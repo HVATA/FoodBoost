@@ -1,3 +1,7 @@
+using RuokaAPI.Data;
+using Microsoft.EntityFrameworkCore;
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -7,7 +11,37 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("blazor", policyBuilder =>
+    {
+        policyBuilder.WithOrigins("https://localhost:7218");
+        policyBuilder.AllowAnyHeader();
+        policyBuilder.AllowAnyMethod();
+        policyBuilder.AllowCredentials();
+    });
+
+
+
+
+});
+
+
+
+builder.Services.AddDbContext<ruokaContext>(option =>
+{      
+    option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+
+});
+
+
+
+
 var app = builder.Build();
+
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -18,8 +52,16 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+
+
+
+
 app.UseAuthorization();
 
+
+
 app.MapControllers();
+
+app.UseCors("blazor");
 
 app.Run();
