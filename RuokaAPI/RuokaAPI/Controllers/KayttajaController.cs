@@ -22,12 +22,17 @@ namespace RuokaAPI.Controllers
         [HttpPost]
         public async Task<string> LisaaKayttaja(Kayttaja x)
         {
+
+           
+
             List<Kayttaja> lista = new List<Kayttaja>();
+            
+
 
 
             string email = x.Sahkopostiosoite;
 
-           lista= _context.Kayttajat.Where(x => x.Sahkopostiosoite == email).ToList();
+            lista = _context.Kayttajat.Where(x => x.Sahkopostiosoite == email).ToList();
 
             if (lista.Count == 0)
             {
@@ -38,17 +43,54 @@ namespace RuokaAPI.Controllers
                 return "Käyttäjä lisätty";
             }
 
-            else {
+            else
+            {
 
                 return "Sähköposti on jo käytössä!!!";
-            
-            
+
+
             }
-        
-        
-        
+
+
+
         }
 
+        
+        [HttpGet("/Haekaikki/{Id}")]
+        public async Task<IEnumerable<Kayttaja>> HaeKayttajat(int Id)
+        {
 
+            //Vain admin voi hakea kaikki
+
+            Kayttaja? p =await _context.Kayttajat.FindAsync(Id);
+
+
+                List<Kayttaja> kayttajat = new List<Kayttaja>();
+
+                string kayttäjätaso = "admin";
+
+
+            if (p.Kayttajataso.Equals(kayttäjätaso)) { 
+
+
+
+                
+                    kayttajat = await _context.Kayttajat.ToListAsync();
+
+
+                    return kayttajat;
+
+               }
+            else
+            {
+                kayttajat = null;
+
+                return kayttajat;
+
+
+
+            }
+
+            }
+        }
     }
-}
