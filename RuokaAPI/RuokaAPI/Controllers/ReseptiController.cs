@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using RuokaAPI.Data;
 using RuokaAPI.Properties.Model;
 
+
+
 namespace RuokaAPI.Controllers
 {
 
@@ -22,11 +24,11 @@ namespace RuokaAPI.Controllers
         [HttpGet]
         public async Task<IEnumerable<Resepti>> HaeReseptit()
         {
+            
+            
 
 
-
-
-            var lista = await _context.Reseptiset.ToListAsync();
+            var lista = await _context.Reseptit.ToListAsync();
 
 
             return lista;

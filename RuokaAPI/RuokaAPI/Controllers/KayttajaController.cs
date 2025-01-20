@@ -19,17 +19,17 @@ namespace RuokaAPI.Controllers
             _context = context;
         }
 
-        [HttpGet]
-        public async Task<IEnumerable<Kayttaja>> HaeKäyttajat()
+        [HttpPost]
+        public async Task<string> LisaaKayttaja(Kayttaja x)
         {
 
 
 
 
-            var lista = await _context.Kayttajaset.ToListAsync();
+              _context.Kayttajat.Add(x);
+            await _context.SaveChangesAsync();
 
-
-            return lista;
+            return "Käyttäjä lisätty";
 
         }
 

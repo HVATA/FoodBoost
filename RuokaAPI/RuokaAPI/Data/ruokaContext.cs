@@ -12,15 +12,15 @@ public class ruokaContext : DbContext
 
 
 
-   public  DbSet<Avsanat> Avainsanatset { get; set; }
+   public  DbSet<Avsanat> Avainsanat { get; set; }
 
-   public DbSet<Kayttaja> Kayttajaset {  get; set; }   
+   public DbSet<Kayttaja> Kayttajat {  get; set; }   
     
-   public DbSet<Resepti> Reseptiset { get; set; }
+   public DbSet<Resepti> Reseptit { get; set; }
 
-   public DbSet<Ruokaaineet> Ruokaaineetset { get; set; }  
+   public DbSet<Ruokaaineet> Ruokaaineet { get; set; }  
 
-   public DbSet<Suosikit> Suosikitset { get; set; }
+   public DbSet<Suosikit> Suosikit { get; set; }
     
 
 
