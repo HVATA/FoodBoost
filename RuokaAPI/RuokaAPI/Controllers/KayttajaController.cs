@@ -9,24 +9,24 @@ namespace RuokaAPI.Controllers
 
     [ApiController]
     [Route("[controller]")]
-    public class ReseptiController : ControllerBase
+    public class KayttajaController : ControllerBase
     {
 
         private readonly ruokaContext _context;
 
-        public ReseptiController(ruokaContext context)
+        public KayttajaController(ruokaContext context)
         {
             _context = context;
         }
 
         [HttpGet]
-        public async Task<IEnumerable<Resepti>> HaeReseptit()
+        public async Task<IEnumerable<Kayttaja>> HaeKäyttajat()
         {
 
 
 
 
-            var lista = await _context.Reseptiset.ToListAsync();
+            var lista = await _context.Kayttajaset.ToListAsync();
 
 
             return lista;

@@ -2,7 +2,7 @@
 
 using RuokaAPI.Properties.Model;
 
-namespace RuokaAPI.Data;
+namespace RuokaAPI.Data; 
 
 public class ruokaContext : DbContext
 {
@@ -12,15 +12,15 @@ public class ruokaContext : DbContext
 
 
 
-public  DbSet<Avsanat> Avainsanatset { get; set; }
+   public  DbSet<Avsanat> Avainsanatset { get; set; }
 
    public DbSet<Kayttaja> Kayttajaset {  get; set; }   
     
-    public DbSet<Resepti> Reseptiset { get; set; }
+   public DbSet<Resepti> Reseptiset { get; set; }
 
-    public DbSet<Ruokaaineet> Ruokaaineetset { get; set; }  
+   public DbSet<Ruokaaineet> Ruokaaineetset { get; set; }  
 
-
+   public DbSet<Suosikit> Suosikitset { get; set; }
     
 
 
