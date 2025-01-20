@@ -1,0 +1,56 @@
+﻿@page "/login"
+@inject NavigationManager Navigation
+
+
+<EditForm Model="loginModel" OnValidSubmit="HandleLogin" class="login-layout">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label for="username">Username</label>
+        <InputText id="username" @bind-Value="loginModel.Username" class="form-control" />
+    </div>
+
+    <div>
+        <label for="password">Password</label>
+        <InputText id="password" @bind-Value="loginModel.Password" type="password" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Login</button>
+    
+    <div style="margin-bottom: 15px;"></div>
+
+    <div>
+        <a href="/signup">Sign up</a>
+    </div>
+    
+</EditForm>
+
+<p>@message</p>
+
+@code {
+    private LoginModel loginModel = new();
+    private string message = string.Empty;
+
+    private void HandleLogin()
+    {
+        // Simppeli esimerkki kirjautumislogiikasta
+        if (loginModel.Username == "admin" && loginModel.Password == "123")
+        {
+            message = "Login successful!";
+            Navigation.NavigateTo("/home");
+
+        }
+        else
+        {
+            message = "Invalid username or password.";
+        }
+    }
+
+    public class LoginModel
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+}
+
