@@ -22,15 +22,31 @@ namespace RuokaAPI.Controllers
         [HttpPost]
         public async Task<string> LisaaKayttaja(Kayttaja x)
         {
+            List<Kayttaja> lista = new List<Kayttaja>();
 
 
+            string email = x.Sahkopostiosoite;
 
+           lista= _context.Kayttajat.Where(x => x.Sahkopostiosoite == email).ToList();
 
-              _context.Kayttajat.Add(x);
-            await _context.SaveChangesAsync();
+            if (lista.Count == 0)
+            {
 
-            return "Käyttäjä lisätty";
+                _context.Kayttajat.Add(x);
+                await _context.SaveChangesAsync();
 
+                return "Käyttäjä lisätty";
+            }
+
+            else {
+
+                return "Sähköposti on jo käytössä!!!";
+            
+            
+            }
+        
+        
+        
         }
 
 
