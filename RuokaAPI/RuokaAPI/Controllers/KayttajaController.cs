@@ -127,7 +127,7 @@ namespace RuokaAPI.Controllers
 
             var tt = _context.Kayttajat.Find(id);
 
-            if (tt.Salasana.Equals(Salasana)&&tt.Sahkopostiosoite == Sahkoposti) { 
+            if (tt.Salasana.Equals(Salasana)&&tt.Sahkopostiosoite.Equals(Sahkoposti)) { 
 
             string? kuva = null;
 
