@@ -1,6 +1,6 @@
 using RuokaAPI.Data;
 using Microsoft.EntityFrameworkCore;
-
+using RuokaAPI.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,7 +11,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-
+builder.Services.AddScoped<ReseptiRepository>();
 
 builder.Services.AddCors(options =>
 {
@@ -22,26 +22,14 @@ builder.Services.AddCors(options =>
         policyBuilder.AllowAnyMethod();
         policyBuilder.AllowCredentials();
     });
-
-
-
-
 });
-
-
 
 builder.Services.AddDbContext<ruokaContext>(option =>
 {      
     option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-
 });
 
-
-
-
 var app = builder.Build();
-
-
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -52,13 +40,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-
-
-
-
 app.UseAuthorization();
-
-
 
 app.MapControllers();
 
