@@ -49,7 +49,7 @@ namespace RuokaAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Etumini")
+                    b.Property<string>("Etunimi")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
