@@ -30,7 +30,7 @@ namespace RuokaAPI.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Etumini = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Etunimi = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Sukunimi = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Nimimerkki = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Sahkopostiosoite = table.Column<string>(type: "nvarchar(max)", nullable: false),

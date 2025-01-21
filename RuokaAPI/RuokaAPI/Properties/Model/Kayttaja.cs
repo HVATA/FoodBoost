@@ -4,7 +4,7 @@
     {
 
         public int Id { get; set; }
-        public string Etumini { get; set; }
+        public string Etunimi { get; set; }
 
         public string Sukunimi { get; set; }
 

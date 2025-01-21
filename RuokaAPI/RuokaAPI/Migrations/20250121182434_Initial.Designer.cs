@@ -11,7 +11,7 @@ using RuokaAPI.Data;
 namespace RuokaAPI.Migrations
 {
     [DbContext(typeof(ruokaContext))]
-    [Migration("20250120200640_Initial")]
+    [Migration("20250121182434_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -52,7 +52,7 @@ namespace RuokaAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Etumini")
+                    b.Property<string>("Etunimi")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
