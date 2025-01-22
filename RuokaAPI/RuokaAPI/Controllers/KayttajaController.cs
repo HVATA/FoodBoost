@@ -94,8 +94,9 @@ namespace RuokaAPI.Controllers
             }
 
         }
-        [HttpDelete("poista/{poistajanID}/{poistettavanID}/{salasana}/{sahkopostiosoite}")]
-        async Task<ActionResult> PoistaKayttaja(int poistajanID, int poistettavanID, string salasana, string sahkopostiosoite)
+
+        [HttpDelete("/poista/{poistajanID}/{poistettavanID}/{salasana}/{sahkopostiosoite}")]
+       public async Task<ActionResult> PoistaKayttaja(int poistajanID, int poistettavanID, string salasana, string sahkopostiosoite)
         {
 
 
