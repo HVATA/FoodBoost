@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RuokaAPI.Data;
 using RuokaAPI.Properties.Model;
+using RuokaAPI.Services;
 
 namespace RuokaAPI.Controllers
 {
@@ -26,7 +27,7 @@ namespace RuokaAPI.Controllers
 
 
             List<Kayttaja> lista = new List<Kayttaja>();
-            
+
 
 
 
@@ -93,31 +94,32 @@ namespace RuokaAPI.Controllers
             }
 
         }
-            [HttpDelete("poista/{poistajanID}/{poistettavanID}/{salasana}/{sahkopostiosoite}")]
-             async Task<ActionResult>PoistaKayttaja(int poistajanID,int poistettavanID,string salasana,string sahkopostiosoite)
+
+        [HttpDelete("/poista/{poistajanID}/{poistettavanID}/{salasana}/{sahkopostiosoite}")]
+       public async Task<ActionResult> PoistaKayttaja(int poistajanID, int poistettavanID, string salasana, string sahkopostiosoite)
+        {
+
+
+            var poistaja = _context.Kayttajat.Find(poistajanID);
+
+            if (poistaja.Salasana.Equals(salasana) && poistaja.Sahkopostiosoite.Equals(sahkopostiosoite) && poistaja.Kayttajataso.Equals("admin"))
             {
 
+                var x = _context.Kayttajat.Find(poistettavanID);
 
-                var poistaja = _context.Kayttajat.Find(poistajanID);
+                _context.Kayttajat.Remove(x);
+                await _context.SaveChangesAsync();
 
-                if (poistaja.Salasana.Equals(salasana) && poistaja.Sahkopostiosoite.Equals(sahkopostiosoite) && poistaja.Kayttajataso.Equals("admin"))
-                {
-
-                    var x = _context.Kayttajat.Find(poistettavanID);
-
-                    _context.Kayttajat.Remove(x);
-                    await _context.SaveChangesAsync();
-
-                    return Ok(x);
-                }
-                else {  return Ok("Poisto ei onnistunut!!!"); }
-            
-            
-            
+                return Ok(x);
             }
+            else { return Ok("Poisto ei onnistunut!!!"); }
+
+
+
+        }
 
         [HttpPut("PaivitaTietoja/{id}/{Salasana}/{Sahkoposti}")]
-        public async Task<ActionResult<Kayttaja>>Paivita(int id, Kayttaja p,string Salasana,string Sahkoposti)
+        public async Task<ActionResult<Kayttaja>> Paivita(int id, Kayttaja p, string Salasana, string Sahkoposti)
         {
 
 
@@ -127,36 +129,92 @@ namespace RuokaAPI.Controllers
 
             var tt = _context.Kayttajat.Find(id);
 
-            if (tt.Salasana.Equals(Salasana)&&tt.Sahkopostiosoite.Equals(Sahkoposti)) { 
+            if (tt.Salasana.Equals(Salasana) && tt.Sahkopostiosoite.Equals(Sahkoposti))
+            {
 
-            string? kuva = null;
+                string? kuva = null;
 
 
-            tt.Etunimi = p.Etunimi;
-            tt.Sukunimi = p.Sukunimi;
-            tt.Sahkopostiosoite = p.Sahkopostiosoite;
-            tt.Kayttajataso = p.Kayttajataso;
-            tt.Salasana = p.Salasana;
-            tt.Nimimerkki = p.Nimimerkki;
+                tt.Etunimi = p.Etunimi;
+                tt.Sukunimi = p.Sukunimi;
+                tt.Sahkopostiosoite = p.Sahkopostiosoite;
+                tt.Kayttajataso = p.Kayttajataso;
+                tt.Salasana = p.Salasana;
+                tt.Nimimerkki = p.Nimimerkki;
 
-        
 
-            _context.Kayttajat.Update(tt);
-            await _context.SaveChangesAsync();
 
-            return Ok(tt);
+                _context.Kayttajat.Update(tt);
+                await _context.SaveChangesAsync();
+
+                return Ok(tt);
             }
-            else {
-                
-                Kayttaja k =new Kayttaja();
+            else
+            {
 
-             return Ok(k);
-                    
-                    }
+                Kayttaja k = new Kayttaja();
+
+                return Ok(k);
+
+            }
+
+
+        }
+        [HttpPut("Salasananpalautus/{id}/{Sahkoposti}")]
+        public async Task<ActionResult> HaeUusiSalasana(int id, string Sahkoposti)
+        {
+
+            Boolean k = false;
+
+            string? Uusisalasana = null;
+
+
+            var tt = _context.Kayttajat.Find(id);
+
+            if (tt.Sahkopostiosoite.Equals(Sahkoposti))
+            {
+
+                Salasananlahetys salasananlahetys = new Salasananlahetys();
+                Uusisalasana = await salasananlahetys.LahetaSalasana(Sahkoposti);
+
+
+
+
+            }
+            if (!tt.Sahkopostiosoite.Equals(Sahkoposti))
+            {
+
+                return Ok("Sähköposti tai Id on väärin");
+
+            }
+
+            if (Uusisalasana != null)
+            {
+
+                tt.Salasana = Uusisalasana;
+
+
+
+                _context.Kayttajat.Update(tt);
+                await _context.SaveChangesAsync();
+
+                return Ok("Salasana vaihdettu");
+
+
+            }
+
+            else {
+
+
+                return Ok("Jotain meni pieleen!!!");
+            
+            
+            }
+
+            
+        
         
         
         }
-
     }
-}
-    
+}    

@@ -11,8 +11,8 @@ using RuokaAPI.Data;
 namespace RuokaAPI.Migrations
 {
     [DbContext(typeof(ruokaContext))]
-    [Migration("20250121173144_lisätty suhteet reseptista aineosiin ja avainsanoihin")]
-    partial class lisättysuhteetreseptistaaineosiinjaavainsanoihin
+    [Migration("20250121215133_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -64,7 +64,8 @@ namespace RuokaAPI.Migrations
 
                     b.Property<string>("Nimi")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
 
                     b.HasKey("Id");
 
@@ -81,7 +82,8 @@ namespace RuokaAPI.Migrations
 
                     b.Property<string>("Sana")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
 
                     b.HasKey("Id");
 
@@ -96,7 +98,7 @@ namespace RuokaAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Etumini")
+                    b.Property<string>("Etunimi")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -158,7 +160,8 @@ namespace RuokaAPI.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Valmistuskuvaus")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
 
                     b.HasKey("Id");
 
