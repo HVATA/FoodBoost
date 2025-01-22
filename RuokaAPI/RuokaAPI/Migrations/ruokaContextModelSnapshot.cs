@@ -61,7 +61,8 @@ namespace RuokaAPI.Migrations
 
                     b.Property<string>("Nimi")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
 
                     b.HasKey("Id");
 
@@ -78,7 +79,8 @@ namespace RuokaAPI.Migrations
 
                     b.Property<string>("Sana")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
 
                     b.HasKey("Id");
 
@@ -155,7 +157,8 @@ namespace RuokaAPI.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Valmistuskuvaus")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
 
                     b.HasKey("Id");
 
