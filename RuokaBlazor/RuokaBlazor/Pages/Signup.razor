@@ -1,5 +1,80 @@
-﻿<h3>Signup</h3>
+﻿@page "/signup"
+@inject NavigationManager Navigation
+@layout SignupLayout
+
+<EditForm Model="signupModel" OnValidSubmit="HandleSignup" class="signup-layout">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div>
+        <label for="firstname">Etunimi</label>
+        <InputText id="firstname" @bind-Value="signupModel.Firstname" class="form-control" />
+    </div>
+
+    <div>
+        <label for="lastname">Sukunimi</label>
+        <InputText id="lastname" @bind-Value="signupModel.Lastname" class="form-control" />
+    </div>
+
+    <div>
+        <label for="email">Sähköpostiosoite</label>
+        <InputText id="email" @bind-Value="signupModel.Email" class="form-control" />
+    </div>
+
+    <div>
+        <label for="username">Käyttäjätunnus</label>
+        <InputText id="username" @bind-Value="signupModel.Username" class="form-control" />
+    </div>
+
+    <div>
+        <label for="password">Salasana</label>
+        <InputText id="password" @bind-Value="signupModel.Password" type="password" class="form-control" />
+    </div>
+
+    <div style="margin-bottom: 15px;"></div>
+
+    <button type="submit" class="btn btn-primary">Rekisteröidy</button>
+
+    <div style="margin-bottom: 15px;"></div>
+
+    <div>
+        <button @onclick="BackToLogin" class="btn btn-link">Peruuta</button>
+    </div>
+
+</EditForm>
+
+<p>@message</p>
 
 @code {
+    private SignupModel signupModel = new();
+    private string message = string.Empty;
 
+    private void HandleSignup()
+    {
+        // Simppeli esimerkki rekisteröitymislogiikasta, TÄHÄN TÄYTYY LISÄTÄ SIT IHA OIKEITA API KUTSUJA JA SEMMOSTA
+        if (signupModel.Firstname != "" && signupModel.Lastname != "" && signupModel.Email != "" && signupModel.Username != "" && signupModel.Password != "")
+        {
+            //Tää ei näy viel, pitää kattoo miksi
+            message = "Rekisteröityminen onnistui!";
+            Navigation.NavigateTo("/home");//Siirtyy kuitenki toimivasti eteenpäin tästä
+
+        }
+        else
+        {
+            message = "Invalid username or password.";
+        }
+    }
+
+    public class SignupModel
+    {
+        public string Firstname { get; set; } = string.Empty;
+        public string Lastname { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+    private void BackToLogin()
+    {
+        Navigation.NavigateTo("/");
+    }
 }
+
