@@ -17,44 +17,31 @@ namespace RuokaAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Resepti>>> HaeReseptit()
+        public async Task<ActionResult<IEnumerable<Resepti>>> HaeReseptit(
+            [FromQuery] string[]? ainesosat,
+            [FromQuery] string[]? avainsanat)
         {
-            var reseptit = await _repository.HaeKaikkiAsync();
+            var reseptit = await _repository.HaeReseptitAsync(ainesosat, avainsanat);
             return Ok(reseptit);
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Resepti>> HaeResepti(int id)
-        {
-            var resepti = await _repository.HaeIdllaAsync(id);
-            if (resepti == null)
-            {
-                return NotFound();
-            }
-            return Ok(resepti);
-        }
 
         [HttpPost]
         public async Task<ActionResult<Resepti>> LisaaResepti(ReseptiDto reseptiDto)
         {
             var uusiResepti = await _repository.LisaaAsync(reseptiDto);
-            return CreatedAtAction(nameof(HaeResepti), new { id = uusiResepti.Id }, uusiResepti);
+            return Created();
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> PaivitaResepti(int id, Resepti resepti)
+        public async Task<IActionResult> PaivitaResepti(int id, ReseptiDto resepti)
         {
-            if (id != resepti.Id)
-            {
-                return BadRequest();
-            }
-
             if (!await _repository.OnOlemassaAsync(id))
             {
                 return NotFound();
             }
 
-            await _repository.PaivitaAsync(resepti);
+            await _repository.PaivitaAsync(id, resepti);
             return NoContent();
         }
 
