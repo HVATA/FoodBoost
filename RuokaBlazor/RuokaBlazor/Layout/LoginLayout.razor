@@ -7,13 +7,16 @@
     </div>
 </div>
 <style>
-    /* Login-sivu tyylitys */
-    .login-page {
+    /* Login-sivu taustakuva ja tyylit */
+    .login-page {  
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 100vh;
-        background-color: #f4f4f4;
+        min-height: 100vh; /* Kattaa koko sivun korkeuden */
+        background-image: url('/recipeapp_bg.png'); /* Polku taustakuvaan */
+        background-size: cover; /* Skaalaa kuva peittämään koko alueen */
+        background-repeat: no-repeat; /* Estää kuvan toistamisen */
+        background-position: center; /* Keskittää kuvan */
     }
 
     .login-container {
@@ -55,9 +58,7 @@
         button:hover {
             background-color: #0056b3;
         }
-
 </style>
 @code {
     // Voit lisätä mahdollisia komponentteja tai käsittelylogiikkaa tänne
 }
-
