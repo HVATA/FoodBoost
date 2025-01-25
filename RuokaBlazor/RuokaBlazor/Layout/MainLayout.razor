@@ -1,17 +1,17 @@
 ﻿@inherits LayoutComponentBase
 <div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
     <main>
-        <div class="top-row px-4">
-            <a href="/login" @onclick="Logout">Logout</a>
+        <div class="main-header">
+            <a href="/home">RuokaBoost-Home</a>
+            <a href="/Recipe">Omat reseptit</a>
+            <a href="/settings">Asetukset</a>
+            <a href="/">Haku</a>
+            <a href="/">Suosikit</a>
+            <a href="/login" @onclick="Logout">Kirjaudu ulos</a>
         </div>
-
-        <article class="content px-4">
+        <div>
             @Body
-        </article>
+        </div>
     </main>
 </div>
 @code {

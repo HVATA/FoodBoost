@@ -15,22 +15,31 @@ namespace RuokaAPI.Repositories
             _konteksti = konteksti;
         }
 
-        public async Task<IEnumerable<Resepti>> HaeKaikkiAsync()
+        public async Task<IEnumerable<Resepti>> HaeReseptitAsync(string[]? ainesosat, string[]? avainsanat)
         {
-            return await _konteksti.Reseptit
+            var query = _konteksti.Reseptit
                 .Include(r => r.Ainesosat)
                 .Include(r => r.Avainsanat)
-                .ToListAsync();
+                .AsQueryable();
+
+            if (ainesosat != null && ainesosat.Length > 0)
+            {
+                var haettavatAinesosat = ainesosat.ToList();
+                query = query.Where(r => r.Ainesosat
+                    .Any(a => haettavatAinesosat.Contains(a.Nimi)));
+            }
+
+            if (avainsanat != null && avainsanat.Length > 0)
+            {
+                var haettavatAvainsanat = avainsanat.ToList();
+                query = query.Where(r => r.Avainsanat
+                    .Any(a => haettavatAvainsanat.Contains(a.Sana)));
+            }
+
+            return await query.ToListAsync();
         }
 
-        public async Task<Resepti?> HaeIdllaAsync(int id)
-        {
-            return await _konteksti.Reseptit
-                .Include(r => r.Ainesosat)
-                .Include(r => r.Avainsanat)
-                .FirstOrDefaultAsync(r => r.Id == id);
-        }
-
+       
         private async Task<List<Ainesosa>> PoistaDuplikaatit(List<string> uudetNimet, Dictionary<string, Ainesosa> olemassaOlevat)
         {
             var kasitellyt = new List<Ainesosa>();
@@ -65,18 +74,18 @@ namespace RuokaAPI.Repositories
             return kasitellyt;
         }
 
-        private async Task<List<Ainesosa>> PoistaDuplikaattiAinesosat(Resepti resepti)
+        private async Task<List<Ainesosa>> PoistaDuplikaattiAinesosat(ReseptiDto resepti)
         {
-            var uudetAinesosat = resepti.Ainesosat.Select(a => a.Nimi.ToLower()).ToList();
+            var uudetAinesosat = resepti.Ainesosat.Select(a => a.ToLower()).ToList();
             var olemassaOlevatAinesosat = await _konteksti.Ainesosat
                 .Where(x => uudetAinesosat.Contains(x.Nimi.ToLower()))
                 .ToDictionaryAsync(x => x.Nimi.ToLower());
             return await PoistaDuplikaatit(uudetAinesosat, olemassaOlevatAinesosat);
         }
 
-        private async Task<List<Avainsana>> PoistaDuplikaattiAvainsanat(Resepti resepti)
+        private async Task<List<Avainsana>> PoistaDuplikaattiAvainsanat(ReseptiDto resepti)
         {
-            var uudetAvainsanat = resepti.Avainsanat.Select(a => a.Sana.ToLower()).ToList();
+            var uudetAvainsanat = resepti.Avainsanat.Select(a => a.ToLower()).ToList();
             var olemassaOlevatAvainsanat = await _konteksti.Avainsanat
                 .Where(x => uudetAvainsanat.Contains(x.Sana.ToLower()))
                 .ToDictionaryAsync(x => x.Sana.ToLower());
@@ -120,14 +129,20 @@ namespace RuokaAPI.Repositories
             return resepti;
         }
 
-        public async Task PaivitaAsync(Resepti resepti)
+        public async Task PaivitaAsync(int id, ReseptiDto reseptiRequest)
         {
-            resepti.Avainsanat = await PoistaDuplikaattiAvainsanat(resepti);
-            resepti.Ainesosat = await PoistaDuplikaattiAinesosat(resepti);
+            var resepti = _konteksti.Reseptit
+                .Include(r => r.Ainesosat)
+                .Include(r => r.Avainsanat)
+                .FirstOrDefault(r => r.Id == id);
+            if (resepti == null) return;
 
-            _konteksti.Entry(resepti).State = EntityState.Modified;
-            _konteksti.Entry(resepti).Collection(r => r.Ainesosat).IsModified = true;
-            _konteksti.Entry(resepti).Collection(r => r.Avainsanat).IsModified = true;
+            resepti.Avainsanat = await PoistaDuplikaattiAvainsanat(reseptiRequest);
+            resepti.Ainesosat = await PoistaDuplikaattiAinesosat(reseptiRequest);
+            resepti.Katseluoikeus = reseptiRequest.Katseluoikeus;
+            resepti.Valmistuskuvaus = reseptiRequest?.Valmistuskuvaus;
+            resepti.Tekijäid = reseptiRequest.TekijaId;
+            resepti.Kuva1 = reseptiRequest.Kuva1;
             
             await _konteksti.SaveChangesAsync();
         }
@@ -146,5 +161,6 @@ namespace RuokaAPI.Repositories
         {
             return await _konteksti.Reseptit.AnyAsync(r => r.Id == id);
         }
+        
     }
 }

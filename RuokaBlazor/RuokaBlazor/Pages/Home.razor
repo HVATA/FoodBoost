@@ -1,8 +1,139 @@
 ﻿@page "/home"
 @layout MainLayout
+<div class="search-options-container">
+    <button @onclick="Search" class="search-button">Hae</button>
+    <input type="text" placeholder="Hae reseptejä nimellä tai ainesosalla..." @bind="SearchQuery" class="search-input" />
+</div>
 
-<PageTitle>Home</PageTitle>
+<p class="search-results">Hakutulokset: @SearchResult</p> <!--Tälle jos sais sellasen että jos ei oo haettu on näkymätön, näytetää vasta haun aloitettua-->
+<div class="display-poprecipe">
+    <!--
+    @if (TopRecipes == null) //Tähän sit jossai vaihees oikeita hakuja
+    {
+        <p>Ladataan suosituimpia reseptejä...</p>
+    }
+    else
+    {
+    @foreach (var recipe in TopRecipes)
+    {
+            <div class="recipe-card">
+                <img src="@recipe.ImageUrl" alt="@recipe.Name" class="recipe-image" />
+                <p class="recipe-name">@recipe.Name</p>
+            </div>
+    }
+    }
+    -->
+    <div class="recipe-card">
+        <img src="/bolognese_png.png" class="recipe-image" />
+        <p class="recipe-name">Bolognese</p>
+        <img src="/hambuger_png.png" class="recipe-image" />
+        <p class="recipe-name">Hampurilainen</p>
+        <img src="/chickensoup_png.png" class="recipe-image" />
+        <p class="recipe-name">Kanakeitto</p>
+        <img src="/salmon_png.png" class="recipe-image" />
+        <p class="recipe-name">Uunilohi</p>
+    </div>
+</div>
+<style>
+    .dropbtn {
+        background-color: #3498DB;
+        color: white;
+        padding: 16px;
+        font-size: 16px;
+        border: none;
+        cursor: pointer;
+    }
 
-<h1>Hello, world!</h1>
+        .dropbtn:hover, .dropbtn:focus {
+            background-color: #2980B9;
+        }
 
-Welcome to your new app.
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #f1f1f1;
+        min-width: 160px;
+        overflow: auto;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+        z-index: 1;
+    }
+
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+
+    .dropdown a:hover {
+        background-color: #ddd;
+    }
+
+    .show {
+        display: block;
+    }
+
+    .search-button {
+        width: 8rem;
+        height: 4rem;
+    }
+
+    .search-input {
+        width: 90%;
+        height: 4rem;
+    }
+
+    .search-results {
+        position: center;
+        width: 10rem;
+        height: 10rem;
+    }
+
+    .search-options-container {
+        display: initial;
+        flex-direction: column;
+        text-align: end; /* Tekstin keskitys */
+        width: 8rem;
+        height: 4rem;
+    }
+
+    .recipe-image {
+        width: 100px;
+        height: 100px;
+    }
+
+    .recipe-card {
+        display: flex;
+        justify-content: initial;
+        align-items: center;
+        height: 20rem;
+    }
+</style>
+@code {
+    private string SearchQuery { get; set; } = string.Empty; // Tallentaa hakukyselyn
+    private string SearchResult { get; set; } = string.Empty; // Näyttää tulokset
+    private List<Recipe>? TopRecipes;
+
+    private void Search()
+    {
+        // Simuloi hakutuloksen palauttamista
+        if (!string.IsNullOrEmpty(SearchQuery))
+        {
+            SearchResult = $"Haku: '{SearchQuery}' suoritettu!";
+        }
+        else
+        {
+            SearchResult = "Hakukenttä on tyhjä. Anna hakusana.";
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        // Hakee 4 katsotuinta reseptiä tietokannasta
+
+    }
+}

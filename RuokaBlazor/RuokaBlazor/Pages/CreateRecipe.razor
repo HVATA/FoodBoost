@@ -1,0 +1,119 @@
+﻿@page "/createRecipe"
+@layout MainLayout
+
+<h1>Luo uusi resepti</h1>
+
+<div class="form-container">
+    <EditForm Model="uusiResepti" OnValidSubmit="TallennaResepti">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div>
+            <label for="nimi">Reseptin nimi:</label>
+            <InputText id="nimi" @bind-Value="uusiResepti.Nimi" class="form-control" />
+        </div>
+
+        <div>
+            <label for="kuvaus">Kuvaus:</label>
+            <InputTextArea id="kuvaus" @bind-Value="uusiResepti.Kuvaus" class="form-control" />
+        </div>
+
+        <div>
+            <label for="kuvaUrl">Kuvan URL:</label>
+            <InputText id="kuvaUrl" @bind-Value="uusiResepti.KuvaUrl" class="form-control" />
+        </div>
+
+        <h2>Ainesosat</h2>
+        @for (int i = 0; i < uusiResepti.Ainesosat.Count; i++)
+            {
+            var index = i;
+            <!-- Väliaikainen muuttuja indeksiä varten -->
+            <div class="input-group">
+                <InputText @bind-Value="uusiResepti.Ainesosat[index]" class="form-control" placeholder="Ainesosa" />
+                <button type="button" class="btn btn-danger" @onclick="() => PoistaAinesosa(index)">Poista</button>
+            </div>
+            }
+        <button type="button" class="btn btn-secondary" @onclick="LisaaAinesosa">+ Lisää ainesosa</button>
+
+        <h2>Ohjeet</h2>
+        @for (int i = 0; i < uusiResepti.Ohjeet.Count; i++)
+            {
+            var index = i;
+            <!-- Väliaikainen muuttuja indeksiä varten -->
+            <div class="input-group">
+                <InputTextArea @bind-Value="uusiResepti.Ohjeet[index]" class="form-control" placeholder="Ohjeen vaihe" />
+                <button type="button" class="btn btn-danger" @onclick="() => PoistaOhje(index)">Poista</button>
+            </div>
+            }
+        <button type="button" class="btn btn-secondary" @onclick="LisaaOhje">+ Lisää ohje</button>
+
+        <button type="submit" class="btn btn-primary mt-3">Tallenna</button>
+    </EditForm>
+</div>
+
+@code {
+    private ReseptiModel uusiResepti = new ReseptiModel();
+
+    protected override void OnInitialized ()
+        {
+        // Aloitusrivit: 5 ainesosaa ja 5 ohjetta
+        uusiResepti.Ainesosat = Enumerable.Repeat(string.Empty, 5).ToList();
+        uusiResepti.Ohjeet = Enumerable.Repeat(string.Empty, 5).ToList();
+        }
+
+    private void LisaaAinesosa ()
+        {
+        uusiResepti.Ainesosat.Add(string.Empty);
+        }
+
+    private void PoistaAinesosa ( int index )
+        {
+        if (index >= 0 && index < uusiResepti.Ainesosat.Count)
+            {
+            uusiResepti.Ainesosat.RemoveAt(index);
+            }
+        }
+
+    private void LisaaOhje ()
+        {
+        uusiResepti.Ohjeet.Add(string.Empty);
+        }
+
+    private void PoistaOhje ( int index )
+        {
+        if (index >= 0 && index < uusiResepti.Ohjeet.Count)
+            {
+            uusiResepti.Ohjeet.RemoveAt(index);
+            }
+        }
+
+    private async Task TallennaResepti ()
+        {
+        // Simuloidaan tallennus
+        Console.WriteLine($"Resepti tallennettu: {uusiResepti.Nimi}");
+        foreach (var ainesosa in uusiResepti.Ainesosat)
+            {
+            Console.WriteLine($"Ainesosa: {ainesosa}");
+            }
+        foreach (var ohje in uusiResepti.Ohjeet)
+            {
+            Console.WriteLine($"Ohje: {ohje}");
+            }
+
+        // Tyhjennetään lomake
+        uusiResepti = new ReseptiModel
+                {
+                Ainesosat = Enumerable.Repeat(string.Empty, 5).ToList(),
+                Ohjeet = Enumerable.Repeat(string.Empty, 5).ToList()
+                };
+        }
+
+    public class ReseptiModel
+        {
+        public string Nimi { get; set; }
+        public string Kuvaus { get; set; }
+        public string KuvaUrl { get; set; }
+        public List<string> Ainesosat { get; set; } = new List<string>();
+        public List<string> Ohjeet { get; set; } = new List<string>();
+        }
+}
