@@ -4,6 +4,7 @@
     <button @onclick="Search" class="search-button">Hae</button>
     <input type="text" placeholder="Hae reseptejä nimellä tai ainesosalla..." @bind="SearchQuery" class="search-input" />
 </div>
+
 <p class="search-results">Hakutulokset: @SearchResult</p> <!--Tälle jos sais sellasen että jos ei oo haettu on näkymätön, näytetää vasta haun aloitettua-->
 <div class="display-poprecipe">
     <!--
@@ -34,6 +35,49 @@
     </div>
 </div>
 <style>
+    .dropbtn {
+        background-color: #3498DB;
+        color: white;
+        padding: 16px;
+        font-size: 16px;
+        border: none;
+        cursor: pointer;
+    }
+
+        .dropbtn:hover, .dropbtn:focus {
+            background-color: #2980B9;
+        }
+
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #f1f1f1;
+        min-width: 160px;
+        overflow: auto;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+        z-index: 1;
+    }
+
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+
+    .dropdown a:hover {
+        background-color: #ddd;
+    }
+
+    .show {
+        display: block;
+    }
+
     .search-button {
         width: 8rem;
         height: 4rem;
@@ -43,11 +87,13 @@
         width: 90%;
         height: 4rem;
     }
+
     .search-results {
         position: center;
         width: 10rem;
         height: 10rem;
     }
+
     .search-options-container {
         display: initial;
         flex-direction: column;
@@ -55,10 +101,12 @@
         width: 8rem;
         height: 4rem;
     }
+
     .recipe-image {
         width: 100px;
         height: 100px;
     }
+
     .recipe-card {
         display: flex;
         justify-content: initial;
