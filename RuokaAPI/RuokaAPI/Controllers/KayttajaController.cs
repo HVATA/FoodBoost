@@ -57,7 +57,7 @@ namespace RuokaAPI.Controllers
         }
 
         [HttpGet("/Tunnistautumistiedot/{Salasana}/{Sahkopostiosoite}")]
-        public async Task<Kayttaja> HaeKayttaja( string Salasana, string Sahkopostiosoite)
+        public async Task<ActionResult<Kayttaja>> HaeKayttaja( string Salasana, string Sahkopostiosoite)
         {
 
             //Haetaan front kutsusta käyttäjä salasanan ja sähköpostiosoitteen perusteella
@@ -69,7 +69,7 @@ namespace RuokaAPI.Controllers
 
             if (p != null)
             {
-                return p;
+                return Ok(p);
 
 
             }
@@ -78,7 +78,7 @@ namespace RuokaAPI.Controllers
 
 
 
-                return p;
+                return Ok(p);
             
             
             
