@@ -33,7 +33,7 @@ namespace RuokaAPI.Controllers
 
             string email = x.Sahkopostiosoite;
 
-            lista = _context.Kayttajat.Where(x => x.Sahkopostiosoite == email).ToList();
+            lista = _context.Kayttajat.Where(x => x.Sahkopostiosoite ==email).ToList();
 
             if (lista.Count == 0)
             {
@@ -56,15 +56,21 @@ namespace RuokaAPI.Controllers
 
         }
 
-        [HttpGet("/Tunnistautumistiedot/{Salasana}/{Sahkopostiosoite}")]
-        public async Task<ActionResult<Kayttaja>> HaeKayttaja( string Salasana, string Sahkopostiosoite)
+        [HttpGet("Tunnistautumistiedot")]
+        public async Task<ActionResult<Kayttaja>> HaeKayttaja([FromQuery] string salasana,
+    [FromQuery] string sahkopostiosoite
+
+
+
+
+            )
         {
 
             //Haetaan front kutsusta käyttäjä salasanan ja sähköpostiosoitteen perusteella
-            Kayttaja? p=null;
+            
 
 
-             p = await _context.Kayttajat.Where (x => (x.Sahkopostiosoite==Sahkopostiosoite&&x.Salasana==Salasana)).FirstOrDefaultAsync();
+         Kayttaja?    p = await _context.Kayttajat.Where (x => (x.Sahkopostiosoite==sahkopostiosoite&&x.Salasana==salasana)).FirstOrDefaultAsync();
 
 
             if (p != null)
@@ -78,7 +84,7 @@ namespace RuokaAPI.Controllers
 
 
 
-                return Ok(p);
+                return NotFound("Käyttäjää ei löytynyt.");
             
             
             
@@ -90,52 +96,40 @@ namespace RuokaAPI.Controllers
         }
 
 
-        [HttpGet("/Haekaikki/{Id}/{Salasana}/{Sahkopostiosoite}")]
-        public async Task<IEnumerable<Kayttaja>> HaeKayttajat(int Id, string Salasana, string Sahkopostiosoite)
+        [HttpGet("Haekaikki")]
+        public async Task<ActionResult<IEnumerable<Kayttaja>>> HaeKayttajat(
+    [FromQuery] int id,
+    [FromQuery] string salasana,
+    [FromQuery] string sahkopostiosoite)
         {
+            // Etsitään käyttäjä tietokannasta
+            Kayttaja? p = await _context.Kayttajat.FindAsync(id);
 
-            //Vain admin voi hakea kaikki
-
-            Kayttaja? p = await _context.Kayttajat.FindAsync(Id);
-
-
-            List<Kayttaja> kayttajat = new List<Kayttaja>();
-
-            string kayttäjätaso = "admin";
-
-
-            if (p.Kayttajataso.Equals(kayttäjätaso) && p.Salasana.Equals(Salasana) && p.Sahkopostiosoite.Equals(Sahkopostiosoite))
+            if (p == null)
             {
-
-
-
-
-                kayttajat = await _context.Kayttajat.ToListAsync();
-
-
-                return kayttajat;
-
-            }
-            else
-            {
-                kayttajat = null;
-
-                return kayttajat;
-
-
-
+                return NotFound("Käyttäjää ei löytynyt.");
             }
 
+            string kayttajataso = "admin";
+
+            // Tarkistetaan, että käyttäjä on admin ja tunnistetiedot ovat oikein
+            if (p.Kayttajataso.Equals(kayttajataso) && p.Salasana == salasana && p.Sahkopostiosoite == sahkopostiosoite)
+            {
+                var kayttajat = await _context.Kayttajat.ToListAsync();
+                return Ok(kayttajat);
+            }
+
+            return Unauthorized("Käyttäjällä ei ole oikeuksia.");
         }
 
-        [HttpDelete("/poista/{poistajanID}/{poistettavanID}/{salasana}/{sahkopostiosoite}")]
-       public async Task<ActionResult> PoistaKayttaja(int poistajanID, int poistettavanID, string salasana, string sahkopostiosoite)
+        [HttpDelete("Poista/{poistettavanID}")]
+       public async Task<ActionResult> PoistaKayttaja(Kayttaja k,int poistettavanID)
         {
 
 
-            var poistaja = _context.Kayttajat.Find(poistajanID);
+            var poistaja = _context.Kayttajat.Find(k.Id);
 
-            if (poistaja.Salasana.Equals(salasana) && poistaja.Sahkopostiosoite.Equals(sahkopostiosoite) && poistaja.Kayttajataso.Equals("admin"))
+            if (poistaja.Salasana.Equals(k.Salasana) && poistaja.Sahkopostiosoite.Equals(k.Sahkopostiosoite) && poistaja.Kayttajataso.Equals("admin")||poistaja.Id==poistettavanID&&poistaja.Sahkopostiosoite==k.Sahkopostiosoite&&poistaja.Salasana==k.Salasana)
             {
 
                 var x = _context.Kayttajat.Find(poistettavanID);
@@ -151,8 +145,8 @@ namespace RuokaAPI.Controllers
 
         }
 
-        [HttpPut("PaivitaTietoja/{id}/{Salasana}/{Sahkoposti}")]
-        public async Task<ActionResult<Kayttaja>> Paivita(int id, Kayttaja p, string Salasana, string Sahkoposti)
+        [HttpPut("PaivitaTietoja")]
+        public async Task<ActionResult<Kayttaja>> Paivita(Kayttaja p)
         {
 
 
@@ -160,9 +154,9 @@ namespace RuokaAPI.Controllers
 
 
 
-            var tt = _context.Kayttajat.Find(id);
+            var tt = _context.Kayttajat.Find(p.Id);
 
-            if (tt.Salasana.Equals(Salasana) && tt.Sahkopostiosoite.Equals(Sahkoposti))
+            if (tt.Salasana.Equals(p.Salasana) && tt.Sahkopostiosoite.Equals(p.Sahkopostiosoite))
             {
 
                 string? kuva = null;
@@ -193,8 +187,8 @@ namespace RuokaAPI.Controllers
 
 
         }
-        [HttpPut("Salasananpalautus/{id}/{Sahkoposti}")]
-        public async Task<ActionResult> HaeUusiSalasana(int id, string Sahkoposti)
+        [HttpPut("Salasananpalautus")]
+        public async Task<ActionResult> HaeUusiSalasana(Kayttaja p)
         {
 
             Boolean k = false;
@@ -202,19 +196,19 @@ namespace RuokaAPI.Controllers
             string? Uusisalasana = null;
 
 
-            var tt = _context.Kayttajat.Find(id);
+            var tt = _context.Kayttajat.Find(p.Id);
 
-            if (tt.Sahkopostiosoite.Equals(Sahkoposti))
+            if (tt.Sahkopostiosoite.Equals(p.Sahkopostiosoite))
             {
 
                 Salasananlahetys salasananlahetys = new Salasananlahetys();
-                Uusisalasana = await salasananlahetys.LahetaSalasana(Sahkoposti);
+                Uusisalasana = await salasananlahetys.LahetaSalasana(tt.Sahkopostiosoite);
 
 
 
 
             }
-            if (!tt.Sahkopostiosoite.Equals(Sahkoposti))
+            if (!tt.Sahkopostiosoite.Equals(p.Sahkopostiosoite))
             {
 
                 return Ok("Sähköposti tai Id on väärin");
