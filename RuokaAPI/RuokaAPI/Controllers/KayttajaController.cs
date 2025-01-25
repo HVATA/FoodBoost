@@ -56,6 +56,39 @@ namespace RuokaAPI.Controllers
 
         }
 
+        [HttpGet("/Tunnistautumistiedot/{Salasana}/{Sahkopostiosoite}")]
+        public async Task<Kayttaja> HaeKayttaja( string Salasana, string Sahkopostiosoite)
+        {
+
+            //Haetaan front kutsusta käyttäjä salasanan ja sähköpostiosoitteen perusteella
+            Kayttaja? p=null;
+
+
+             p = await _context.Kayttajat.Where (x => (x.Sahkopostiosoite==Sahkopostiosoite&&x.Salasana==Salasana)).FirstOrDefaultAsync();
+
+
+            if (p != null)
+            {
+                return p;
+
+
+            }
+
+            else {
+
+
+
+                return p;
+            
+            
+            
+            }
+
+
+            
+
+        }
+
 
         [HttpGet("/Haekaikki/{Id}/{Salasana}/{Sahkopostiosoite}")]
         public async Task<IEnumerable<Kayttaja>> HaeKayttajat(int Id, string Salasana, string Sahkopostiosoite)
