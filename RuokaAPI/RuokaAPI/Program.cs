@@ -17,7 +17,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("blazor", policyBuilder =>
     {
-        policyBuilder.WithOrigins("https://localhost:7218");
+        policyBuilder.WithOrigins("https://localhost:7042");
         policyBuilder.AllowAnyHeader();
         policyBuilder.AllowAnyMethod();
         policyBuilder.AllowCredentials();
@@ -38,12 +38,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors("blazor");
 app.UseHttpsRedirection();
+
 
 app.UseAuthorization();
 
 app.MapControllers();
 
-app.UseCors("blazor");
 
 app.Run();
