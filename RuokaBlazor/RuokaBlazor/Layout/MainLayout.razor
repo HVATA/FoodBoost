@@ -3,17 +3,34 @@
     <main>
         <div class="main-header">
             <a href="/home">RuokaBoost-Home</a>
-            <a href="/Recipe">Omat reseptit</a>
+            <a href="/recipe">Omat reseptit</a>
             <a href="/settings">Asetukset</a>
-            <a href="/">Haku</a>
-            <a href="/">Suosikit</a>
+            <a href="/accounts">Käyttäjähallinta</a>
+            <a href="/favorites">Suosikit</a>
             <a href="/login" @onclick="Logout">Kirjaudu ulos</a>
         </div>
-        <div>
+        <div class="main-body">
             @Body
+        </div>
+        <div>
+            
         </div>
     </main>
 </div>
+<style>
+    .main-header{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f4f4f4;
+    }
+    .main-body{
+        display: flex;
+        justify-content: center;
+        background-color: #f4f4f4;
+    }
+</style>
 @code {
     private async Task Logout()
     {
