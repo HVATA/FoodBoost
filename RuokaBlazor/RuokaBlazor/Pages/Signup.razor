@@ -1,34 +1,35 @@
 ﻿@page "/signup"
 @inject NavigationManager Navigation
+@inject HttpClient Http
 @layout SignupLayout
 
-<EditForm Model="signupModel" OnValidSubmit="HandleSignup" class="signup-layout">
+<EditForm Model="uusiKayttaja" OnSubmit="HandleSignup" class="signup-layout">
     <DataAnnotationsValidator />
     <ValidationSummary />
 
     <div class="form-group">
         <label for="firstname">Etunimi</label>
-        <InputText id="firstname" @bind-Value="signupModel.Firstname" class="form-control" />
+        <InputText id="firstname" @bind-Value="uusiKayttaja.etunimi" class="form-control" />
     </div>
 
     <div class="form-group">
         <label for="lastname">Sukunimi</label>
-        <InputText id="lastname" @bind-Value="signupModel.Lastname" class="form-control" />
+        <InputText id="lastname" @bind-Value="uusiKayttaja.sukunimi" class="form-control" />
     </div>
 
     <div class="form-group">
         <label for="email">Sähköpostiosoite</label>
-        <InputText id="email" @bind-Value="signupModel.Email" class="form-control" />
+        <InputText id="email" @bind-Value="uusiKayttaja.sahkopostiosoite" class="form-control" />
     </div>
 
     <div class="form-group">
         <label for="username">Käyttäjätunnus</label>
-        <InputText id="username" @bind-Value="signupModel.Username" class="form-control" />
+        <InputText id="username" @bind-Value="uusiKayttaja.nimimerkki" class="form-control" />
     </div>
 
     <div class="form-group">
         <label for="password">Salasana</label>
-        <InputText id="password" @bind-Value="signupModel.Password" type="password" class="form-control" />
+        <InputText id="password" @bind-Value="uusiKayttaja.salasana" type="password" class="form-control" />
     </div>
 
     <div style="margin-bottom: 15px;"></div>
@@ -42,6 +43,8 @@
     </div>
 
 </EditForm>
+
+<p>@message</p>
 
 <style>
     .form-group {
@@ -65,41 +68,45 @@
     }
 </style>
 
-<p>@message</p>
-
 @code {
-    private SignupModel signupModel = new();
+    public UusiKayttaja uusiKayttaja = new();
     private string message = string.Empty;
 
-    private void HandleSignup()
+    private async Task HandleSignup()
     {
-        // Simppeli esimerkki rekisteröitymislogiikasta
-        if (!string.IsNullOrWhiteSpace(signupModel.Firstname) &&
-            !string.IsNullOrWhiteSpace(signupModel.Lastname) &&
-            !string.IsNullOrWhiteSpace(signupModel.Email) &&
-            !string.IsNullOrWhiteSpace(signupModel.Username) &&
-            !string.IsNullOrWhiteSpace(signupModel.Password))
+        try
         {
-            message = "Rekisteröityminen onnistui!";
-            Navigation.NavigateTo("/home");
-        }
-        else
-        {
-            message = "Täytä kaikki kentät ennen lähettämistä.";
-        }
-    }
+            uusiKayttaja.kayttajataso = "user";
+            var response = await Http.PostAsJsonAsync("Kayttaja", uusiKayttaja);
 
-    public class SignupModel
-    {
-        public string Firstname { get; set; } = string.Empty;
-        public string Lastname { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public string Username { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
+            if (response.IsSuccessStatusCode)
+            {
+                message = "Rekisteröinti onnistui!";
+                Navigation.NavigateTo("/home");
+            }
+            else
+            {
+                message = "Rekisteröinti epäonnistui. Yritä uudelleen.";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Virhe rekisteröinnissä: {ex.Message}";
+        }
     }
 
     private void BackToLogin()
     {
         Navigation.NavigateTo("/");
+    }
+
+    public class UusiKayttaja
+    {
+        public string etunimi { get; set; } = string.Empty;
+        public string sukunimi { get; set; } = string.Empty;
+        public string sahkopostiosoite { get; set; } = string.Empty;
+        public string nimimerkki { get; set; } = string.Empty;
+        public string salasana { get; set; } = string.Empty;
+        public string kayttajataso { get; set; } = string.Empty;
     }
 }

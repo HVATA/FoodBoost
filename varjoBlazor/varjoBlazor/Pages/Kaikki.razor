@@ -109,9 +109,9 @@
 
         string salasana = "Aku313";
 
-       string sahkopostiosoite = "aku.ankka@gmail.com";
+        string sahkopostiosoite = "aku.ankka@gmail.com";
 
-       
+
 
         //vain admin tason käyttäjä
         await HaeKayttajat(Id,salasana,sahkopostiosoite);
@@ -122,7 +122,7 @@
         /*
         Kayttaja kayttaja;
 
-        kayttaja = await HaeKayttaja(salasana,sahkopostiosoite);
+         kayttaja = await HaeKayttaja(salasana,sahkopostiosoite);
 
         */
 
@@ -130,8 +130,8 @@
 
         //Päivitä käyttäjän tietoja 
         /*
-         * 
-         * 
+        * 
+        * 
         Kayttaja kayttaja1 = new Kayttaja();
         kayttaja1.Etunimi = "Mikki";
         kayttaja1.Sukunimi = "Hiiri";
@@ -148,28 +148,28 @@
 
 
 
-       //Luo uuden salasanan kadonneen tilalle ja lähettää sähköpostiin
-/*
+                //Luo uuden salasanan kadonneen tilalle ja lähettää sähköpostiin
+                /*
 
-        Kayttaja kayttaja2 = new Kayttaja();
+                Kayttaja kayttaja2 = new Kayttaja();
 
-        kayttaja2.Etunimi = "Iines";
-        kayttaja2.Sukunimi = "Ankka";
-        kayttaja2.Sahkopostiosoite = "iines.ankka@gmail.com";
+                kayttaja2.Etunimi = "Iines";
+                kayttaja2.Sukunimi = "Ankka";
+                kayttaja2.Sahkopostiosoite = "iines.ankka@gmail.com";
 
 
-        HaeUusiSalasana(kayttaja2);
+                HaeUusiSalasana(kayttaja2);
 
 
 */
 
     }
- 
+
 
     public async Task<List<Kayttaja>> HaeKayttajat(int Id, string salasana, string sahkopostiosoite)
     {
-         kayttajat = await Http.GetFromJsonAsync<List<Kayttaja>>($@"Kayttaja/Haekaikki/{Id}/{salasana}/{sahkopostiosoite}");
-        
+        kayttajat = await Http.GetFromJsonAsync<List<Kayttaja>>($@"Kayttaja/Haekaikki/{Id}/{salasana}/{sahkopostiosoite}");
+
         return kayttajat;
     }
 
