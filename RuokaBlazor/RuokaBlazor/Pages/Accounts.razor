@@ -1,0 +1,175 @@
+﻿@page "/accounts"
+@layout MainLayout
+@inject NavigationManager Navigation
+<div>
+    <EditForm Model="signupModel" OnValidSubmit="HandleSignup" class="main-layout">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div>
+            <div class="form-group">
+                <label for="firstname">Etunimi</label>
+                <InputText id="firstname" @bind-Value="signupModel.Firstname" class="form-control" />
+            </div>
+
+            <div class="form-group">
+                <label for="lastname">Sukunimi</label>
+                <InputText id="lastname" @bind-Value="signupModel.Lastname" class="form-control" />
+            </div>
+
+            <div class="form-group">
+                <label for="email">Sähköpostiosoite</label>
+                <InputText id="email" @bind-Value="signupModel.Email" class="form-control" />
+            </div>
+
+            <div class="form-group">
+                <label for="username">Käyttäjätunnus</label>
+                <InputText id="username" @bind-Value="signupModel.Username" class="form-control" />
+            </div>
+
+            <div class="form-group">
+                <label for="password">Salasana</label>
+                <InputText id="password" @bind-Value="signupModel.Password" type="password" class="form-control" />
+            </div>
+
+            <div style="margin-bottom: 15px;"></div>
+
+            <button type="submit" class="btn btn-primary">Muokkaa</button>
+            <button type="submit" class="btn btn-primary">Poista</button>
+            <button type="submit" class="btn btn-primary">Tyhjennä</button>
+
+            <div style="margin-bottom: 15px;"></div>
+        </div>
+    </EditForm>
+    <div>
+        <div class="dropdown">
+            <button onclick="showContent()" class="dropbtn">Käyttäjät</button>
+            <div id="accountsDropdown" class="dropdown-content">
+                <a href="#home">Käyttäjä 1</a>
+                <a href="#about">Käyttäjä 2</a>
+                <a href="#contact">Käyttäjä 3</a>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function showContent() {
+        document.getElementById("accountsDropdown").classList.toggle("show");
+    }
+
+    // Suljetaan alamenu jos klikataan menu ulkopuolelle
+    window.onclick = function (event) {
+        if (!event.target.matches('.dropbtn')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            var i;
+            for (i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
+                }
+            }
+        }
+    }
+</script>
+<style>
+    .form-group {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px; /* Lisää tilaa lomakkeen kenttien väliin */
+    }
+
+        .form-group label {
+            margin-right: 10px; /* Etäisyys labelin ja input-kentän välillä */
+            min-width: 120px; /* Määritä leveys, jotta labelit asettuvat tasaisesti */
+        }
+
+    .signup-layout {
+        max-width: 400px; /* Lomakkeen maksimileveys */
+        margin: 0 auto; /* Keskittää lomakkeen */
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+    }
+
+    .dropbtn {
+        background-color: #3498DB;
+        color: white;
+        padding: 16px;
+        font-size: 16px;
+        border: none;
+        cursor: pointer;
+    }
+
+        .dropbtn:hover, .dropbtn:focus {
+            background-color: #2980B9;
+        }
+
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #f1f1f1;
+        min-width: 160px;
+        overflow: auto;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+        z-index: 1;
+    }
+
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+
+    .dropdown a:hover {
+        background-color: #ddd;
+    }
+
+    .show {
+        display: block;
+    }
+</style>
+
+<p>@message</p>
+
+@code {
+    private SignupModel signupModel = new();
+    private string message = string.Empty;
+
+    private void HandleSignup()
+    {
+        // Simppeli esimerkki rekisteröitymislogiikasta
+        if (!string.IsNullOrWhiteSpace(signupModel.Firstname) &&
+            !string.IsNullOrWhiteSpace(signupModel.Lastname) &&
+            !string.IsNullOrWhiteSpace(signupModel.Email) &&
+            !string.IsNullOrWhiteSpace(signupModel.Username) &&
+            !string.IsNullOrWhiteSpace(signupModel.Password))
+        {
+            message = "Rekisteröityminen onnistui!";
+            Navigation.NavigateTo("/home");
+        }
+        else
+        {
+            message = "Täytä kaikki kentät ennen lähettämistä.";
+        }
+    }
+
+    public class SignupModel
+    {
+        public string Firstname { get; set; } = string.Empty;
+        public string Lastname { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+
+    private void BackToLogin()
+    {
+        Navigation.NavigateTo("/");
+    }
+}

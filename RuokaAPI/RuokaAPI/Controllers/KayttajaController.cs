@@ -96,18 +96,18 @@ namespace RuokaAPI.Controllers
         }
 
 
-        [HttpGet("Haekaikki")]
-        public async Task<ActionResult<IEnumerable<Kayttaja>>> HaeKayttajat(
-    [FromQuery] int id,
-    [FromQuery] string salasana,
-    [FromQuery] string sahkopostiosoite)
+        [HttpGet("Haekaikki/{id}/{salasana}/{sahkopostiosoite}")]
+        public async Task<List<Kayttaja>> HaeKayttajat(int id, string salasana, string sahkopostiosoite)
         {
+
+            List<Kayttaja> kayttajat = new List<Kayttaja>();
+
             // Etsitään käyttäjä tietokannasta
             Kayttaja? p = await _context.Kayttajat.FindAsync(id);
 
             if (p == null)
             {
-                return NotFound("Käyttäjää ei löytynyt.");
+                return kayttajat;
             }
 
             string kayttajataso = "admin";
@@ -115,11 +115,14 @@ namespace RuokaAPI.Controllers
             // Tarkistetaan, että käyttäjä on admin ja tunnistetiedot ovat oikein
             if (p.Kayttajataso.Equals(kayttajataso) && p.Salasana == salasana && p.Sahkopostiosoite == sahkopostiosoite)
             {
-                var kayttajat = await _context.Kayttajat.ToListAsync();
-                return Ok(kayttajat);
+                kayttajat = await _context.Kayttajat.ToListAsync();
+                return kayttajat;
             }
 
-            return Unauthorized("Käyttäjällä ei ole oikeuksia.");
+            else {
+
+                return kayttajat;
+                 } 
         }
 
         [HttpDelete("Poista/{poistettavanID}")]

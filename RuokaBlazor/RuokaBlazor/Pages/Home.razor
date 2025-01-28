@@ -1,39 +1,80 @@
 ﻿@page "/home"
 @layout MainLayout
-<div class="search-options-container">
-    <button @onclick="Search" class="search-button">Hae</button>
-    <input type="text" placeholder="Hae reseptejä nimellä tai ainesosalla..." @bind="SearchQuery" class="search-input" />
-</div>
-
-<p class="search-results">Hakutulokset: @SearchResult</p> <!--Tälle jos sais sellasen että jos ei oo haettu on näkymätön, näytetää vasta haun aloitettua-->
-<div class="display-poprecipe">
-    <!--
-    @if (TopRecipes == null) //Tähän sit jossai vaihees oikeita hakuja
-    {
-        <p>Ladataan suosituimpia reseptejä...</p>
-    }
-    else
-    {
-    @foreach (var recipe in TopRecipes)
-    {
-            <div class="recipe-card">
-                <img src="@recipe.ImageUrl" alt="@recipe.Name" class="recipe-image" />
-                <p class="recipe-name">@recipe.Name</p>
+<div>
+    <div class="search-bar">
+        <div class="search-container">
+            <button @onclick="Search" class="search-btn">Hae</button>
+        </div>
+        <div class="search-container">
+            <div>
+                <input type="text" placeholder="Hae reseptejä nimellä tai ainesosalla..." @bind="SearchQuery" class="search-input" />
             </div>
-    }
-    }
-    -->
-    <div class="recipe-card">
-        <img src="/bolognese_png.png" class="recipe-image" />
-        <p class="recipe-name">Bolognese</p>
-        <img src="/hambuger_png.png" class="recipe-image" />
-        <p class="recipe-name">Hampurilainen</p>
-        <img src="/chickensoup_png.png" class="recipe-image" />
-        <p class="recipe-name">Kanakeitto</p>
-        <img src="/salmon_png.png" class="recipe-image" />
-        <p class="recipe-name">Uunilohi</p>
+        </div>
+    </div>
+    <div class="dropdown-bar">
+        <div class="dropdown">
+            <button onclick="showIngredientContent()" class="dropbtn">Raaka-aine</button>
+            <div id="ingredientDropdown" class="dropdown-content">
+                <a href="#home">Raaka-aine</a>
+                <a href="#about">Raaka-aine</a>
+                <a href="#contact">Raaka-aine</a>
+            </div>
+        </div>
+        <div class="dropdown">
+            <button onclick="showDishContent()" class="dropbtn">Ruokalaji</button>
+            <div id="dishDropdown" class="dropdown-content">
+                <a href="#home">Ruokalaji</a>
+                <a href="#about">Ruokalaji</a>
+                <a href="#contact">Ruokalaji</a>
+            </div>
+        </div>
+        <div class="dropdown">
+            <button onclick="showDietContent()" class="dropbtn">Ruokavalio</button>
+            <div id="dietDropdown" class="dropdown-content">
+                <a href="#home">Ruokavalio</a>
+                <a href="#about">Ruokavalio</a>
+                <a href="#contact">Ruokavalio</a>
+            </div>
+        </div>
+        <div class="dropdown">
+            <button onclick="showSeasonalContent()" class="dropbtn">Sesonki</button>
+            <div id="seasonalDropdown" class="dropdown-content">
+                <a href="#home">Sesonki</a>
+                <a href="#about">Sesonki</a>
+                <a href="#contact">Sesonki</a>
+            </div>
+        </div>
     </div>
 </div>
+<script>
+    /* Klikattaessa näytetään dropdown alamenu*/
+    function showIngredientContent() {
+        document.getElementById("ingredientDropdown").classList.toggle("show");
+    }
+    function showDishContent() {
+        document.getElementById("dishDropdown").classList.toggle("show");
+    }
+    function showDietContent() {
+        document.getElementById("dietDropdown").classList.toggle("show");
+    } 
+    function showSeasonalContent() {
+        document.getElementById("seasonalDropdown").classList.toggle("show");
+    }
+
+    // Suljetaan alamenu jos klikataan menu ulkopuolelle
+    window.onclick = function (event) {
+        if (!event.target.matches('.dropbtn')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            var i;
+            for (i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
+                }
+            }
+        }
+    }
+</script>
 <style>
     .dropbtn {
         background-color: #3498DB;
@@ -52,6 +93,12 @@
         position: relative;
         display: inline-block;
     }
+
+    .search-container {
+        position: relative;
+        display: inline-block;
+    }
+    
 
     .dropdown-content {
         display: none;
@@ -77,29 +124,30 @@
     .show {
         display: block;
     }
-
-    .search-button {
-        width: 8rem;
-        height: 4rem;
+    .search-options-container{
+        position: relative;
+        display: inline-block;
+    }
+    .search-btn {
+        background-color: #3498DB;
+        color: white;
+        padding: 16px;
+        font-size: 16px;
+        border: none;
+        cursor: pointer;
     }
 
     .search-input {
-        width: 90%;
+        width: 70rem;
         height: 4rem;
+        position: relative;
+        display: inline-block;
     }
 
     .search-results {
         position: center;
         width: 10rem;
         height: 10rem;
-    }
-
-    .search-options-container {
-        display: initial;
-        flex-direction: column;
-        text-align: end; /* Tekstin keskitys */
-        width: 8rem;
-        height: 4rem;
     }
 
     .recipe-image {
@@ -117,23 +165,52 @@
 @code {
     private string SearchQuery { get; set; } = string.Empty; // Tallentaa hakukyselyn
     private string SearchResult { get; set; } = string.Empty; // Näyttää tulokset
+    private bool isDropdownVisible = false; // Dropdownin tila
+    private bool showSearchResult = false; // Hakutuloksen näkyvyys
     private List<Recipe>? TopRecipes;
+
+    private void ToggleDropdown()
+    {
+        isDropdownVisible = !isDropdownVisible;
+    }
 
     private void Search()
     {
-        // Simuloi hakutuloksen palauttamista
         if (!string.IsNullOrEmpty(SearchQuery))
         {
             SearchResult = $"Haku: '{SearchQuery}' suoritettu!";
+            showSearchResult = true;
         }
         else
         {
             SearchResult = "Hakukenttä on tyhjä. Anna hakusana.";
+            showSearchResult = false;
         }
     }
+
+    private void FilterByName()
+    {
+        SearchResult = "Suodatus nimellä valittu.";
+        isDropdownVisible = false;
+        showSearchResult = true;
+    }
+
+    private void FilterByIngredient()
+    {
+        SearchResult = "Suodatus ainesosilla valittu.";
+        isDropdownVisible = false;
+        showSearchResult = true;
+    }
+
+    private void FilterByCategory()
+    {
+        SearchResult = "Suodatus kategoriasta valittu.";
+        isDropdownVisible = false;
+        showSearchResult = true;
+    }
+
     protected override async Task OnInitializedAsync()
     {
-        // Hakee 4 katsotuinta reseptiä tietokannasta
-
+        // Hakee 4 katsotuinta reseptiä tietokannasta myöhemmin
     }
 }
