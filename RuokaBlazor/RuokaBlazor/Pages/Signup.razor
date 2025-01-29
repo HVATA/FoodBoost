@@ -2,6 +2,7 @@
 @inject NavigationManager Navigation
 @inject HttpClient Http
 @layout SignupLayout
+@using RuokaBlazor.Properties.Model
 
 <EditForm Model="uusiKayttaja" OnSubmit="HandleSignup" class="signup-layout">
     <DataAnnotationsValidator />
@@ -9,27 +10,27 @@
 
     <div class="form-group">
         <label for="firstname">Etunimi</label>
-        <InputText id="firstname" @bind-Value="uusiKayttaja.etunimi" class="form-control" />
+        <InputText id="firstname" @bind-Value="uusiKayttaja.Etunimi" class="form-control" />
     </div>
 
     <div class="form-group">
         <label for="lastname">Sukunimi</label>
-        <InputText id="lastname" @bind-Value="uusiKayttaja.sukunimi" class="form-control" />
+        <InputText id="lastname" @bind-Value="uusiKayttaja.Sukunimi" class="form-control" />
     </div>
 
     <div class="form-group">
         <label for="email">Sähköpostiosoite</label>
-        <InputText id="email" @bind-Value="uusiKayttaja.sahkopostiosoite" class="form-control" />
+        <InputText id="email" @bind-Value="uusiKayttaja.Sahkopostiosoite" class="form-control" />
     </div>
 
     <div class="form-group">
         <label for="username">Käyttäjätunnus</label>
-        <InputText id="username" @bind-Value="uusiKayttaja.nimimerkki" class="form-control" />
+        <InputText id="username" @bind-Value="uusiKayttaja.Nimimerkki" class="form-control" />
     </div>
 
     <div class="form-group">
         <label for="password">Salasana</label>
-        <InputText id="password" @bind-Value="uusiKayttaja.salasana" type="password" class="form-control" />
+        <InputText id="password" @bind-Value="uusiKayttaja.Salasana" type="password" class="form-control" />
     </div>
 
     <div style="margin-bottom: 15px;"></div>
@@ -46,37 +47,16 @@
 
 <p>@message</p>
 
-<style>
-    .form-group {
-        display: flex;
-        align-items: center;
-        margin-bottom: 10px; /* Lisää tilaa lomakkeen kenttien väliin */
-    }
-
-        .form-group label {
-            margin-right: 10px; /* Etäisyys labelin ja input-kentän välillä */
-            min-width: 120px; /* Määritä leveys, jotta labelit asettuvat tasaisesti */
-        }
-
-    .signup-layout {
-        max-width: 400px; /* Lomakkeen maksimileveys */
-        margin: 0 auto; /* Keskittää lomakkeen */
-        padding: 20px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        background-color: #f9f9f9;
-    }
-</style>
-
 @code {
-    public UusiKayttaja uusiKayttaja = new();
+    private Kayttaja uusiKayttaja = new();
+
     private string message = string.Empty;
 
     private async Task HandleSignup()
     {
         try
         {
-            uusiKayttaja.kayttajataso = "user";
+            uusiKayttaja.Kayttajataso = "user";
             var response = await Http.PostAsJsonAsync("Kayttaja", uusiKayttaja);
 
             if (response.IsSuccessStatusCode)
@@ -98,15 +78,5 @@
     private void BackToLogin()
     {
         Navigation.NavigateTo("/");
-    }
-
-    public class UusiKayttaja
-    {
-        public string etunimi { get; set; } = string.Empty;
-        public string sukunimi { get; set; } = string.Empty;
-        public string sahkopostiosoite { get; set; } = string.Empty;
-        public string nimimerkki { get; set; } = string.Empty;
-        public string salasana { get; set; } = string.Empty;
-        public string kayttajataso { get; set; } = string.Empty;
     }
 }
