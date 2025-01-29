@@ -1,5 +1,4 @@
 ﻿@page "/kaikki"
-@using RuokaAPI.Properties.Model
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
 
@@ -112,35 +111,68 @@
         string sahkopostiosoite = "aku.ankka@gmail.com";
 
 
-
+        
         //vain admin tason käyttäjä
         await HaeKayttajat(Id,salasana,sahkopostiosoite);
 
+        
 
 
-        //Yksittäisen käyttäjän haku
-        /*
-        Kayttaja kayttaja;
+        //Yksittäisen käyttäjän haku pb1 testi
 
-         kayttaja = await HaeKayttaja(salasana,sahkopostiosoite);
+        /*   
+
+        Kayttaja kayttaja = await HaeKayttaja(salasana,sahkopostiosoite);
 
         */
 
 
 
         //Päivitä käyttäjän tietoja 
-        /*
-        * 
-        * 
+
+        /* 
+
         Kayttaja kayttaja1 = new Kayttaja();
         kayttaja1.Etunimi = "Mikki";
         kayttaja1.Sukunimi = "Hiiri";
-        kayttaja1.Nimimerkki = "Mikki";
-        kayttaja1.Kayttajataso = "admin";
-        kayttaja1.Sahkopostiosoite = "mikki(at)";
-        kayttaja1.Salasana = "Mikki313";
+         kayttaja1.Nimimerkki = "Mikki";
+         kayttaja1.Kayttajataso = "admin";
+         kayttaja1.Sahkopostiosoite = "iines.ankka@gmail.com";
+         kayttaja1.Salasana = "Iines313";
 
-        kayttaja1=await PaivitaTietoja(kayttaja1);
+        await PaivitaTietoja(kayttaja1);
+
+        */
+
+
+        /*
+
+        //Lisää uusi käyttäjä
+
+        Kayttaja x = new Kayttaja();
+
+        x.Etunimi = "Kalle";
+        x.Sukunimi = "Kalastaja";
+        x.Sahkopostiosoite = "kalle.kalastaja@gmail.com";
+        x.Salasana = "Kalle313";
+        x.Nimimerkki = "KalaKalle";
+        x.Kayttajataso = "admin";
+
+
+
+        string tulos = await Lisaakayttaja(x);
+
+
+        */
+
+
+
+        //Olemassa oleva käyttäjä jolla on admin oikeudet voi poistaa tai jos Käyttäjä haluaa poistaa itsensä eli löytyy poistajalta ja poistettavalta tarvittavat tiedot
+
+
+        /*
+
+        string tulos  = await PoistaKayttaja(5,"aku.ankka@gmail.com","Aku313");
 
         */
 
@@ -148,20 +180,27 @@
 
 
 
-                //Luo uuden salasanan kadonneen tilalle ja lähettää sähköpostiin
-                /*
 
-                Kayttaja kayttaja2 = new Kayttaja();
-
-                kayttaja2.Etunimi = "Iines";
-                kayttaja2.Sukunimi = "Ankka";
-                kayttaja2.Sahkopostiosoite = "iines.ankka@gmail.com";
+        //Luo uuden salasanan kadonneen tilalle ja lähettää sähköpostiin
 
 
-                HaeUusiSalasana(kayttaja2);
+        /*
+
+        Kayttaja kayttaja2 = new Kayttaja();
+
+        kayttaja2.Id = 2;
+        kayttaja2.Etunimi = "Aku";
+        kayttaja2.Sukunimi = "Ankka";
+        kayttaja2.Sahkopostiosoite = "aku.ankka@gmail.com";
+        kayttaja2.Salasana = "Aku313";
+        kayttaja2.Kayttajataso = "admin";
+        kayttaja2.Nimimerkki = "Aku";
 
 
-*/
+   string tulos  =  await HaeUusiSalasana(kayttaja2);
+
+   */
+
 
     }
 
@@ -176,10 +215,16 @@
 
     public async Task<Kayttaja> HaeKayttaja(string salasana, string sahkopostiosoite){
 
-        Kayttaja p = await Http.GetFromJsonAsync<Kayttaja>($@"Kayttaja/Tunnistautumistiedot/{salasana}/{sahkopostiosoite}");
 
+        var url = $@"Kayttaja/Tunnistautumistiedot/{salasana}/{sahkopostiosoite}";
+
+
+        Kayttaja? p = await Http.GetFromJsonAsync<Kayttaja>(url);
 
         return p;
+
+
+
     }
 
 
@@ -216,58 +261,62 @@
 
 
 
-        Kayttaja x = new Kayttaja();
-
-        x.Etunimi = "Kalle";
-        x.Sukunimi = "Kalastaja";
-        x.Sahkopostiosoite = "kalle.kalastaja";
-
-
-
-        string tulos=await LisaaKayttaja(x);
 
 
 
     }
 
-    public  async Task<string> LisaaKayttaja(Kayttaja x)
+    public async Task<string> Lisaakayttaja(Kayttaja x)
     {
-
-
         HttpResponseMessage response = await Http.PostAsJsonAsync("Kayttaja/LisaaKayttaja", x);
 
         if (response.IsSuccessStatusCode)
         {
-
             string tulos = await response.Content.ReadAsStringAsync();
             return tulos;
         }
         else
         {
-
-            throw new Exception($"Virhe lisättäessä käyttäjää: {response.StatusCode}");
+            string virhe = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Virhe lisättäessä käyttäjää: {virhe}");
         }
     }
 
+    public async Task<string> PoistaKayttaja(int poistettavanID, string sahkopostiosoite, string salasana)
+    {
+        try
+        {
+            
+            HttpResponseMessage response = await Http.DeleteAsync(
+                $@"Kayttaja/Poista/{poistettavanID}/{sahkopostiosoite}/{salasana}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadAsStringAsync();
+            }
+            else
+            {
+                string errorMessage = await response.Content.ReadAsStringAsync();
+                return $"Virhe poistaessa käyttäjää: {errorMessage}";
+            }
+        }
+        catch (Exception ex)
+        {
+            return $"Virhe poistaessa käyttäjää: {ex.Message}";
+        }
+    }
 
     public async Task<string> HaeUusiSalasana(Kayttaja y)
     {
-
-
-        HttpResponseMessage response = await Http.PutAsJsonAsync("Kayttaja/PaivitaTietoja", y);
-
+        HttpResponseMessage response = await Http.PutAsJsonAsync("Kayttaja/Salasananpalautus", y);
 
         if (response.IsSuccessStatusCode)
         {
-            string tulos   =await response.Content.ReadAsStringAsync();
-
-            return tulos;
+            return await response.Content.ReadAsStringAsync();
         }
         else
         {
-            
-            throw new Exception($"Salasanaa ei vaihdettu!!!: {response.StatusCode}");
-
+            throw new Exception($"Salasanaa ei vaihdettu: {response.StatusCode}");
         }
     }
 }

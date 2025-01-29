@@ -29,19 +29,35 @@ namespace RuokaAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<Resepti>> LisaaResepti(ReseptiDto reseptiDto)
         {
+            var validator = new ReseptiValidator();
+            var validationMessages = validator.Validate(reseptiDto);
+
+            if (validationMessages.Count > 0)
+            {
+                return BadRequest(validationMessages);
+            }
+
             var uusiResepti = await _repository.LisaaAsync(reseptiDto);
-            return Created();
+            return CreatedAtAction(nameof(HaeReseptit), new { id = uusiResepti.Id }, uusiResepti);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> PaivitaResepti(int id, ReseptiDto resepti)
+        public async Task<IActionResult> PaivitaResepti(int id, ReseptiDto reseptiDto)
         {
             if (!await _repository.OnOlemassaAsync(id))
             {
                 return NotFound();
             }
 
-            await _repository.PaivitaAsync(id, resepti);
+            var validator = new ReseptiValidator();
+            var validationMessages = validator.Validate(reseptiDto);
+
+            if (validationMessages.Count > 0)
+            {
+                return BadRequest(validationMessages);
+            }
+
+            await _repository.PaivitaAsync(id, reseptiDto);
             return NoContent();
         }
 

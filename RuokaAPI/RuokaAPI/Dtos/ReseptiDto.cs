@@ -1,5 +1,8 @@
 namespace RuokaAPI.Dtos
 {
+    //tämä luokka kuvaa http-pyynnön body-lohkoa, joka eroaa hiukan tietokantataulusta, esim resepitaulun id:tä ei tarvita
+    //lisätessä ja muokatessa id tulee osana url:ia. Kun tätä luokkaa käytetään, voidaan pyyntä tehdä siinä muodossa kuin halutaan
+    //ilman, että tarvitsee välittää tietokantataulun rakenteesta
     public class ReseptiDto
     {
         public int TekijaId { get; set; }
