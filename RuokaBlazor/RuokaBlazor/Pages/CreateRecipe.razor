@@ -1,5 +1,8 @@
 ﻿@page "/createRecipe"
 @layout MainLayout
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@using RuokaBlazor.Properties.Model
 
 <h1>Luo uusi resepti</h1>
 
@@ -36,16 +39,9 @@
         <button type="button" class="btn btn-secondary" @onclick="LisaaAinesosa">+ Lisää ainesosa</button>
 
         <h2>Ohjeet</h2>
-        @for (int i = 0; i < uusiResepti.Ohjeet.Count; i++)
-            {
-            var index = i;
-            <!-- Väliaikainen muuttuja indeksiä varten -->
-            <div class="input-group">
-                <InputTextArea @bind-Value="uusiResepti.Ohjeet[index]" class="form-control" placeholder="Ohjeen vaihe" />
-                <button type="button" class="btn btn-danger" @onclick="() => PoistaOhje(index)">Poista</button>
-            </div>
-            }
-        <button type="button" class="btn btn-secondary" @onclick="LisaaOhje">+ Lisää ohje</button>
+        <div class="input-group">
+            <InputTextArea @bind-Value="uusiResepti.Ohjeet[0]" class="form-control" placeholder="Ohjeet" />
+        </div>
 
         <button type="submit" class="btn btn-primary mt-3">Tallenna</button>
     </EditForm>
@@ -87,26 +83,19 @@
             }
         }
 
-    private async Task TallennaResepti ()
-        {
+    private async Task TallennaResepti()
+    {
         // Simuloidaan tallennus
         Console.WriteLine($"Resepti tallennettu: {uusiResepti.Nimi}");
-        foreach (var ainesosa in uusiResepti.Ainesosat)
-            {
-            Console.WriteLine($"Ainesosa: {ainesosa}");
-            }
-        foreach (var ohje in uusiResepti.Ohjeet)
-            {
-            Console.WriteLine($"Ohje: {ohje}");
-            }
+        Console.WriteLine($"Ohjeet: {uusiResepti.Ohjeet[0]}");
 
         // Tyhjennetään lomake
         uusiResepti = new ReseptiModel
-                {
+            {
                 Ainesosat = Enumerable.Repeat(string.Empty, 5).ToList(),
-                Ohjeet = Enumerable.Repeat(string.Empty, 5).ToList()
-                };
-        }
+                Ohjeet = new List<string> { string.Empty }
+            };
+    }
 
     public class ReseptiModel
         {
