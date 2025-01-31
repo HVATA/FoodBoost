@@ -47,18 +47,16 @@
 
             if (response.IsSuccessStatusCode)
             {
-                var userData = await response.Content.ReadFromJsonAsync<Kayttaja>();
+                var userData = await response.Content.ReadFromJsonAsync<UserData>();
 
                 if (userData != null)
                 {
-                    kayttaja = userData; // Päivitetään käyttäjä tiedoilla, jotka saadaan backendistä
-
                     message = "Kirjautuminen onnistui";
 
-                    // Käytä CustomAuthenticationStateProviderin Login-metodia
-                    await AuthenticationStateProvider.Login(kayttaja.Sahkopostiosoite, kayttaja.Kayttajataso);
-                    Console.WriteLine($"Tähän tulee tiedot {kayttaja.Sahkopostiosoite}, {kayttaja.Kayttajataso}");
+                    // Käytä uutta Login-metodia ja lähetä kaikki käyttäjän tiedot
+                    await AuthenticationStateProvider.Login(userData);
 
+                    Console.WriteLine($"Kirjautunut käyttäjä: {userData.Sahkopostiosoite}, {userData.Kayttajataso}, {userData.Id}");
 
                     Navigation.NavigateTo("/home");
                 }
@@ -77,6 +75,7 @@
             message = "Error during login: " + ex.Message;
         }
     }
+
 
     private void GuestLogin()
     {

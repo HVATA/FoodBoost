@@ -2,7 +2,11 @@
 @layout MainLayout
 @inject HttpClient Http
 @inject NavigationManager Navigation
+@inject CustomAuthenticationStateProvider CustomAuthStateProvider
 @using RuokaBlazor.Properties.Model
+@using System.Security.Claims
+@using RuokaBlazor.Services
+
 <div>
     <div class="container">
         <div class="form-container">
@@ -51,15 +55,18 @@
             </EditForm>
         </div>
 
-        <div class="user-list">
-            <h3>Käyttäjät</h3>
-            <ul>
-                @foreach (var user in users)
-                {
-                    <li @onclick="() => SelectUser(user)" class="user-item">@user.Etunimi</li>
-                }
-            </ul>
-        </div>
+        @if (user.IsInRole("admin"))
+        {
+            <div class="user-list">
+                <h3>Käyttäjät</h3>
+                <ul>
+                    @foreach (var user in users)
+                    {
+                        <li @onclick="() => SelectUser(user)" class="user-item">@user.Etunimi</li>
+                    }
+                </ul>
+            </div>
+        }
     </div>
 </div>
 <script>
@@ -135,19 +142,28 @@
     private List<Kayttaja> users = new();
     private Kayttaja kayttaja = new();
     private string message = string.Empty;
+    private bool isUserAdminOrUser;
+    private ClaimsPrincipal user;
 
     protected override async Task OnInitializedAsync()
     {
-        int Id = 2;
-        string salasana = "Admin";
-        string sahkopostiosoite = "Admin@gmail.com";
+        var authState = await CustomAuthStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
 
+        var role = user.FindFirst(ClaimTypes.Role)?.Value;
+        var email = user.FindFirst(ClaimTypes.Email)?.Value;
+        var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
+        Console.WriteLine($"User role: {role}, Email: {email}, User ID: {userId}");
 
-        //vain admin tason käyttäjät
-        await getUsers(Id, salasana, sahkopostiosoite);
+        isUserAdminOrUser = user.IsInRole("admin") || user.IsInRole("user");
 
+        if (user.IsInRole("admin") && !string.IsNullOrEmpty(userId) && !string.IsNullOrEmpty(email))
+        {
+            await getUsers(int.Parse(userId), "Admin", email); // Nyt ID ja email tulevat dynaamisesti
+        }
     }
+
 
     private async Task getUsers(int Id, string salasana, string sahkopostiosoite)
     {
@@ -178,13 +194,18 @@
     {
         try
         {
-            Console.WriteLine($"Päivitetään käyttäjää: {kayttaja.Etunimi} {kayttaja.Sukunimi} {kayttaja.Kayttajataso}"); // Lokita tiedot
+            Console.WriteLine($"Päivitetään käyttäjää: {kayttaja.Etunimi} {kayttaja.Sukunimi} {kayttaja.Kayttajataso}");
 
             var response = await Http.PutAsJsonAsync("Kayttaja/PaivitaTietoja", kayttaja);
 
             if (response.IsSuccessStatusCode)
             {
                 message = "Päivitys onnistui!";
+                await getUsers(int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0"),
+                               "Admin",
+                               user.FindFirst(ClaimTypes.Email)?.Value ?? ""); // Päivitä käyttäjien lista
+                kayttaja = new Kayttaja(); // Tyhjennä lomake
+                StateHasChanged(); // Päivitä käyttöliittymä
             }
             else
             {
@@ -197,9 +218,9 @@
             message = "Päivitys epäonnistui: " + ex.Message;
         }
     }
+
     private async Task DeleteUser()
     {
-        // Tarkista, että kayttaja on valittu ja että sillä on kaikki tarvittavat tiedot
         if (kayttaja.Id == 0 || string.IsNullOrEmpty(kayttaja.Sahkopostiosoite) || string.IsNullOrEmpty(kayttaja.Salasana))
         {
             message = "Poistaminen epäonnistui: Puuttuvat tiedot.";
@@ -208,13 +229,16 @@
 
         try
         {
-            // Poista käyttäjä backendistä
             var response = await Http.DeleteAsync($@"Kayttaja/Poista/{kayttaja.Id}/{kayttaja.Sahkopostiosoite}/{kayttaja.Salasana}");
 
             if (response.IsSuccessStatusCode)
             {
                 message = "Käyttäjä poistettu!";
+                await getUsers(int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0"),
+                               "Admin",
+                               user.FindFirst(ClaimTypes.Email)?.Value ?? ""); // Päivitä käyttäjien lista
                 kayttaja = new Kayttaja(); // Tyhjennä lomake
+                StateHasChanged(); // Päivitä käyttöliittymä
             }
             else
             {
@@ -226,6 +250,7 @@
             message = "Virhe: " + ex.Message;
         }
     }
+
 
     private void ClearForm()
     {

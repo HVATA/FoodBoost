@@ -26,31 +26,42 @@
             }
 
             var userData = JsonSerializer.Deserialize<UserData>(userJson);
+
             var identity = new ClaimsIdentity(new[]
             {
-                new Claim(ClaimTypes.Name, userData.Email),
-                new Claim(ClaimTypes.Role, userData.Role)
-            }, "auth");
+        new Claim(ClaimTypes.NameIdentifier, userData.Id.ToString()),
+        new Claim(ClaimTypes.GivenName, userData.Etunimi),
+        new Claim(ClaimTypes.Surname, userData.Sukunimi),
+        new Claim("Nimimerkki", userData.Nimimerkki),
+        new Claim(ClaimTypes.Email, userData.Sahkopostiosoite),
+        new Claim(ClaimTypes.Role, userData.Kayttajataso)
+    }, "auth");
 
             _currentUser = new ClaimsPrincipal(identity);
             return new AuthenticationState(_currentUser);
         }
 
-        public async Task Login(string email, string role)
+
+        public async Task Login(UserData user)
         {
-            var userData = new UserData { Email = email, Role = role };
-            var userJson = JsonSerializer.Serialize(userData);
+            var userJson = JsonSerializer.Serialize(user);
 
             await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "authUser", userJson);
+
             var identity = new ClaimsIdentity(new[]
             {
-                new Claim(ClaimTypes.Name, email),
-                new Claim(ClaimTypes.Role, role)
-            }, "auth");
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        new Claim(ClaimTypes.GivenName, user.Etunimi),
+        new Claim(ClaimTypes.Surname, user.Sukunimi),
+        new Claim("Nimimerkki", user.Nimimerkki),
+        new Claim(ClaimTypes.Email, user.Sahkopostiosoite),
+        new Claim(ClaimTypes.Role, user.Kayttajataso)
+    }, "auth");
 
             _currentUser = new ClaimsPrincipal(identity);
             NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_currentUser)));
         }
+
 
         public async Task Logout()
         {
@@ -62,9 +73,15 @@
 
     public class UserData
     {
-        public string Email { get; set; }
-        public string Role { get; set; }
+        public int Id { get; set; }
+        public string Etunimi { get; set; }
+        public string Sukunimi { get; set; }
+        public string Nimimerkki { get; set; }
+        public string Sahkopostiosoite { get; set; }
+        public string Salasana { get; set; }
+        public string Kayttajataso { get; set; }
     }
+
 }
 
 
