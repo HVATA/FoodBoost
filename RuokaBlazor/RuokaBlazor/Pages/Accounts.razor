@@ -150,11 +150,12 @@
         var authState = await CustomAuthStateProvider.GetAuthenticationStateAsync();
         user = authState.User;
 
+        //Tää on vaa consolewritelineä varten!
         var role = user.FindFirst(ClaimTypes.Role)?.Value;
         var email = user.FindFirst(ClaimTypes.Email)?.Value;
         var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
         Console.WriteLine($"User role: {role}, Email: {email}, User ID: {userId}");
+        //Tää on vaa consolewritelineä varten!
 
         isUserAdminOrUser = user.IsInRole("admin") || user.IsInRole("user");
 
