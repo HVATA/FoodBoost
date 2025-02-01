@@ -18,7 +18,9 @@ public class ruokaContext : DbContext
             entity.Property(r => r.Tekijäid)
                 .IsRequired();
             entity.Property(r => r.Valmistuskuvaus)
-                .HasMaxLength(1024);
+                .HasMaxLength(1024);            
+            entity.Property(r => r.Nimi)
+                .HasMaxLength(50);
             entity.Property(r => r.Kuva1);
             entity.Property(r => r.Kuva2);
             entity.Property(r => r.Kuva3);

@@ -117,6 +117,7 @@ namespace RuokaAPI.Repositories
             var resepti = new Resepti
             {
                 Tekijäid = reseptiDto.TekijaId,
+                Nimi = reseptiDto.Nimi,
                 Valmistuskuvaus = reseptiDto.Valmistuskuvaus,
                 Kuva1 = reseptiDto.Kuva1,
                 Katseluoikeus = reseptiDto.Katseluoikeus,
@@ -143,6 +144,7 @@ namespace RuokaAPI.Repositories
             resepti.Valmistuskuvaus = reseptiRequest?.Valmistuskuvaus;
             resepti.Tekijäid = reseptiRequest.TekijaId;
             resepti.Kuva1 = reseptiRequest.Kuva1;
+            resepti.Nimi = reseptiRequest.Nimi;
             
             await _konteksti.SaveChangesAsync();
         }

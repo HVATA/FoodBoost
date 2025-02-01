@@ -74,6 +74,7 @@ namespace RuokaAPI.Properties.Model
     {
         public int Id { get; set; }
         public int Tekijäid { get; set; }
+        public string Nimi { get; set; }
         public List<Ainesosa> Ainesosat { get; set; } = new();
         public string? Valmistuskuvaus { get; set; }
         public string? Kuva1 { get; set; }
