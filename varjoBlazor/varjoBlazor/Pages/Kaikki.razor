@@ -113,7 +113,7 @@
 
 
         //vain admin tason käyttäjä
-      //  await HaeKayttajat(Id,salasana,sahkopostiosoite);
+        //  await HaeKayttajat(Id,salasana,sahkopostiosoite);
 
 
 
@@ -141,10 +141,10 @@
         x.Sukunimi = "Ankka";
         x.Id = 2;
         x.Sahkopostiosoite = "aku.ankka@gmail.com";
+        x.Nimimerkki = "Aku";
 
 
-
-       await LahetaResepti(email, Id, salasana, x);
+       await LahetaResepti(email, Id,x);
 
 
 
@@ -348,14 +348,14 @@
 
 
 
-    public async Task LahetaResepti(string sahkopostiosoite, int ReseptiId, string salasana, Kayttaja x)
+    public async Task LahetaResepti(string sahkopostiosoite, int reseptiId,Kayttaja x)
     {
        
       string  responseMessage = string.Empty;
 
         try
         {
-            var response = await Http.PostAsJsonAsync($"kayttaja/lahetaResepti/{ReseptiId}/{sahkopostiosoite}", x);
+            var response = await Http.PutAsJsonAsync($"kayttaja/lahetaResepti/{reseptiId}/{sahkopostiosoite}", x);
 
             if (response.IsSuccessStatusCode)
             {
@@ -370,10 +370,7 @@
         {
             responseMessage = $"Virhe: {ex.Message}";
         }
-        finally
-        {
-            isSending = false;
-        }
+        
     }
 
 
