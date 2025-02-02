@@ -4,6 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using RuokaAPI.Data;
 using RuokaAPI.Properties.Model;
 using RuokaAPI.Services;
+using BCrypt.Net;
+
+
+
 
 namespace RuokaAPI.Controllers
 {
@@ -35,8 +39,18 @@ namespace RuokaAPI.Controllers
 
             lista = _context.Kayttajat.Where(x => x.Sahkopostiosoite ==email).ToList();
 
+            string? salasana =null;
+            
+
+
+
+
             if (lista.Count == 0)
             {
+                salasana = x.Salasana;
+                string hash = BCrypt.Net.BCrypt.HashPassword(salasana);
+                x.Salasana = hash;
+
 
                 _context.Kayttajat.Add(x);
                 await _context.SaveChangesAsync();
@@ -69,10 +83,13 @@ namespace RuokaAPI.Controllers
             
 
 
-         Kayttaja?    p = await _context.Kayttajat.Where (x => (x.Sahkopostiosoite==sahkopostiosoite&&x.Salasana==salasana)).FirstOrDefaultAsync();
+         Kayttaja?    p = await _context.Kayttajat.Where (x => (x.Sahkopostiosoite==sahkopostiosoite)).FirstOrDefaultAsync();
 
 
-            if (p != null)
+            bool onHashattu = p.Salasana.StartsWith("$2a$") || p.Salasana.StartsWith("$2b$");
+
+
+            if ((onHashattu && BCrypt.Net.BCrypt.Verify(salasana, p.Salasana)) || (!onHashattu && p.Salasana == salasana))
             {
                 return Ok(p);
 
@@ -112,7 +129,9 @@ namespace RuokaAPI.Controllers
             string kayttajataso = "admin";
 
             // Tarkistetaan, että käyttäjä on admin ja tunnistetiedot ovat oikein
-            if (p.Kayttajataso.Equals(kayttajataso) && p.Salasana == salasana && p.Sahkopostiosoite == sahkopostiosoite)
+            if ((p != null && p.Kayttajataso.Equals(kayttajataso) &&
+    (p.Salasana == salasana || (p.Salasana.StartsWith("$2a$") || p.Salasana.StartsWith("$2b$")) && BCrypt.Net.BCrypt.Verify(salasana, p.Salasana)) &&
+    p.Sahkopostiosoite == sahkopostiosoite))
             {
                 kayttajat = await _context.Kayttajat.ToListAsync();
                 return kayttajat;
@@ -127,13 +146,22 @@ namespace RuokaAPI.Controllers
         [HttpDelete("Poista/{poistettavanID}/{sahkopostiosoite}/{salasana}")]
         public async Task<ActionResult> PoistaKayttaja(int poistettavanID, string sahkopostiosoite, string salasana)
         {
-            // Etsitään poistaja sähköpostin perusteella ja tarkistetaan täsmääkö salasana
+            // Etsitään poistaja sähköpostin perusteella
             var poistaja = await _context.Kayttajat
-                .FirstOrDefaultAsync(k => k.Sahkopostiosoite == sahkopostiosoite && k.Salasana == salasana);
+                .FirstOrDefaultAsync(k => k.Sahkopostiosoite == sahkopostiosoite);
 
             if (poistaja == null)
             {
-                return Unauthorized("Virheellinen sähköposti tai salasana.");
+                return Unauthorized("Virheellinen sähköposti.");
+            }
+
+            // Tarkistetaan, onko salasana hajautettu ja validoidaan se
+            bool onHashattu = poistaja.Salasana.StartsWith("$2a$") || poistaja.Salasana.StartsWith("$2b$");
+            bool salasanaOk = onHashattu ? BCrypt.Net.BCrypt.Verify(salasana, poistaja.Salasana) : (poistaja.Salasana == salasana);
+
+            if (!salasanaOk)
+            {
+                return Unauthorized("Virheellinen salasana.");
             }
 
             // Tarkistetaan, onko poistajalla oikeus poistaa
@@ -145,7 +173,6 @@ namespace RuokaAPI.Controllers
                     return NotFound("Poistettavaa käyttäjää ei löytynyt.");
                 }
 
-                
                 _context.Kayttajat.Remove(poistettava);
                 await _context.SaveChangesAsync();
 
@@ -168,17 +195,22 @@ namespace RuokaAPI.Controllers
 
             var tt = _context.Kayttajat.Find(p.Id);
 
-            if (tt.Salasana.Equals(p.Salasana) && tt.Sahkopostiosoite.Equals(p.Sahkopostiosoite))
+            bool onHashattu = tt.Salasana.StartsWith("$2a$") || tt.Salasana.StartsWith("$2b$");
+            bool salasanaOk = onHashattu ? BCrypt.Net.BCrypt.Verify(p.Salasana, tt.Salasana) : (tt.Salasana == p.Salasana);
+
+            if (salasanaOk && tt.Sahkopostiosoite.Equals(p.Sahkopostiosoite))
             {
 
                 string? kuva = null;
+
+
 
 
                 tt.Etunimi = p.Etunimi;
                 tt.Sukunimi = p.Sukunimi;
                 tt.Sahkopostiosoite = p.Sahkopostiosoite;
                 tt.Kayttajataso = p.Kayttajataso;
-                tt.Salasana = p.Salasana;
+                tt.Salasana = BCrypt.Net.BCrypt.HashPassword(p.Salasana);
                 tt.Nimimerkki = p.Nimimerkki;
 
 
@@ -225,11 +257,96 @@ namespace RuokaAPI.Controllers
             }
 
             // Päivitetään salasana
-            tt.Salasana = Uusisalasana;
+
+            tt.Salasana = BCrypt.Net.BCrypt.HashPassword(Uusisalasana);
             _context.Kayttajat.Update(tt);
             await _context.SaveChangesAsync();
 
             return Ok("Salasana vaihdettu.");
+       
         }
+
+        [HttpPut("LahetaResepti/{reseptiId}/{vastaanottajanEmail}")]
+        public async Task<IActionResult> LahetaResepti(int reseptiId, string vastaanottajanEmail, [FromBody] Kayttaja o)
+        {
+            try
+            {
+                // Tarkistetaan käyttäjä kannasta
+                var kayttaja = await _context.Kayttajat.Where(x => x.Sahkopostiosoite == o.Sahkopostiosoite).FirstOrDefaultAsync();
+
+                if (kayttaja == null)
+                {
+                    return Unauthorized("Käyttäjää ei löytynyt.");
+                }
+
+                // Tarkistetaan salasana (hashattu tai ei)
+                string salasana = o.Salasana;
+                bool onHashattu = kayttaja.Salasana.StartsWith("$2a$") || kayttaja.Salasana.StartsWith("$2b$");
+                bool salasanaOk = onHashattu ? BCrypt.Net.BCrypt.Verify(salasana, kayttaja.Salasana) : (kayttaja.Salasana == salasana);
+
+                if (!salasanaOk)
+                {
+                    return Unauthorized("Virheellinen salasana.");
+                }
+
+                // Haetaan resepti tietokannasta ID:n perusteella
+                var resepti = await _context.Reseptit
+                    .Include(r => r.Ainesosat) // Haetaan myös ainesosat
+                    .Include(r => r.Avainsanat) // Haetaan myös avainsanat
+                    .FirstOrDefaultAsync(r => r.Id == reseptiId);
+
+                if (resepti == null)
+                {
+                    return NotFound("Reseptiä ei löytynyt.");
+                }
+
+                // Rakennetaan resepti stringiksi
+                string reseptiString = $"Henkilö nimimerkillä: {kayttaja.Nimimerkki} halusi jakaa reseptin kanssasi BoostFood verkkopalvelusta \n\n" +
+                                       $"Resepti: {resepti.Nimi}\n\n" +
+                                       $"Valmistuskuvaus: {resepti.Valmistuskuvaus ?? "Ei kuvausta"}\n\n" +
+                                       $"Ainesosat:\n";
+
+                // Lisätään ainesosat listasta
+                foreach (var ainesosa in resepti.Ainesosat)
+                {
+                    reseptiString += $"- {ainesosa.Nimi})\n";
+                }
+
+                reseptiString += $"\nAvainsanat:\n";
+                foreach (var avainsana in resepti.Avainsanat)
+                {
+                    reseptiString += $"- {avainsana.Id}, ({avainsana.Sana})\n";
+                }
+
+                reseptiString += "\nKuvat:\n";
+                if (!string.IsNullOrEmpty(resepti.Kuva1)) reseptiString += $"Kuva 1: {resepti.Kuva1}\n";
+                if (!string.IsNullOrEmpty(resepti.Kuva2)) reseptiString += $"Kuva 2: {resepti.Kuva2}\n";
+                if (!string.IsNullOrEmpty(resepti.Kuva3)) reseptiString += $"Kuva 3: {resepti.Kuva3}\n";
+                if (!string.IsNullOrEmpty(resepti.Kuva4)) reseptiString += $"Kuva 4: {resepti.Kuva4}\n";
+                if (!string.IsNullOrEmpty(resepti.Kuva5)) reseptiString += $"Kuva 5: {resepti.Kuva5}\n";
+                if (!string.IsNullOrEmpty(resepti.Kuva6)) reseptiString += $"Kuva 6: {resepti.Kuva6}\n";
+
+                // Lähetetään sähköposti
+                ReseptinLaheys reseptinlahetys = new ReseptinLaheys();
+
+                bool lahetysOk = await reseptinlahetys.LahetaResepti(vastaanottajanEmail, "Jaettu resepti", reseptiString);
+
+                if (!lahetysOk)
+                {
+                    return StatusCode(500, "Sähköpostin lähetys epäonnistui.");
+                }
+
+                return Ok("Resepti lähetetty sähköpostitse!");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Virhe: {ex.Message}");
+            }
+        }
+
+
+
+
+
     }
 }    

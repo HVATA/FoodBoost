@@ -108,14 +108,14 @@
 
         string salasana = "Aku313";
 
-        string sahkopostiosoite = "aku.ankka@gmail.com";
+        //  string sahkopostiosoite = "aku.ankka@gmail.com";
 
 
-        
+
         //vain admin tason käyttäjä
-        await HaeKayttajat(Id,salasana,sahkopostiosoite);
+      //  await HaeKayttajat(Id,salasana,sahkopostiosoite);
 
-        
+
 
 
         //Yksittäisen käyttäjän haku pb1 testi
@@ -128,16 +128,39 @@
 
 
 
+        //Reseptin lähetys emailiin
+        //Vastaanottajan sähköposti  ReseptiId  lahettäjän salasana  Kayttäjä
+
+        string email = "pasi.melentjeff@gmail.com";
+
+        Kayttaja x = new Kayttaja();
+
+        x.Etunimi = "Aku";
+        x.Salasana = salasana;
+        x.Kayttajataso = "admin";
+        x.Sukunimi = "Ankka";
+        x.Id = 2;
+        x.Sahkopostiosoite = "aku.ankka@gmail.com";
+
+
+
+       await LahetaResepti(email, Id, salasana, x);
+
+
+
+
+
+
         //Päivitä käyttäjän tietoja 
 
         /* 
 
         Kayttaja kayttaja1 = new Kayttaja();
         kayttaja1.Etunimi = "Mikki";
-        kayttaja1.Sukunimi = "Hiiri";
-         kayttaja1.Nimimerkki = "Mikki";
-         kayttaja1.Kayttajataso = "admin";
-         kayttaja1.Sahkopostiosoite = "iines.ankka@gmail.com";
+       kayttaja1.Sukunimi = "Hiiri";
+       kayttaja1.Nimimerkki = "Mikki";
+        kayttaja1.Kayttajataso = "admin";
+       kayttaja1.Sahkopostiosoite = "iines.ankka@gmail.com";
          kayttaja1.Salasana = "Iines313";
 
         await PaivitaTietoja(kayttaja1);
@@ -286,7 +309,7 @@
     {
         try
         {
-            
+
             HttpResponseMessage response = await Http.DeleteAsync(
                 $@"Kayttaja/Poista/{poistettavanID}/{sahkopostiosoite}/{salasana}");
 
@@ -318,7 +341,46 @@
         {
             throw new Exception($"Salasanaa ei vaihdettu: {response.StatusCode}");
         }
+
     }
+
+   
+
+
+
+    public async Task LahetaResepti(string sahkopostiosoite, int ReseptiId, string salasana, Kayttaja x)
+    {
+       
+      string  responseMessage = string.Empty;
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync($"kayttaja/lahetaResepti/{ReseptiId}/{sahkopostiosoite}", x);
+
+            if (response.IsSuccessStatusCode)
+            {
+                responseMessage = "Resepti lähetetty sähköpostitse!";
+            }
+            else
+            {
+                responseMessage = "Sähköpostin lähetys epäonnistui.";
+            }
+        }
+        catch (Exception ex)
+        {
+            responseMessage = $"Virhe: {ex.Message}";
+        }
+        finally
+        {
+            isSending = false;
+        }
+    }
+
+
+
+
+
+
 }
 
 

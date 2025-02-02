@@ -1,4 +1,4 @@
-namespace RuokaAPI.Properties.Model
+namespace varjoBlazor.Model
 {
     public class Resepti
     {
