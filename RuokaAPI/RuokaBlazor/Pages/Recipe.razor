@@ -1,57 +1,49 @@
-﻿@page "/recipe"
+﻿@page "/recipe/{reseptiId:int}"
 @layout MainLayout
+@inject HttpClient Http
 
-<PageTitle>Resepti: Kanakeitto</PageTitle>
+<PageTitle>Resepti: @resepti?.Nimi</PageTitle>
 
-<div class="page-container">
-    <header>
-        <h1>Kanakeitto</h1>
-        <img src="chickensoup_png.png" alt="Kanakeitto" class="recipe-image" />
-        <p>Lämmittävä ja maukas kotitekoinen kanakeitto.</p>
-    </header>
-
-    <div class="multiplier-selector">
-        <label for="multiplier">Valitse reseptin määrä:</label>
-        <select id="multiplier" @onchange="UpdateMultiplier">
-            @for (int i = 1; i <= 5; i++)
+@if (resepti == null)
+{
+    <div class="page-container">
+        <h1>Ladataan...</h1>
+    </div>
+}
+else
+{
+    <div class="page-container">
+        <header>
+            <h1>@resepti.Nimi</h1>
+            @if (!string.IsNullOrWhiteSpace(resepti.Kuva1))
             {
-                <option value="@i" selected="@(i == multiplier)">@i-kertainen</option>
+                <img src="@resepti.Kuva1" alt="@resepti.Nimi" class="recipe-image" />
             }
-        </select>
-    </div>
+            <p>@resepti.Valmistuskuvaus</p>
+        </header>
 
-    <div class="recipe-container">
-        <div class="ingredients">
-            <h2>Ainesosat</h2>
-            <ul>
-                <li>@(500 * multiplier) g kanan fileepaloja</li>
-                <li>@(2 * multiplier) porkkanaa</li>
-                <li>@(2 * multiplier) perunaa</li>
-                <li>@(1 * multiplier) sipuli</li>
-                <li>@(1 * multiplier) l kanaliemi</li>
-                <li>@(2 * multiplier) dl ruokakermaa</li>
-                <li>@(1 * multiplier) rkl öljyä</li>
-                <li>@(1 * multiplier) tl suolaa</li>
-                <li>@(0.5 * multiplier) tl mustapippuria</li>
-                <li>Tuoretta persiljaa koristeluun</li>
-            </ul>
-        </div>
-        <div class="instructions">
-            <h2>Valmistusohjeet</h2>
-            <p>Kuori ja pilko porkkanat, perunat ja sipuli pieniksi paloiksi.
-               Kuutioi kanan fileepalat.
-               Kuumenna öljy kattilassa ja ruskista kanapalat kevyesti.
-               Lisää pilkotut vihannekset ja kuullota niitä hetki.
-               Kaada joukkoon kanaliemi ja mausta suolalla ja pippurilla.
-               Anna keiton kiehua miedolla lämmöllä noin 20 minuuttia, kunnes vihannekset ovat pehmeitä.
-               Sekoita joukkoon ruokakerma ja kuumenna keitto uudelleen.
-               Koristele keitto tuoreella persiljalla ennen tarjoilua.</p>
+        <div class="recipe-container">
+            <!-- Ainesosat -->
+            <div class="ingredients">
+                <h2>Ainesosat</h2>
+                <ul>
+                    @foreach (var ainesosa in resepti.Ainesosat)
+                    {
+                        <li>@ainesosa</li>
+                    }
+                </ul>
+            </div>
+
+            <!-- Valmistusohjeet -->
+            <div class="instructions">
+                <h2>Valmistusohjeet</h2>
+                <p>@resepti.Valmistuskuvaus</p>
+            </div>
         </div>
     </div>
-</div>
+}
 
 <style>
-    /* Keskittää sivun sisällön ja lisää paddingia */
     .page-container {
         max-width: 800px;
         margin: 0 auto;
@@ -59,7 +51,6 @@
         text-align: center;
     }
 
-    /* Kuvan tyyli */
     .recipe-image {
         max-width: 100%;
         height: auto;
@@ -68,16 +59,6 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
-    /* Pudotusvalikon tyyli */
-    .multiplier-selector {
-        margin-bottom: 2rem;
-    }
-
-    label, select {
-        font-size: 1.2rem;
-    }
-
-    /* Ainesosien ja ohjeiden asettelu */
     .recipe-container {
         display: flex;
         flex-wrap: wrap;
@@ -96,7 +77,7 @@
         background-color: #fff;
     }
 
-    ul, ol {
+    ul {
         margin: 0;
         padding-left: 1.5rem;
     }
@@ -107,13 +88,30 @@
 </style>
 
 @code {
-    private int multiplier = 1;
+    [Parameter] public int ReseptiId { get; set; }
 
-    private void UpdateMultiplier(ChangeEventArgs e)
+    private ReseptiDto? resepti;
+
+    protected override async Task OnInitializedAsync()
     {
-        if (int.TryParse(e.Value?.ToString(), out int selectedMultiplier))
+        try
         {
-            multiplier = selectedMultiplier;
+            // Haetaan resepti API:sta
+            resepti = await Http.GetFromJsonAsync<ReseptiDto>($"resepti/{ReseptiId}");
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Virhe reseptiä haettaessa: {ex.Message}");
+        }
+    }
+
+    public class ReseptiDto
+    {
+        public int Id { get; set; }
+        public string Nimi { get; set; }
+        public string Valmistuskuvaus { get; set; } = string.Empty;
+        public string[] Ainesosat { get; set; } = Array.Empty<string>();
+        public string Kuva1 { get; set; } = string.Empty;
+        public string[] Avainsanat { get; set; } = Array.Empty<string>();
     }
 }
