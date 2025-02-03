@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace RuokaAPI.Properties.Model
+namespace varjoBlazor.Model
 {
     public class Avainsana
     {
