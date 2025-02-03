@@ -344,7 +344,44 @@ namespace RuokaAPI.Controllers
             }
         }
 
+        [HttpPost("Lisaasuokkkiehin/{sahkopostiosoite}")]
+        public async Task<string> TallennaSuosikeiksi([FromBody] SuosikitRequest request, string sahkopostiosoite)
+        {
+            // Tarkistetaan käyttäjä kannasta
+            Kayttaja? p = await _context.Kayttajat.Where(x => x.Sahkopostiosoite == sahkopostiosoite).FirstOrDefaultAsync();
 
+            if (p == null)
+            {
+                return "Käyttäjää ei löytynyt.";
+            }
+
+            // Tarkistetaan salasana (hashattu tai ei)
+            string ssana = p.Salasana;
+            bool onHashattu = p.Salasana.StartsWith("$2a$") || p.Salasana.StartsWith("$2b$");
+
+            bool salasanaOk = onHashattu ? BCrypt.Net.BCrypt.Verify(request.Kayttaja.Salasana, p.Salasana) : (p.Salasana == request.Kayttaja.Salasana);
+
+            if (!salasanaOk)
+            {
+                return "Virheellinen salasana.";
+            }
+
+            if (salasanaOk)
+            {
+                // Lisätään reseptit suosikkeihin
+                foreach (int ReseptiId in request.Idlista)
+                {
+                    _context.Suosikit.Add(new Suosikit
+                    {
+                        kayttajaID = p.Id,
+                        reseptiID = ReseptiId
+                    });
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return "Suosikit tallennettu onnistuneesti.";
+        }
 
 
 
