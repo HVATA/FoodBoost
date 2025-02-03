@@ -5,6 +5,7 @@
 @inject CustomAuthenticationStateProvider AuthenticationStateProvider
 @using System.Text.Json
 @using RuokaBlazor.Services
+@using RuokaBlazor.Properties.Model
 
 <h1>Luo uusi resepti</h1>
 
@@ -129,7 +130,6 @@
                 .Where(a => !string.IsNullOrWhiteSpace(a))
                 .ToArray();
 
-            // Määritetään katseluoikeus
             uusiResepti.Katseluoikeus = uusiResepti.OnYksityinen ? "Yksityinen" : "Julkinen";
 
             // Lähetetään tiedot API:lle
@@ -137,25 +137,25 @@
 
             if (response.IsSuccessStatusCode)
             {
-                // Luetaan API:n palauttama resepti
-                var tallennettuResepti = await response.Content.ReadFromJsonAsync<ReseptiDto>();
+                // Luetaan API:n palauttama resepti (Resepti, EI ReseptiDto)
+                var tallennettuResepti = await response.Content.ReadFromJsonAsync<Resepti>();
 
-                if (tallennettuResepti != null)
+                Console.WriteLine($"Tallennettu resepti: {JsonSerializer.Serialize(tallennettuResepti)}");
+
+                if (tallennettuResepti != null && tallennettuResepti.Id > 0)
                 {
-                    
                     // Navigoidaan reseptin sivulle
                     Navigation.NavigateTo($"/recipe/{tallennettuResepti.Id}");
                 }
                 else
                 {
-                    Console.WriteLine("API palautti null-arvon reseptille.");
+                    Console.WriteLine("API ei palauttanut kelvollista ID:tä.");
                 }
             }
             else
             {
-                Console.WriteLine($"Virhe tallennuksessa: {response.StatusCode}");
                 var errorContent = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Virheviesti: {errorContent}");
+                Console.WriteLine($"Virhe tallennuksessa: {response.StatusCode}, Virheviesti: {errorContent}");
             }
         }
         catch (Exception ex)

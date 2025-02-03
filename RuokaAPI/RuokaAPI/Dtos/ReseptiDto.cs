@@ -5,6 +5,7 @@ namespace RuokaAPI.Dtos
     //ilman, että tarvitsee välittää tietokantataulun rakenteesta
     public class ReseptiDto
     {
+        public int Id { get; set; }
         public int TekijaId { get; set; }
         public string Nimi { get; set; }
         public string Valmistuskuvaus { get; set; } = string.Empty;
