@@ -344,7 +344,7 @@ namespace RuokaAPI.Controllers
             }
         }
 
-        [HttpPost("Lisaasuokkkiehin/{sahkopostiosoite}")]
+        [HttpPost("Lisaasuosikkeihin/{sahkopostiosoite}")]
         public async Task<string> TallennaSuosikeiksi([FromBody] SuosikitRequest request, string sahkopostiosoite)
         {
             // Tarkistetaan käyttäjä kannasta
