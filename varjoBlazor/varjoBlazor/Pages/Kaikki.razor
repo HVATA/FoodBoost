@@ -110,7 +110,10 @@
 
         //  string sahkopostiosoite = "aku.ankka@gmail.com";
 
-
+        List<int> lista = new List<int>();
+        lista.Add(1);
+        lista.Add(2);
+        lista.Add(3);
 
         //vain admin tason käyttäjä
         //  await HaeKayttajat(Id,salasana,sahkopostiosoite);
@@ -131,7 +134,7 @@
         //Reseptin lähetys emailiin
         //Vastaanottajan sähköposti  ReseptiId  lahettäjän salasana  Kayttäjä
 
-        string email = "pasi.melentjeff@gmail.com";
+        // string email = "pasi.melentjeff@gmail.com";
 
         Kayttaja x = new Kayttaja();
 
@@ -144,11 +147,12 @@
         x.Nimimerkki = "Aku";
 
 
-       await LahetaResepti(email, Id,x);
+    // await LahetaResepti(email, Id,x);
+
+     //  public List<int> lista = new List<int>();
 
 
-
-
+     string tulos   =await TallennaSuosikit( lista, x.Sahkopostiosoite,x);
 
 
         //Päivitä käyttäjän tietoja 
@@ -373,6 +377,17 @@
         
     }
 
+    public async Task<string> TallennaSuosikit(List<int> idlista, string sahkopostiosoite, Kayttaja k)
+    {
+
+
+        var response = await Http.PostAsJsonAsync($"Kayttaja/Lisaasuokkkieihin/{sahkopostiosoite}", new { idlista, k });
+
+
+
+
+        return await response.Content.ReadAsStringAsync();
+    }
 
 
 
