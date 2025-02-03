@@ -59,4 +59,6 @@ public class ruokaContext : DbContext
    public DbSet<Ainesosa> Ainesosat { get; set; }  
 
    public DbSet<Suosikit> Suosikit { get; set; }
+
+    public DbSet<Arvostelu> Arvostelut { get; set; }
 }
