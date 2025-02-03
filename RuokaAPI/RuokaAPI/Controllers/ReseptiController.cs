@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RuokaAPI.Dtos;
 using RuokaAPI.Properties.Model;
 using RuokaAPI.Repositories;
@@ -23,6 +24,19 @@ namespace RuokaAPI.Controllers
         {
             var reseptit = await _repository.HaeReseptitAsync(ainesosat, avainsanat);
             return Ok(reseptit);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Resepti>> GetReseptiById(int id)
+        {
+            var resepti = await _repository.HaeReseptiAsync(id); // Adjust according to your DbSet name
+
+            if (resepti == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(resepti);
         }
 
 
