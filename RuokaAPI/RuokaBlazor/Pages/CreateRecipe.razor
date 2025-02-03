@@ -2,7 +2,9 @@
 @layout MainLayout
 @inject HttpClient Http
 @inject NavigationManager Navigation
-@using RuokaBlazor.Properties.Model
+@inject CustomAuthenticationStateProvider AuthenticationStateProvider
+@using System.Text.Json
+@using RuokaBlazor.Services
 
 <h1>Luo uusi resepti</h1>
 
@@ -11,98 +13,171 @@
         <DataAnnotationsValidator />
         <ValidationSummary />
 
+        <!-- Reseptin nimi -->
         <div>
             <label for="nimi">Reseptin nimi:</label>
             <InputText id="nimi" @bind-Value="uusiResepti.Nimi" class="form-control" />
         </div>
 
+        <!-- Valmistuskuvaus -->
         <div>
-            <label for="kuvaus">Kuvaus:</label>
-            <InputTextArea id="kuvaus" @bind-Value="uusiResepti.Kuvaus" class="form-control" />
+            <label for="valmistuskuvaus">Valmistuskuvaus:</label>
+            <InputTextArea id="valmistuskuvaus" @bind-Value="uusiResepti.Valmistuskuvaus" class="form-control" />
         </div>
 
+        <!-- Kuvan URL -->
         <div>
-            <label for="kuvaUrl">Kuvan URL:</label>
-            <InputText id="kuvaUrl" @bind-Value="uusiResepti.KuvaUrl" class="form-control" />
+            <label for="kuva1">Kuvan URL:</label>
+            <InputText id="kuva1" @bind-Value="uusiResepti.Kuva1" class="form-control" />
         </div>
 
+        <!-- Ainesosat -->
         <h2>Ainesosat</h2>
-        @for (int i = 0; i < uusiResepti.Ainesosat.Count; i++)
-            {
+        @for (int i = 0; i < uusiResepti.Ainesosat.Length; i++)
+        {
             var index = i;
-            <!-- Väliaikainen muuttuja indeksiä varten -->
             <div class="input-group">
                 <InputText @bind-Value="uusiResepti.Ainesosat[index]" class="form-control" placeholder="Ainesosa" />
                 <button type="button" class="btn btn-danger" @onclick="() => PoistaAinesosa(index)">Poista</button>
             </div>
-            }
-        <button type="button" class="btn btn-secondary" @onclick="LisaaAinesosa">+ Lisää ainesosa</button>
+        }
+        <button type="button" class="btn btn-secondary mt-2" @onclick="LisaaAinesosa">+ Lisää ainesosa</button>
 
-        <h2>Ohjeet</h2>
-        <div class="input-group">
-            <InputTextArea @bind-Value="uusiResepti.Ohjeet[0]" class="form-control" placeholder="Ohjeet" />
+        <!-- Avainsanat -->
+        <h2>Avainsanat</h2>
+        @for (int i = 0; i < uusiResepti.Avainsanat.Length; i++)
+        {
+            var index = i;
+            <div class="input-group">
+                <InputText @bind-Value="uusiResepti.Avainsanat[index]" class="form-control" placeholder="Avainsana" />
+                <button type="button" class="btn btn-danger" @onclick="() => PoistaAvainsana(index)">Poista</button>
+            </div>
+        }
+        <button type="button" class="btn btn-secondary mt-2" @onclick="LisaaAvainsana">+ Lisää avainsana</button>
+
+        <!-- Katseluoikeus -->
+        <div class="form-check mt-3">
+            <InputCheckbox id="katseluoikeus" @bind-Value="uusiResepti.OnYksityinen" class="form-check-input" />
+            <label for="katseluoikeus" class="form-check-label">Yksityinen</label>
         </div>
 
+        <!-- Tallenna -->
         <button type="submit" class="btn btn-primary mt-3">Tallenna</button>
     </EditForm>
 </div>
 
 @code {
-    private ReseptiModel uusiResepti = new ReseptiModel();
+    private ReseptiDto uusiResepti = new();
 
-    protected override void OnInitialized ()
-        {
-        // Aloitusrivit: 5 ainesosaa ja 5 ohjetta
-        uusiResepti.Ainesosat = Enumerable.Repeat(string.Empty, 5).ToList();
-        uusiResepti.Ohjeet = Enumerable.Repeat(string.Empty, 5).ToList();
-        }
+    protected override async Task OnInitializedAsync()
+    {
+        uusiResepti.Ainesosat = Array.Empty<string>();
+        uusiResepti.Avainsanat = Array.Empty<string>();
 
-    private void LisaaAinesosa ()
-        {
-        uusiResepti.Ainesosat.Add(string.Empty);
-        }
+        // Haetaan kirjautuneen käyttäjän tiedot
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
 
-    private void PoistaAinesosa ( int index )
+        if (user.Identity != null && user.Identity.IsAuthenticated)
         {
-        if (index >= 0 && index < uusiResepti.Ainesosat.Count)
+            var tekijaId = user.FindFirst(c => c.Type == "userId")?.Value;
+            if (int.TryParse(tekijaId, out var id))
             {
-            uusiResepti.Ainesosat.RemoveAt(index);
+                uusiResepti.TekijaId = id;
             }
         }
+    }
 
-    private void LisaaOhje ()
-        {
-        uusiResepti.Ohjeet.Add(string.Empty);
-        }
 
-    private void PoistaOhje ( int index )
+    private void LisaaAinesosa()
+    {
+        uusiResepti.Ainesosat = uusiResepti.Ainesosat.Append(string.Empty).ToArray();
+    }
+
+    private void PoistaAinesosa(int index)
+    {
+        if (index >= 0 && index < uusiResepti.Ainesosat.Length)
         {
-        if (index >= 0 && index < uusiResepti.Ohjeet.Count)
-            {
-            uusiResepti.Ohjeet.RemoveAt(index);
-            }
+            uusiResepti.Ainesosat = uusiResepti.Ainesosat.Where((_, i) => i != index).ToArray();
         }
+    }
+
+    private void LisaaAvainsana()
+    {
+        uusiResepti.Avainsanat = uusiResepti.Avainsanat.Append(string.Empty).ToArray();
+    }
+
+    private void PoistaAvainsana(int index)
+    {
+        if (index >= 0 && index < uusiResepti.Avainsanat.Length)
+        {
+            uusiResepti.Avainsanat = uusiResepti.Avainsanat.Where((_, i) => i != index).ToArray();
+        }
+    }
+
 
     private async Task TallennaResepti()
     {
-        // Simuloidaan tallennus
-        Console.WriteLine($"Resepti tallennettu: {uusiResepti.Nimi}");
-        Console.WriteLine($"Ohjeet: {uusiResepti.Ohjeet[0]}");
+        try
+        {
+            // Poistetaan tyhjät arvot
+            uusiResepti.Ainesosat = uusiResepti.Ainesosat
+                .Where(a => !string.IsNullOrWhiteSpace(a))
+                .ToArray();
 
-        // Tyhjennetään lomake
-        uusiResepti = new ReseptiModel
+            uusiResepti.Avainsanat = uusiResepti.Avainsanat
+                .Where(a => !string.IsNullOrWhiteSpace(a))
+                .ToArray();
+
+            // Määritetään katseluoikeus
+            uusiResepti.Katseluoikeus = uusiResepti.OnYksityinen ? "Yksityinen" : "Julkinen";
+
+            // Lähetetään tiedot API:lle
+            var response = await Http.PostAsJsonAsync("resepti", uusiResepti);
+
+            if (response.IsSuccessStatusCode)
             {
-                Ainesosat = Enumerable.Repeat(string.Empty, 5).ToList(),
-                Ohjeet = new List<string> { string.Empty }
-            };
+                // Luetaan API:n palauttama resepti
+                var tallennettuResepti = await response.Content.ReadFromJsonAsync<ReseptiDto>();
+
+                if (tallennettuResepti != null)
+                {
+                    
+                    // Navigoidaan reseptin sivulle
+                    Navigation.NavigateTo($"/recipe/{tallennettuResepti.Id}");
+                }
+                else
+                {
+                    Console.WriteLine("API palautti null-arvon reseptille.");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Virhe tallennuksessa: {response.StatusCode}");
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Virheviesti: {errorContent}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Poikkeus tallennuksessa: {ex.Message}");
+        }
     }
 
-    public class ReseptiModel
-        {
+
+
+
+    public class ReseptiDto
+    {
+        public int Id { get; set; } // ID, joka tulee tietokannasta automaattisesti
+        public int TekijaId { get; set; }
         public string Nimi { get; set; }
-        public string Kuvaus { get; set; }
-        public string KuvaUrl { get; set; }
-        public List<string> Ainesosat { get; set; } = new List<string>();
-        public List<string> Ohjeet { get; set; } = new List<string>();
-        }
+        public string Valmistuskuvaus { get; set; } = string.Empty;
+        public string[] Ainesosat { get; set; } = Array.Empty<string>();
+        public string[] Avainsanat { get; set; } = Array.Empty<string>();
+        public string Kuva1 { get; set; } = string.Empty;
+        public string Katseluoikeus { get; set; } = string.Empty;
+        public bool OnYksityinen { get; set; }
+    }
+
 }
