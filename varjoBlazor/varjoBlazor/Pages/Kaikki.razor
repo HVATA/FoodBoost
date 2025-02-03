@@ -147,24 +147,24 @@
         x.Nimimerkki = "Aku";
 
 
-    // await LahetaResepti(email, Id,x);
+        // await LahetaResepti(email, Id,x);
 
-     //  public List<int> lista = new List<int>();
-
-
-     string tulos   =await TallennaSuosikit( lista, x.Sahkopostiosoite,x);
+        //  public List<int> lista = new List<int>();
 
 
-        //Päivitä käyttäjän tietoja 
+        string tulos   =await TallennaSuosikit( lista, x.Sahkopostiosoite,x);
 
-        /* 
 
-        Kayttaja kayttaja1 = new Kayttaja();
-        kayttaja1.Etunimi = "Mikki";
-       kayttaja1.Sukunimi = "Hiiri";
-       kayttaja1.Nimimerkki = "Mikki";
-        kayttaja1.Kayttajataso = "admin";
-       kayttaja1.Sahkopostiosoite = "iines.ankka@gmail.com";
+         //Päivitä käyttäjän tietoja 
+
+         /* 
+
+         Kayttaja kayttaja1 = new Kayttaja();
+          kayttaja1.Etunimi = "Mikki";
+         kayttaja1.Sukunimi = "Hiiri";
+         kayttaja1.Nimimerkki = "Mikki";
+         kayttaja1.Kayttajataso = "admin";
+        kayttaja1.Sahkopostiosoite = "iines.ankka@gmail.com";
          kayttaja1.Salasana = "Iines313";
 
         await PaivitaTietoja(kayttaja1);
@@ -348,14 +348,14 @@
 
     }
 
-   
+
 
 
 
     public async Task LahetaResepti(string sahkopostiosoite, int reseptiId,Kayttaja x)
     {
-       
-      string  responseMessage = string.Empty;
+
+        string  responseMessage = string.Empty;
 
         try
         {
@@ -374,14 +374,16 @@
         {
             responseMessage = $"Virhe: {ex.Message}";
         }
-        
+
     }
 
     public async Task<string> TallennaSuosikit(List<int> idlista, string sahkopostiosoite, Kayttaja k)
     {
+        SuosikitRequest a = new SuosikitRequest();
+        a.Kayttaja = k;
+        a.Idlista = idlista;
 
-
-        var response = await Http.PostAsJsonAsync($"Kayttaja/Lisaasuosikkeihin/{sahkopostiosoite}", new { idlista, k });
+        var response = await Http.PostAsJsonAsync($"Kayttaja/Lisaasuosikkeihin/{sahkopostiosoite}",a);
 
 
 
