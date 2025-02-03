@@ -256,7 +256,7 @@ namespace RuokaAPI.Controllers
                 return StatusCode(500, "Jotain meni pieleen!");
             }
 
-            // Päivitetään salasana
+            // Päivitetään salasana ja krypatataan se kantaan
 
             tt.Salasana = BCrypt.Net.BCrypt.HashPassword(Uusisalasana);
             _context.Kayttajat.Update(tt);
@@ -309,7 +309,7 @@ namespace RuokaAPI.Controllers
                 // Lisätään ainesosat listasta
                 foreach (var ainesosa in resepti.Ainesosat)
                 {
-                    reseptiString += $"- {ainesosa.Nimi})\n";
+                    reseptiString += $"- {ainesosa.Nimi}\n";
                 }
 
                 reseptiString += $"\nAvainsanat:\n";
