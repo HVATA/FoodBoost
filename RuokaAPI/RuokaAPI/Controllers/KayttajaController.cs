@@ -5,6 +5,7 @@ using RuokaAPI.Data;
 using RuokaAPI.Properties.Model;
 using RuokaAPI.Services;
 using BCrypt.Net;
+using Azure.Core;
 
 
 
@@ -37,10 +38,10 @@ namespace RuokaAPI.Controllers
 
             string email = x.Sahkopostiosoite;
 
-            lista = _context.Kayttajat.Where(x => x.Sahkopostiosoite ==email).ToList();
+            lista = _context.Kayttajat.Where(x => x.Sahkopostiosoite == email).ToList();
 
-            string? salasana =null;
-            
+            string? salasana = null;
+
 
 
 
@@ -71,19 +72,19 @@ namespace RuokaAPI.Controllers
         }
 
         [HttpGet("Tunnistautumistiedot/{salasana}/{sahkopostiosoite}")]
-        public async Task<ActionResult<Kayttaja>> HaeKayttaja(string salasana,string sahkopostiosoite)
+        public async Task<ActionResult<Kayttaja>> HaeKayttaja(string salasana, string sahkopostiosoite)
         {
 
 
 
-            
-        
+
+
 
             //Haetaan front kutsusta käyttäjä salasanan ja sähköpostiosoitteen perusteella
-            
 
 
-         Kayttaja?    p = await _context.Kayttajat.Where (x => (x.Sahkopostiosoite==sahkopostiosoite)).FirstOrDefaultAsync();
+
+            Kayttaja? p = await _context.Kayttajat.Where(x => (x.Sahkopostiosoite == sahkopostiosoite)).FirstOrDefaultAsync();
 
 
             bool onHashattu = p.Salasana.StartsWith("$2a$") || p.Salasana.StartsWith("$2b$");
@@ -96,18 +97,19 @@ namespace RuokaAPI.Controllers
 
             }
 
-            else {
+            else
+            {
 
 
 
                 return NotFound("Käyttäjää ei löytynyt.");
-            
-            
-            
+
+
+
             }
 
 
-            
+
 
         }
 
@@ -137,10 +139,11 @@ namespace RuokaAPI.Controllers
                 return kayttajat;
             }
 
-            else {
+            else
+            {
 
                 return kayttajat;
-                 } 
+            }
         }
 
         [HttpDelete("Poista/{poistettavanID}/{sahkopostiosoite}/{salasana}")]
@@ -263,7 +266,7 @@ namespace RuokaAPI.Controllers
             await _context.SaveChangesAsync();
 
             return Ok("Salasana vaihdettu.");
-       
+
         }
 
         [HttpPut("LahetaResepti/{reseptiId}/{vastaanottajanEmail}")]
@@ -344,11 +347,20 @@ namespace RuokaAPI.Controllers
             }
         }
 
-        [HttpPost("Lisaasuosikkeihin/{sahkopostiosoite}")]
-        public async Task<string> TallennaSuosikeiksi([FromBody] SuosikitRequest request, string sahkopostiosoite)
+        [HttpPost("LisaasuosikkeihinListallinen")]
+        public async Task<string> TallennaSuosikeiksi([FromBody] SuosikitRequest request)
         {
+
+
+
+
+            List<Suosikit> suosikkilista = new List<Suosikit>();
+
+            suosikkilista = request.Suosikitlista;
+            Kayttaja kayttaja = request.Kayttaja;
+
             // Tarkistetaan käyttäjä kannasta
-            Kayttaja? p = await _context.Kayttajat.Where(x => x.Sahkopostiosoite == sahkopostiosoite).FirstOrDefaultAsync();
+            Kayttaja? p = await _context.Kayttajat.Where(x => x.Sahkopostiosoite == kayttaja.Sahkopostiosoite).FirstOrDefaultAsync();
 
             if (p == null)
             {
@@ -368,22 +380,179 @@ namespace RuokaAPI.Controllers
 
             if (salasanaOk)
             {
-                // Lisätään reseptit suosikkeihin
-                foreach (int ReseptiId in request.Idlista)
+
+                //haetaan käyttäjän aijemmat suosikit ja tarkistetaan että uudessa listassa ei ole samoja ja jos ei ole niin lisätään kantaan
+
+                var templista = await _context.Suosikit.Where(x => x.kayttajaID == p.Id).ToListAsync();
+
+                foreach (var x in suosikkilista)
                 {
-                    _context.Suosikit.Add(new Suosikit
+
+
+                    if (!templista.Contains(x))
                     {
-                        kayttajaID = p.Id,
-                        reseptiID = ReseptiId
-                    });
+
+
+                        _context.Suosikit.Add(x);
+
+
+                    }
+
+
+
+
                 }
+
+
+
             }
 
             await _context.SaveChangesAsync();
             return "Suosikit tallennettu onnistuneesti.";
         }
 
+        [HttpPut("Haesuosikkireseptit")]
+        public async Task<List<Resepti>> HaeSuosikkiReseptit(Kayttaja k)
+        {
+
+            List<Suosikit>? suosikit = new List<Suosikit>();
+
+            List<Resepti> Suosikkireseptit = new List<Resepti>();
+
+
+            Kayttaja? p = await _context.Kayttajat.Where(x => x.Sahkopostiosoite == k.Sahkopostiosoite).FirstOrDefaultAsync();
+
+            if (p == null)
+            {
+                Suosikkireseptit = null;
+                return Suosikkireseptit;
+            }
+
+            // Tarkistetaan salasana (hashattu tai ei)
+            string ssana = p.Salasana;
+            bool onHashattu = p.Salasana.StartsWith("$2a$") || p.Salasana.StartsWith("$2b$");
+            bool salasanaOk = onHashattu ? BCrypt.Net.BCrypt.Verify(k.Salasana, p.Salasana) : (k.Salasana == p.Salasana);
+            if (!salasanaOk)
+            {
+                return Suosikkireseptit = null;
+            }
+
+            if (salasanaOk)
+            {
+                suosikit = await _context.Suosikit.Where(x => x.kayttajaID == p.Id).ToListAsync();
+
+                foreach (var x in suosikit)
+                {
+
+                    Resepti? resepti =await _context.Reseptit.Where(i =>i.Id == x.reseptiID).FirstOrDefaultAsync();
+
+                    Suosikkireseptit.Add(resepti);
+                }
+
+            }
+            return Suosikkireseptit;
+        }
+
+        [HttpDelete("PoistaSuosikit")]
+        public async Task<string> PoistaSuosikit([FromBody] Kayttaja request)
+        {
+            // Etsitään käyttäjä tietokannasta
+            Kayttaja? p = await _context.Kayttajat
+                .Where(x => x.Sahkopostiosoite == request.Sahkopostiosoite)
+                .FirstOrDefaultAsync();
+
+            if (p == null)
+            {
+                return "Käyttäjää ei löytynyt.";
+            }
+
+            // Tarkistetaan salasana
+            bool onHashattu = p.Salasana.StartsWith("$2a$") || p.Salasana.StartsWith("$2b$");
+            bool salasanaOk = onHashattu
+                ? BCrypt.Net.BCrypt.Verify(request.Salasana, p.Salasana)
+                : (p.Salasana == request.Salasana);
+
+            if (!salasanaOk)
+            {
+                return "Virheellinen salasana.";
+            }
+
+            // Poistetaan kaikki käyttäjän suosikit
+            var suosikit = _context.Suosikit.Where(x => x.kayttajaID == p.Id);
+            _context.Suosikit.RemoveRange(suosikit);
+
+            await _context.SaveChangesAsync();
+            return "Kaikki suosikit poistettu onnistuneesti.";
+        }
+
+
+
+        [HttpPost("Lisaasuosikki")]
+        public async Task<string> LisaaSuosikki([FromBody] SuosikkiMuokkaus request)
+        {
+            Kayttaja? p = await _context.Kayttajat
+                .Where(x => x.Sahkopostiosoite == request.Kayttaja.Sahkopostiosoite)
+                .FirstOrDefaultAsync();
+
+            if (p == null) return "Käyttäjää ei löytynyt.";
+
+            bool onHashattu = p.Salasana.StartsWith("$2a$") || p.Salasana.StartsWith("$2b$");
+            bool salasanaOk = onHashattu
+                ? BCrypt.Net.BCrypt.Verify(request.Kayttaja.Salasana, p.Salasana)
+                : (p.Salasana == request.Kayttaja.Salasana);
+
+            if (!salasanaOk) return "Virheellinen salasana.";
+
+            // Tarkistetaan, onko resepti jo suosikeissa
+            bool onJoSuosikissa = await _context.Suosikit
+                .AnyAsync(x => x.kayttajaID == p.Id && x.reseptiID == request.resepti.Id);
+
+            if (onJoSuosikissa) return "Resepti on jo suosikeissa.";
+
+            // Lisätään uusi suosikki
+            _context.Suosikit.Add(new Suosikit
+            {
+                kayttajaID = p.Id,
+                reseptiID = request.resepti.Id
+            });
+
+            await _context.SaveChangesAsync();
+            return "Resepti lisätty suosikkeihin.";
+        }
+
+
+
+        [HttpDelete("Poistasuosikki")]
+        public async Task<string> PoistaSuosikki([FromBody] SuosikkiMuokkaus? request)
+        {
+            Kayttaja? p = await _context.Kayttajat
+                .Where(x => x.Sahkopostiosoite == request.Kayttaja.Sahkopostiosoite)
+                .FirstOrDefaultAsync();
+
+            if (p == null) return "Käyttäjää ei löytynyt.";
+
+            bool onHashattu = p.Salasana.StartsWith("$2a$") || p.Salasana.StartsWith("$2b$");
+            bool salasanaOk = onHashattu
+                ? BCrypt.Net.BCrypt.Verify(request.Kayttaja.Salasana, p.Salasana)
+                : (p.Salasana == request.Kayttaja.Salasana);
+
+            if (!salasanaOk) return "Virheellinen salasana.";
+
+            // Etsitään suosikki
+            var suosikki = await _context.Suosikit
+                .Where(x => x.kayttajaID == p.Id && x.reseptiID == request.resepti.Id)
+                .FirstOrDefaultAsync();
+
+            if (suosikki == null) return "Resepti ei ole suosikeissa.";
+
+            // Poistetaan suosikki
+            _context.Suosikit.Remove(suosikki);
+            await _context.SaveChangesAsync();
+
+            return "Resepti poistettu suosikeista.";
+        }
+
 
 
     }
-}    
+}
