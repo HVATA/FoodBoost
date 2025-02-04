@@ -347,20 +347,15 @@ namespace RuokaAPI.Controllers
             }
         }
 
-        [HttpPost("LisaasuosikkeihinListallinen")]
         public async Task<string> TallennaSuosikeiksi([FromBody] SuosikitRequest request)
         {
-
-
-
-
-            List<Suosikit> suosikkilista = new List<Suosikit>();
-
-            suosikkilista = request.Suosikitlista;
+            List<Suosikit> suosikkilista = request.Suosikitlista;
             Kayttaja kayttaja = request.Kayttaja;
 
             // Tarkistetaan käyttäjä kannasta
-            Kayttaja? p = await _context.Kayttajat.Where(x => x.Sahkopostiosoite == kayttaja.Sahkopostiosoite).FirstOrDefaultAsync();
+            Kayttaja? p = await _context.Kayttajat
+                .Where(x => x.Sahkopostiosoite == kayttaja.Sahkopostiosoite)
+                .FirstOrDefaultAsync();
 
             if (p == null)
             {
@@ -368,10 +363,11 @@ namespace RuokaAPI.Controllers
             }
 
             // Tarkistetaan salasana (hashattu tai ei)
-            string ssana = p.Salasana;
             bool onHashattu = p.Salasana.StartsWith("$2a$") || p.Salasana.StartsWith("$2b$");
 
-            bool salasanaOk = onHashattu ? BCrypt.Net.BCrypt.Verify(request.Kayttaja.Salasana, p.Salasana) : (p.Salasana == request.Kayttaja.Salasana);
+            bool salasanaOk = onHashattu
+                ? BCrypt.Net.BCrypt.Verify(request.Kayttaja.Salasana, p.Salasana)
+                : (p.Salasana == request.Kayttaja.Salasana);
 
             if (!salasanaOk)
             {
@@ -380,34 +376,23 @@ namespace RuokaAPI.Controllers
 
             if (salasanaOk)
             {
-
-                //haetaan käyttäjän aijemmat suosikit ja tarkistetaan että uudessa listassa ei ole samoja ja jos ei ole niin lisätään kantaan
-
-                var templista = await _context.Suosikit.Where(x => x.kayttajaID == p.Id).ToListAsync();
+                // Haetaan käyttäjän aiemmat suosikit kannasta
+                var templista = await _context.Suosikit
+                    .Where(x => x.kayttajaID == p.Id)
+                    .ToListAsync();
 
                 foreach (var x in suosikkilista)
                 {
-
-
-                    if (!templista.Contains(x))
+                    // Tarkistetaan, onko sama resepti jo suosikeissa käyttäjän ID:llä ja reseptiID:llä
+                    if (!templista.Any(s => s.kayttajaID == x.kayttajaID && s.reseptiID == x.reseptiID))
                     {
-
-
                         _context.Suosikit.Add(x);
-
-
                     }
-
-
-
-
                 }
 
-
-
+                await _context.SaveChangesAsync();
             }
 
-            await _context.SaveChangesAsync();
             return "Suosikit tallennettu onnistuneesti.";
         }
 
@@ -444,7 +429,10 @@ namespace RuokaAPI.Controllers
                 foreach (var x in suosikit)
                 {
 
-                    Resepti? resepti =await _context.Reseptit.Where(i =>i.Id == x.reseptiID).FirstOrDefaultAsync();
+                    Resepti? resepti = await _context.Reseptit
+                                            .Include(r => r.Ainesosat)    
+                                            .Include(r => r.Avainsanat)   
+                                            .FirstOrDefaultAsync(r => r.Id == x.reseptiID);
 
                     Suosikkireseptit.Add(resepti);
                 }
