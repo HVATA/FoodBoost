@@ -6,7 +6,7 @@
 
        public Kayttaja? Kayttaja {  get; set; } 
 
-       public Resepti? resepti { get; set; }
+       public Suosikit? suosikki { get; set; }
 
     }
 }

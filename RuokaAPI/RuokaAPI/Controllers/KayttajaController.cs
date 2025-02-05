@@ -494,7 +494,7 @@ namespace RuokaAPI.Controllers
 
             // Tarkistetaan, onko resepti jo suosikeissa
             bool onJoSuosikissa = await _context.Suosikit
-                .AnyAsync(x => x.kayttajaID == p.Id && x.reseptiID == request.resepti.Id);
+                .AnyAsync(x => x.kayttajaID == p.Id && x.reseptiID == request.suosikki.reseptiID);
 
             if (onJoSuosikissa) return "Resepti on jo suosikeissa.";
 
@@ -502,7 +502,7 @@ namespace RuokaAPI.Controllers
             _context.Suosikit.Add(new Suosikit
             {
                 kayttajaID = p.Id,
-                reseptiID = request.resepti.Id
+                reseptiID = request.suosikki.reseptiID
             });
 
             await _context.SaveChangesAsync();
@@ -529,7 +529,7 @@ namespace RuokaAPI.Controllers
 
             // Etsitään suosikki
             var suosikki = await _context.Suosikit
-                .Where(x => x.kayttajaID == p.Id && x.reseptiID == request.resepti.Id)
+                .Where(x => x.kayttajaID == p.Id && x.reseptiID == request.suosikki.reseptiID)
                 .FirstOrDefaultAsync();
 
             if (suosikki == null) return "Resepti ei ole suosikeissa.";
