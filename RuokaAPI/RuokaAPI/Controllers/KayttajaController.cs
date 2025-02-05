@@ -347,7 +347,7 @@ namespace RuokaAPI.Controllers
             }
         }
 
-        [HttpPut("TalennaSuosikeiksiListallinen")]
+        [HttpPut("TallennaSuosikeiksiListallinen")]
         public async Task<string> TallennaSuosikeiksi([FromBody] SuosikitRequest request)
         {
             List<Suosikit> suosikkilista = request.Suosikitlista;
