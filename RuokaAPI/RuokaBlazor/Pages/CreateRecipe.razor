@@ -26,10 +26,16 @@
             <InputTextArea id="valmistuskuvaus" @bind-Value="uusiResepti.Valmistuskuvaus" class="form-control" />
         </div>
 
-        <!-- Kuvan URL -->
+        <!-- Drop box kuvien valintaan -->
         <div>
-            <label for="kuva1">Kuvan URL:</label>
-            <InputText id="kuva1" @bind-Value="uusiResepti.Kuva1" class="form-control" />
+            <label for="kuva">Valitse kuva:</label>
+            <InputFile id="kuva" OnChange="KuvaValittu" class="form-control" />
+            @if (!string.IsNullOrWhiteSpace(kuvanEsikatselu))
+            {
+                <div class="image-preview">
+                    <img src="@kuvanEsikatselu" alt="Valittu kuva" class="preview-image" />
+                </div>
+            }
         </div>
 
         <!-- Ainesosat -->
@@ -66,9 +72,21 @@
         <button type="submit" class="btn btn-primary mt-3">Tallenna</button>
     </EditForm>
 </div>
+<style>
+    .image-preview {
+        margin-top: 10px;
+    }
 
+    .preview-image {
+        max-width: 200px;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+</style>
 @code {
     private ReseptiDto uusiResepti = new();
+    private string? kuvanEsikatselu;
 
     protected override async Task OnInitializedAsync()
     {
@@ -88,6 +106,26 @@
             }
         }
     }
+    private async Task KuvaValittu(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var tiedosto = e.File;
+            using var stream = tiedosto.OpenReadStream(5 * 1024 * 1024); // Maksimikoko: 5MB
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            var kuvaBase64 = Convert.ToBase64String(ms.ToArray());
+
+            // Tallennetaan kuva reseptiin ja esikatseluun
+            uusiResepti.Kuva1 = $"data:{tiedosto.ContentType};base64,{kuvaBase64}";
+            kuvanEsikatselu = uusiResepti.Kuva1;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Virhe kuvan käsittelyssä: {ex.Message}");
+        }
+    }
+
 
 
     private void LisaaAinesosa()
