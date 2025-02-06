@@ -1,89 +1,129 @@
-﻿@page "/recipe"
+﻿@page "/recipe/{Id:int}"
 @layout MainLayout
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject CustomAuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JSRuntime
+@using RuokaBlazor.Properties.Model
+@using RuokaBlazor.Services
 
-<PageTitle>Resepti: Kanakeitto</PageTitle>
-
-<div class="page-container">
-    <header>
-        <h1>Kanakeitto</h1>
-        <img src="chickensoup_png.png" alt="Kanakeitto" class="recipe-image" />
-        <p>Lämmittävä ja maukas kotitekoinen kanakeitto.</p>
-    </header>
-
-    <div class="multiplier-selector">
-        <label for="multiplier">Valitse reseptin määrä:</label>
-        <select id="multiplier" @onchange="UpdateMultiplier">
-            @for (int i = 1; i <= 5; i++)
-            {
-                <option value="@i" selected="@(i == multiplier)">@i-kertainen</option>
-            }
-        </select>
-    </div>
-
+@if (resepti == null)
+{
+    <p>Ladataan reseptin tietoja...</p>
+}
+else
+{
     <div class="recipe-container">
-        <div class="ingredients">
-            <h2>Ainesosat</h2>
-            <ul>
-                <li>@(500 * multiplier) g kanan fileepaloja</li>
-                <li>@(2 * multiplier) porkkanaa</li>
-                <li>@(2 * multiplier) perunaa</li>
-                <li>@(1 * multiplier) sipuli</li>
-                <li>@(1 * multiplier) l kanaliemi</li>
-                <li>@(2 * multiplier) dl ruokakermaa</li>
-                <li>@(1 * multiplier) rkl öljyä</li>
-                <li>@(1 * multiplier) tl suolaa</li>
-                <li>@(0.5 * multiplier) tl mustapippuria</li>
-                <li>Tuoretta persiljaa koristeluun</li>
-            </ul>
+        <div class="recipe-header">
+            <!-- Reseptin otsikko -->
+            <div class="recipe-title-container">
+                <h1 class="recipe-title">@resepti?.Nimi</h1>
+            </div>
+
+            <!-- Reseptin kuva -->
+            <div class="recipe-image-container">
+                <img src="@resepti?.Kuva1" alt="@resepti?.Nimi" class="recipe-image" />
+            </div>
         </div>
-        <div class="instructions">
-            <h2>Valmistusohjeet</h2>
-            <p>Kuori ja pilko porkkanat, perunat ja sipuli pieniksi paloiksi.
-               Kuutioi kanan fileepalat.
-               Kuumenna öljy kattilassa ja ruskista kanapalat kevyesti.
-               Lisää pilkotut vihannekset ja kuullota niitä hetki.
-               Kaada joukkoon kanaliemi ja mausta suolalla ja pippurilla.
-               Anna keiton kiehua miedolla lämmöllä noin 20 minuuttia, kunnes vihannekset ovat pehmeitä.
-               Sekoita joukkoon ruokakerma ja kuumenna keitto uudelleen.
-               Koristele keitto tuoreella persiljalla ennen tarjoilua.</p>
+
+        <!-- Napit näkyvät vain, jos käyttäjä on admin tai reseptin tekijä -->
+        @if (kayttajallaOikeudet)
+        {
+            <div class="action-buttons">
+                <button class="btn btn-primary" @onclick="MuokkaaResepti">Muokkaa</button>
+                <button class="btn btn-danger" @onclick="PoistaResepti">Poista</button>
+            </div>
+        }
+
+        <!-- Avainsanat -->
+        <div class="tags">
+            @if (resepti?.Avainsanat?.Any() == true)
+            {
+                @foreach (var tag in resepti.Avainsanat)
+                {
+                    <span class="tag">@tag</span>
+                }
+            }
+        </div>
+
+        <!-- Ainesosat ja valmistuskuvaus -->
+        <div class="info-container">
+            <div class="ingredients">
+                <h2>Ainesosat</h2>
+                <ul>
+                    @foreach (var ainesosa in resepti.Ainesosat)
+                    {
+                        <li>@ainesosa</li>
+                    }
+                </ul>
+            </div>
+            <div class="instructions">
+                <h2>Valmistuskuvaus</h2>
+                <p>@resepti.Valmistuskuvaus</p>
+            </div>
         </div>
     </div>
-</div>
+}
 
 <style>
-    /* Keskittää sivun sisällön ja lisää paddingia */
-    .page-container {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 2rem;
-        text-align: center;
+    .recipe-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 2rem;
     }
 
-    /* Kuvan tyyli */
+    .recipe-title-container {
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    .recipe-title {
+        font-size: 2.5rem;
+        margin: 0;
+    }
+
+    .recipe-image-container {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+
     .recipe-image {
         max-width: 100%;
         height: auto;
-        margin: 1rem 0;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
-    /* Pudotusvalikon tyyli */
-    .multiplier-selector {
-        margin-bottom: 2rem;
+    .tags {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
     }
 
-    label, select {
-        font-size: 1.2rem;
+    .tag {
+        background-color: #f0f0f0;
+        padding: 0.5rem 1rem;
+        border-radius: 15px;
+        font-size: 0.9rem;
+        color: #555;
     }
 
-    /* Ainesosien ja ohjeiden asettelu */
-    .recipe-container {
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .info-container {
         display: flex;
         flex-wrap: wrap;
         gap: 2rem;
-        justify-content: center;
-        text-align: left;
+        margin-top: 1rem;
     }
 
     .ingredients, .instructions {
@@ -92,28 +132,94 @@
         padding: 1rem;
         border: 1px solid #ccc;
         border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         background-color: #fff;
-    }
-
-    ul, ol {
-        margin: 0;
-        padding-left: 1.5rem;
-    }
-
-    h1, h2 {
-        margin-bottom: 1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 </style>
 
 @code {
-    private int multiplier = 1;
+    [Parameter] public int Id { get; set; }
+    private Resepti? resepti;
+    private bool kayttajallaOikeudet = false;
 
-    private void UpdateMultiplier(ChangeEventArgs e)
+    protected override async Task OnInitializedAsync()
     {
-        if (int.TryParse(e.Value?.ToString(), out int selectedMultiplier))
+        try
         {
-            multiplier = selectedMultiplier;
+            // Hae resepti API:sta
+            resepti = await Http.GetFromJsonAsync<Resepti>($"resepti/{Id}");
+            // Tarkista käyttäjän oikeudet
+            kayttajallaOikeudet = await TarkistaKayttajanOikeudet();
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Virhe reseptin tietojen lataamisessa: {ex.Message}");
+        }
+    }
+
+    private async Task PoistaResepti()
+    {
+        if (resepti == null) return;
+
+        var confirm = await JSRuntime.InvokeAsync<bool>("window.confirm", "Haluatko varmasti poistaa tämän reseptin?");
+        if (confirm)
+        {
+            try
+            {
+                var response = await Http.DeleteAsync($"resepti/{resepti.Id}");
+                if (response.IsSuccessStatusCode)
+                {
+                    Navigation.NavigateTo("/");
+                }
+                else
+                {
+                    Console.WriteLine($"Virhe poistamisessa: {response.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Poikkeus poistamisessa: {ex.Message}");
+            }
+        }
+    }
+
+    private void MuokkaaResepti()
+    {
+        Navigation.NavigateTo($"/editRecipe/{resepti?.Id}");
+    }
+
+    private async Task<bool> TarkistaKayttajanOikeudet()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            // Tarkista admin-rooli
+            if (user.IsInRole("Admin"))
+            {
+                return true;
+            }
+
+            // Tarkista reseptin tekijä
+            var tekijaIdClaim = user.FindFirst(c => c.Type == "userId")?.Value;
+            if (int.TryParse(tekijaIdClaim, out var userId))
+            {
+                return userId == resepti?.TekijaId;
+            }
+        }
+
+        return false;
+    }
+
+    public class Resepti
+    {
+        public int Id { get; set; }
+        public string Nimi { get; set; } = string.Empty;
+        public string Valmistuskuvaus { get; set; } = string.Empty;
+        public string Kuva1 { get; set; } = string.Empty;
+        public string[] Ainesosat { get; set; } = Array.Empty<string>();
+        public string[] Avainsanat { get; set; } = Array.Empty<string>();
+        public int TekijaId { get; set; }
     }
 }
