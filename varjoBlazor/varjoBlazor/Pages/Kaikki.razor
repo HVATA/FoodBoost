@@ -1,17 +1,30 @@
 ﻿@page "/kaikki"
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
-
+@inject TunnistaKayttaja TunnistaKayttaja
 
 <h3>Kaikki käyttäjät</h3>
 
+<h3>Tervetuloa: @p.Nimimerkki   </h3>
+
+
 @{
-    if (kayttajat == null)
+    if (string.IsNullOrEmpty(TunnistaKayttaja.Sahkoposti))
+
+        NavigationManager.NavigateTo("/kirjaudu");
+
+}
+
+@{
+    
+    
+
+   if (kayttajat.Count==0)
     {
         
         <p><em>Loadind...</em></p>
 
-
+       
     }
     else
     {
@@ -97,41 +110,51 @@
 @code {
     public List<Kayttaja>? kayttajat { get; set; }
 
+    public Kayttaja p { get; set; }
+
+    
 
 
     protected override async Task OnInitializedAsync()
     {
+        if (string.IsNullOrEmpty(TunnistaKayttaja.Sahkoposti))
+        {
+            NavigationManager.NavigateTo("/kirjaudu", true);
+            return; 
+        }
+
+        //hakee käyttäjän p TunnistaKayttäjä palvelu singleton kautta ja kun tällä sivulla on käyttäjien tiedot tarvitaan admin oikeudet
+
+        p = await HaeKayttaja(TunnistaKayttaja.Salasana, TunnistaKayttaja.Sahkoposti);
+
+
+
 
         //Hakee kaikki käyttäjät vain admin
 
-        int Id = 2;
+      //  int Id = 2;
 
-        string salasana = "Aku313";
+      //  string salasana = "Aku313";
 
-         string sahkopostiosoite = "aku.ankka@gmail.com";
+        //  string sahkopostiosoite = "aku.ankka@gmail.com";
 
-    kayttajat= await HaeKayttajat(Id, salasana, sahkopostiosoite);
-         
-         
-         /*
-         List<int> lista = new List<int>();
+        List<int> lista = new List<int>();
         lista.Add(1);
         lista.Add(2);
         lista.Add(3);
 
-        //vain admin tason käyttäjä
-         
+        //vain admin tason käyttäjä hakee listallisen käyttäjiä
+       kayttajat = await HaeKayttajat(p.Id,TunnistaKayttaja.Salasana,TunnistaKayttaja.Sahkoposti);
 
-      */
+
 
 
         //Yksittäisen käyttäjän haku pb1 testi
 
-        /*   
+        
+        p = await HaeKayttaja(TunnistaKayttaja.Salasana,TunnistaKayttaja.Sahkoposti);
 
-        Kayttaja kayttaja = await HaeKayttaja(salasana,sahkopostiosoite);
-
-        */
+       
 
 
 
@@ -152,26 +175,26 @@
         x.Sahkopostiosoite = "aku.ankka@gmail.com";
         x.Nimimerkki = "Aku";
 
-
+        */
 
         // await LahetaResepti(email, Id,x);
 
         //  public List<int> lista = new List<int>();
 
 
-       // string tulos   =await TallennaSuosikit( lista, x.Sahkopostiosoite,x);
+      //  string tulos   =await TallennaSuosikit( lista, x.Sahkopostiosoite,x);
 
 
-         //Päivitä käyttäjän tietoja 
+        //Päivitä käyttäjän tietoja 
 
-         /* 
-
-         Kayttaja kayttaja1 = new Kayttaja();
+        /* 
+         * 
+        Kayttaja kayttaja1 = new Kayttaja();
           kayttaja1.Etunimi = "Mikki";
          kayttaja1.Sukunimi = "Hiiri";
          kayttaja1.Nimimerkki = "Mikki";
-         kayttaja1.Kayttajataso = "admin";
-        kayttaja1.Sahkopostiosoite = "iines.ankka@gmail.com";
+          kayttaja1.Kayttajataso = "admin";
+         kayttaja1.Sahkopostiosoite = "iines.ankka@gmail.com";
          kayttaja1.Salasana = "Iines313";
 
         await PaivitaTietoja(kayttaja1);
@@ -219,7 +242,7 @@
 
 
         /*
-
+         * 
         Kayttaja kayttaja2 = new Kayttaja();
 
         kayttaja2.Id = 2;
@@ -237,6 +260,11 @@
 
 
     }
+
+    
+
+
+
 
 
     public async Task<List<Kayttaja>> HaeKayttajat(int Id, string salasana, string sahkopostiosoite)
@@ -388,7 +416,7 @@
     {
         SuosikitRequest a = new SuosikitRequest();
         a.Kayttaja = k;
-      //  a.Idlista = idlista;
+        //a.Idlista = idlista;
 
         var response = await Http.PostAsJsonAsync($"Kayttaja/Lisaasuosikkeihin/{sahkopostiosoite}",a);
 
