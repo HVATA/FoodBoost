@@ -108,17 +108,21 @@
 
         string salasana = "Aku313";
 
-        //  string sahkopostiosoite = "aku.ankka@gmail.com";
+         string sahkopostiosoite = "aku.ankka@gmail.com";
 
-        List<int> lista = new List<int>();
+    kayttajat= await HaeKayttajat(Id, salasana, sahkopostiosoite);
+         
+         
+         /*
+         List<int> lista = new List<int>();
         lista.Add(1);
         lista.Add(2);
         lista.Add(3);
 
         //vain admin tason käyttäjä
-        //  await HaeKayttajat(Id,salasana,sahkopostiosoite);
+         
 
-
+      */
 
 
         //Yksittäisen käyttäjän haku pb1 testi
@@ -136,6 +140,8 @@
 
         // string email = "pasi.melentjeff@gmail.com";
 
+        /*
+
         Kayttaja x = new Kayttaja();
 
         x.Etunimi = "Aku";
@@ -147,12 +153,13 @@
         x.Nimimerkki = "Aku";
 
 
+
         // await LahetaResepti(email, Id,x);
 
         //  public List<int> lista = new List<int>();
 
 
-        string tulos   =await TallennaSuosikit( lista, x.Sahkopostiosoite,x);
+       // string tulos   =await TallennaSuosikit( lista, x.Sahkopostiosoite,x);
 
 
          //Päivitä käyttäjän tietoja 
@@ -381,7 +388,7 @@
     {
         SuosikitRequest a = new SuosikitRequest();
         a.Kayttaja = k;
-        a.Idlista = idlista;
+      //  a.Idlista = idlista;
 
         var response = await Http.PostAsJsonAsync($"Kayttaja/Lisaasuosikkeihin/{sahkopostiosoite}",a);
 
