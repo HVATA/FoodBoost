@@ -294,7 +294,7 @@ namespace RuokaAPI.Controllers
 
                 // Haetaan resepti tietokannasta ID:n perusteella
                 var resepti = await _context.Reseptit
-                    .Include(r => r.Ainesosat) // Haetaan myös ainesosat
+                    .Include(r => r.AinesosanMaara).ThenInclude(am => am.Ainesosa) // Haetaan myös ainesosat
                     .Include(r => r.Avainsanat) // Haetaan myös avainsanat
                     .FirstOrDefaultAsync(r => r.Id == reseptiId);
 
@@ -310,7 +310,7 @@ namespace RuokaAPI.Controllers
                                        $"Ainesosat:\n";
 
                 // Lisätään ainesosat listasta
-                foreach (var ainesosa in resepti.Ainesosat)
+                foreach (var ainesosa in resepti.AinesosanMaara.Select(a => a.Ainesosa))
                 {
                     reseptiString += $"- {ainesosa.Nimi}\n";
                 }
@@ -431,7 +431,7 @@ namespace RuokaAPI.Controllers
                 {
 
                     Resepti? resepti = await _context.Reseptit
-                                            .Include(r => r.Ainesosat)    
+                                            .Include(r => r.AinesosanMaara).ThenInclude(am => am.Ainesosa)    
                                             .Include(r => r.Avainsanat)   
                                             .FirstOrDefaultAsync(r => r.Id == x.reseptiID);
 

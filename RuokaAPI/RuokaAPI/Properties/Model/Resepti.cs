@@ -12,7 +12,7 @@ public class ReseptiValidator
         var validationMessages = new List<string>();
 
         ValidateValmistuskuvaus(reseptiDto.Valmistuskuvaus, validationMessages);
-        ValidateAinesosat(reseptiDto.Ainesosat, validationMessages);
+        ValidateAinesosat(reseptiDto.Ainesosat.Select(a => a.Ainesosa).ToArray(), validationMessages);
         ValidateAvainsanat(reseptiDto.Avainsanat, validationMessages);
 
         return validationMessages;
@@ -75,7 +75,7 @@ namespace RuokaAPI.Properties.Model
         public int Id { get; set; }
         public int Tekijäid { get; set; }
         public string Nimi { get; set; }
-        public List<Ainesosa> Ainesosat { get; set; } = new();
+        public List<ReseptiAinesosa> AinesosanMaara { get; set; } = new();
         public string? Valmistuskuvaus { get; set; }
         public string? Kuva1 { get; set; }
         public string? Kuva2 { get; set; }

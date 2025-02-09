@@ -6,7 +6,8 @@ namespace RuokaAPI.Properties.Model
     {
         public int Id { get; set; }
         public string Nimi { get; set; }
+
         [JsonIgnore]
-        public List<Resepti> Reseptit { get; set; } = new();
+        public List<ReseptiAinesosa> AinesosanMaara { get; set; } = new();
     }
 }
