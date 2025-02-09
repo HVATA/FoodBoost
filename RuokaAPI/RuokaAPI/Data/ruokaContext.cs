@@ -34,6 +34,9 @@ public class ruokaContext : DbContext
 
             entity.HasMany(r => r.Avainsanat)
                   .WithMany(a => a.Reseptit);
+
+            entity.HasMany(r => r.Arvostelut)
+                 .WithOne(a => a.Resepti);
         });
         modelBuilder.Entity<Avainsana>(entity =>
         {

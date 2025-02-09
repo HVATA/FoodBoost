@@ -84,6 +84,7 @@ namespace RuokaAPI.Properties.Model
         public string? Kuva5 { get; set; }
         public string? Kuva6 { get; set; }
         public List<Avainsana> Avainsanat { get; set; } = new();
+        public List<Arvostelu> Arvostelut { get; set; } = new();
         public string? Katseluoikeus { get; set; }
     }
 }

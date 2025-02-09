@@ -39,8 +39,16 @@ namespace RuokaAPI.Repositories
             return await query.ToListAsync();
         }
 
+        public async Task<Resepti?> HaeReseptiAsync(int id)
+        {
+            return await _konteksti.Reseptit
+                .Include(r => r.Arvostelut)
+                .Include(r => r.Ainesosat)
+                .Include(r => r.Avainsanat)
+                .FirstOrDefaultAsync(r => r.Id == id);
+        }
 
-       
+
         private async Task<List<Ainesosa>> PoistaDuplikaatit(List<string> uudetNimet, Dictionary<string, Ainesosa> olemassaOlevat)
         {
             var kasitellyt = new List<Ainesosa>();
@@ -163,11 +171,6 @@ namespace RuokaAPI.Repositories
         public async Task<bool> OnOlemassaAsync(int id)
         {
             return await _konteksti.Reseptit.AnyAsync(r => r.Id == id);
-        }
-
-        public async Task<Resepti?> HaeReseptiAsync(int id)
-        {
-            return await _konteksti.Reseptit.FindAsync(id);
         }
     }
 }
