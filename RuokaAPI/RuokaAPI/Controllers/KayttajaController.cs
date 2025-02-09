@@ -167,7 +167,7 @@ namespace RuokaAPI.Controllers
                 return Unauthorized("Virheellinen salasana.");
             }
 
-            // Tarkistetaan, onko poistajalla oikeus poistaa
+            // Tarkistetaan, onko poistajalla oikeus poistaa ja oman Käyttäjän saa poistaa tässä versiossa vaikka ei olisi admin
             if (poistaja.Kayttajataso == "admin" || poistaja.Id == poistettavanID)
             {
                 var poistettava = await _context.Kayttajat.FindAsync(poistettavanID);
@@ -529,7 +529,7 @@ namespace RuokaAPI.Controllers
 
             // Etsitään suosikki
             var suosikki = await _context.Suosikit
-                .Where(x => x.kayttajaID == p.Id && x.reseptiID == request.suosikki.reseptiID)
+                .Where(x => x.kayttajaID == p.Id && x.reseptiID == request.suosikki.reseptiID )
                 .FirstOrDefaultAsync();
 
             if (suosikki == null) return "Resepti ei ole suosikeissa.";
