@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 using RuokaAPI.Properties.Model;
 
-namespace RuokaAPI.Data; 
+namespace RuokaAPI.Data;
 
 public class ruokaContext : DbContext
 {

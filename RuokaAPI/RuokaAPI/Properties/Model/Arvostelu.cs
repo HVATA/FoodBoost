@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Text.Json.Serialization;
 
 namespace RuokaAPI.Properties.Model
 {
@@ -8,7 +9,8 @@ namespace RuokaAPI.Properties.Model
 
         public int ReseptiId { get; set; }
 
-        [JsonIgnore]
+
+        [JsonIgnore]      
         public Resepti Resepti { get; set; } = new();
 
 

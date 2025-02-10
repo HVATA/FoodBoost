@@ -14,7 +14,7 @@ namespace RuokaAPI.Repositories
             _konteksti = konteksti;
         }
 
-        public async Task<IEnumerable<ReseptiDto>> HaeReseptitAsync(string[]? ainesosat, string[]? avainsanat)
+        public async Task<IEnumerable<ReseptiRequest>> HaeReseptitAsync(string[]? ainesosat, string[]? avainsanat)
         {
             var query = _konteksti.Reseptit
                 .Include(r => r.AinesosanMaara).ThenInclude(ra => ra.Ainesosa)
@@ -36,7 +36,7 @@ namespace RuokaAPI.Repositories
             }
 
             return await query
-                .Select(r => new ReseptiDto
+                .Select(r => new ReseptiRequest
                 {
                     Id = r.Id,                    
                     Nimi = r.Nimi,
@@ -53,14 +53,14 @@ namespace RuokaAPI.Repositories
                 .ToListAsync();
         }
 
-        public async Task<ReseptiDto?> HaeReseptiAsync(int id)
+        public async Task<ReseptiResponse?> HaeReseptiAsync(int id)
         {
             return await _konteksti.Reseptit
                 .Include(r => r.Arvostelut)
                 .Include(r => r.AinesosanMaara)
                 .Include(r => r.Avainsanat)
                 .Where(r => r.Id == id)
-                .Select(r => new ReseptiDto
+                .Select(r => new ReseptiResponse
                 {
                     Id = r.Id,
                     Nimi = r.Nimi,
@@ -72,7 +72,9 @@ namespace RuokaAPI.Repositories
                         Ainesosa = am.Ainesosa.Nimi,
                         Maara = am.Maara
                     }).ToArray(),
-                    Avainsanat = r.Avainsanat.Select(a => a.Sana).ToArray()
+                    Avainsanat = r.Avainsanat.Select(a => a.Sana).ToArray(),
+                    Arvostelut = r.Arvostelut.ToArray()
+
                 })
                 .FirstOrDefaultAsync();
         }
@@ -113,7 +115,7 @@ namespace RuokaAPI.Repositories
             return kasitellyt;
         }
 
-        private async Task<List<Ainesosa>> PoistaDuplikaattiAinesosat(ReseptiDto resepti)
+        private async Task<List<Ainesosa>> PoistaDuplikaattiAinesosat(ReseptiRequest resepti)
         {
             var uudetAinesosat = resepti.Ainesosat.Select(a => a.Ainesosa.ToLower()).ToList();
             var olemassaOlevatAinesosat = await _konteksti.Ainesosat
@@ -122,7 +124,7 @@ namespace RuokaAPI.Repositories
             return await PoistaDuplikaatit(uudetAinesosat, olemassaOlevatAinesosat);
         }
 
-        private async Task<List<Avainsana>> PoistaDuplikaattiAvainsanat(ReseptiDto resepti)
+        private async Task<List<Avainsana>> PoistaDuplikaattiAvainsanat(ReseptiRequest resepti)
         {
             var uudetAvainsanat = resepti.Avainsanat.Select(a => a.ToLower()).ToList();
             var olemassaOlevatAvainsanat = await _konteksti.Avainsanat
@@ -151,7 +153,7 @@ namespace RuokaAPI.Repositories
             return await PoistaDuplikaatit(uudetSanat, olemassaOlevat);
         }
 
-        public async Task<Resepti> LisaaAsync(ReseptiDto reseptiDto)
+        public async Task<Resepti> LisaaAsync(ReseptiRequest reseptiDto)
         {
             var ainesosat = await MuunnaAinesosat(reseptiDto.Ainesosat.Select(a => a.Ainesosa).ToArray());
             var resepti = new Resepti
@@ -178,7 +180,7 @@ namespace RuokaAPI.Repositories
             return resepti;
         }
 
-        public async Task PaivitaAsync(int id, ReseptiDto reseptiRequest)
+        public async Task PaivitaAsync(int id, ReseptiRequest reseptiRequest)
         {
             var resepti = _konteksti.Reseptit
                 .Include(r => r.AinesosanMaara)
@@ -229,6 +231,23 @@ namespace RuokaAPI.Repositories
         public async Task<bool> OnOlemassaAsync(int id)
         {
             return await _konteksti.Reseptit.AnyAsync(r => r.Id == id);
+        }
+
+        public async Task<bool> LisaaArvosteluAsync(int reseptiId, ArvosteluRequest request)
+        {
+            var resepti = _konteksti.Find<Resepti>(reseptiId);
+            if (resepti == null) return false;
+
+            var arvostelu = new Arvostelu
+            {
+                ArvostelijanNimimerkki = request.ArvostelijanNimimerkki,
+                ArvostelijanId = request.ArvostelijanId,
+                Numeroarvostelu = request.Numeroarvostelu,
+                Vapaateksti = request.Vapaateksti
+            };
+            resepti.Arvostelut.Add(arvostelu);
+            await _konteksti.SaveChangesAsync();
+            return true;
         }
     }
 }
