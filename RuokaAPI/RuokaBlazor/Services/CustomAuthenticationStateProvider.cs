@@ -34,7 +34,7 @@
         new Claim(ClaimTypes.Surname, userData.Sukunimi),
         new Claim("Nimimerkki", userData.Nimimerkki),
         new Claim(ClaimTypes.Email, userData.Sahkopostiosoite),
-        new Claim(ClaimTypes.Role, userData.Kayttajataso)
+        new Claim(ClaimTypes.Role, userData.Kayttajataso),
     }, "auth");
 
             _currentUser = new ClaimsPrincipal(identity);
