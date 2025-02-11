@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RuokaAPI.Data;
 
@@ -10,9 +11,11 @@ using RuokaAPI.Data;
 namespace RuokaAPI.Migrations
 {
     [DbContext(typeof(ruokaContext))]
-    partial class ruokaContextModelSnapshot : ModelSnapshot
+    [Migration("20250209172326_lisätty Maara AinesosaResepti-tauluun")]
+    partial class lisättyMaaraAinesosaReseptitauluun
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -46,14 +49,13 @@ namespace RuokaAPI.Migrations
 
                     b.Property<string>("Maara")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("ReseptiId", "AinesosaId");
 
                     b.HasIndex("AinesosaId");
 
-                    b.ToTable("AinesosaResepti", (string)null);
+                    b.ToTable("AineosaResepti", (string)null);
                 });
 
             modelBuilder.Entity("RuokaAPI.Properties.Model.Ainesosa", b =>

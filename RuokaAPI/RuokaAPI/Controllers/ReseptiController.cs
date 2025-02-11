@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using RuokaAPI.Dtos;
 using RuokaAPI.Properties.Model;
 using RuokaAPI.Repositories;
+using System.Text.Json.Serialization;
 
 namespace RuokaAPI.Controllers
 {
@@ -40,23 +41,23 @@ namespace RuokaAPI.Controllers
         }
 
 
-        [HttpPost]
-        public async Task<ActionResult<Resepti>> LisaaResepti(ReseptiDto reseptiDto)
-        {
-            var validator = new ReseptiValidator();
-            var validationMessages = validator.Validate(reseptiDto);
+        //[HttpPost]
+        //public async Task<ActionResult<Resepti>> LisaaResepti(ReseptiRequest reseptiDto)
+        //{
+        //    var validator = new ReseptiValidator();
+        //    var validationMessages = validator.Validate(reseptiDto);
 
-            if (validationMessages.Count > 0)
-            {
-                return BadRequest(validationMessages);
-            }
+        //    if (validationMessages.Count > 0)
+        //    {
+        //        return BadRequest(validationMessages);
+        //    }
 
-            var uusiResepti = await _repository.LisaaAsync(reseptiDto);
-            return CreatedAtAction(nameof(HaeReseptit), new { id = uusiResepti.Id }, uusiResepti);
-        }
+        //    var uusiResepti = await _repository.LisaaAsync(reseptiDto);
+        //    return CreatedAtAction(nameof(HaeReseptit), new { id = uusiResepti.Id }, uusiResepti);
+        //}
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> PaivitaResepti(int id, ReseptiDto reseptiDto)
+        public async Task<IActionResult> PaivitaResepti(int id, ReseptiRequest reseptiDto)
         {
             if (!await _repository.OnOlemassaAsync(id))
             {
@@ -85,6 +86,27 @@ namespace RuokaAPI.Controllers
 
             await _repository.PoistaAsync(id);
             return NoContent();
+        }
+
+        [HttpPost("{id}/arvostelut")]
+        public async Task<ActionResult> LisaaArvostelu(int id, ArvosteluRequest request)
+        {
+            var validator = new ArvosteluValidator();
+            var validationMessages = validator.Validate(request);
+
+            if (validationMessages.Count > 0)
+            {
+                return BadRequest(validationMessages);
+            }
+
+            // Add the new Arvostelu to the database
+            var lisaysOnnistui = await _repository.LisaaArvosteluAsync(id, request);
+            if (!lisaysOnnistui)
+            {
+                return NotFound("Resepti not found.");
+            }
+
+            return Created();
         }
     }
 }

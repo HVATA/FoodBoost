@@ -1,10 +1,17 @@
-﻿namespace RuokaAPI.Properties.Model
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Text.Json.Serialization;
+
+namespace RuokaAPI.Properties.Model
 {
     public class Arvostelu
     {
         public int ArvosteluID { get; set; }
 
         public int ReseptiId { get; set; }
+
+
+        [JsonIgnore]      
+        public Resepti Resepti { get; set; } = new();
 
 
         //ei varmaan näytetä arvostelijanId:tä taulussa

@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RuokaAPI.Data;
 
@@ -10,9 +11,11 @@ using RuokaAPI.Data;
 namespace RuokaAPI.Migrations
 {
     [DbContext(typeof(ruokaContext))]
-    partial class ruokaContextModelSnapshot : ModelSnapshot
+    [Migration("20250209140921_lisätty suhde resepti - arvostelu")]
+    partial class lisättysuhdereseptiarvostelu
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -20,6 +23,21 @@ namespace RuokaAPI.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("AinesosaResepti", b =>
+                {
+                    b.Property<int>("AinesosatId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ReseptitId")
+                        .HasColumnType("int");
+
+                    b.HasKey("AinesosatId", "ReseptitId");
+
+                    b.HasIndex("ReseptitId");
+
+                    b.ToTable("AinesosaResepti");
+                });
 
             modelBuilder.Entity("AvainsanaResepti", b =>
                 {
@@ -34,26 +52,6 @@ namespace RuokaAPI.Migrations
                     b.HasIndex("ReseptitId");
 
                     b.ToTable("AvainsanaResepti");
-                });
-
-            modelBuilder.Entity("ReseptiAinesosa", b =>
-                {
-                    b.Property<int>("ReseptiId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("AinesosaId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Maara")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("ReseptiId", "AinesosaId");
-
-                    b.HasIndex("AinesosaId");
-
-                    b.ToTable("AinesosaResepti", (string)null);
                 });
 
             modelBuilder.Entity("RuokaAPI.Properties.Model.Ainesosa", b =>
@@ -225,6 +223,21 @@ namespace RuokaAPI.Migrations
                     b.ToTable("Suosikit");
                 });
 
+            modelBuilder.Entity("AinesosaResepti", b =>
+                {
+                    b.HasOne("RuokaAPI.Properties.Model.Ainesosa", null)
+                        .WithMany()
+                        .HasForeignKey("AinesosatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RuokaAPI.Properties.Model.Resepti", null)
+                        .WithMany()
+                        .HasForeignKey("ReseptitId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("AvainsanaResepti", b =>
                 {
                     b.HasOne("RuokaAPI.Properties.Model.Avainsana", null)
@@ -240,25 +253,6 @@ namespace RuokaAPI.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ReseptiAinesosa", b =>
-                {
-                    b.HasOne("RuokaAPI.Properties.Model.Ainesosa", "Ainesosa")
-                        .WithMany("AinesosanMaara")
-                        .HasForeignKey("AinesosaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("RuokaAPI.Properties.Model.Resepti", "Resepti")
-                        .WithMany("AinesosanMaara")
-                        .HasForeignKey("ReseptiId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Ainesosa");
-
-                    b.Navigation("Resepti");
-                });
-
             modelBuilder.Entity("RuokaAPI.Properties.Model.Arvostelu", b =>
                 {
                     b.HasOne("RuokaAPI.Properties.Model.Resepti", "Resepti")
@@ -270,15 +264,8 @@ namespace RuokaAPI.Migrations
                     b.Navigation("Resepti");
                 });
 
-            modelBuilder.Entity("RuokaAPI.Properties.Model.Ainesosa", b =>
-                {
-                    b.Navigation("AinesosanMaara");
-                });
-
             modelBuilder.Entity("RuokaAPI.Properties.Model.Resepti", b =>
                 {
-                    b.Navigation("AinesosanMaara");
-
                     b.Navigation("Arvostelut");
                 });
 #pragma warning restore 612, 618

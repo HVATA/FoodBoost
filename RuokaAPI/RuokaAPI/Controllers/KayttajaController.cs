@@ -167,7 +167,7 @@ namespace RuokaAPI.Controllers
                 return Unauthorized("Virheellinen salasana.");
             }
 
-            // Tarkistetaan, onko poistajalla oikeus poistaa
+            // Tarkistetaan, onko poistajalla oikeus poistaa ja oman Käyttäjän saa poistaa tässä versiossa vaikka ei olisi admin
             if (poistaja.Kayttajataso == "admin" || poistaja.Id == poistettavanID)
             {
                 var poistettava = await _context.Kayttajat.FindAsync(poistettavanID);
@@ -294,7 +294,7 @@ namespace RuokaAPI.Controllers
 
                 // Haetaan resepti tietokannasta ID:n perusteella
                 var resepti = await _context.Reseptit
-                    .Include(r => r.Ainesosat) // Haetaan myös ainesosat
+                    .Include(r => r.AinesosanMaara).ThenInclude(am => am.Ainesosa) // Haetaan myös ainesosat
                     .Include(r => r.Avainsanat) // Haetaan myös avainsanat
                     .FirstOrDefaultAsync(r => r.Id == reseptiId);
 
@@ -310,7 +310,7 @@ namespace RuokaAPI.Controllers
                                        $"Ainesosat:\n";
 
                 // Lisätään ainesosat listasta
-                foreach (var ainesosa in resepti.Ainesosat)
+                foreach (var ainesosa in resepti.AinesosanMaara.Select(a => a.Ainesosa))
                 {
                     reseptiString += $"- {ainesosa.Nimi}\n";
                 }
@@ -431,7 +431,7 @@ namespace RuokaAPI.Controllers
                 {
 
                     Resepti? resepti = await _context.Reseptit
-                                            .Include(r => r.Ainesosat)    
+                                            .Include(r => r.AinesosanMaara).ThenInclude(am => am.Ainesosa)    
                                             .Include(r => r.Avainsanat)   
                                             .FirstOrDefaultAsync(r => r.Id == x.reseptiID);
 
@@ -529,7 +529,7 @@ namespace RuokaAPI.Controllers
 
             // Etsitään suosikki
             var suosikki = await _context.Suosikit
-                .Where(x => x.kayttajaID == p.Id && x.reseptiID == request.suosikki.reseptiID)
+                .Where(x => x.kayttajaID == p.Id && x.reseptiID == request.suosikki.reseptiID )
                 .FirstOrDefaultAsync();
 
             if (suosikki == null) return "Resepti ei ole suosikeissa.";
