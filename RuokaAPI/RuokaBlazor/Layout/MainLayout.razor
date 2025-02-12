@@ -55,7 +55,7 @@
 
         isUserAdminOrUser = user.IsInRole("admin") || user.IsInRole("user");
 
-        Console.WriteLine($"User roles: Admin={user.IsInRole("Admin")}, User={user.IsInRole("User")}, IsAdminOrUser={isUserAdminOrUser}");
+        Console.WriteLine($"User roles: Admin={user.IsInRole("admin")}, User={user.IsInRole("user")}, IsAdminOrUser={isUserAdminOrUser}");
         Console.WriteLine($"Is user authenticated: {user.Identity.IsAuthenticated}");
     }
 
