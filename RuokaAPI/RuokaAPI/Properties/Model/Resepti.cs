@@ -7,6 +7,7 @@ public class Resepti
     public int Id { get; set; }
     public int Tekijäid { get; set; }
     public string Nimi { get; set; }
+    //public string Kategoria { get; set; }
     public List<ReseptiAinesosa> AinesosanMaara { get; set; } = new();
     public string? Valmistuskuvaus { get; set; }
     public string? Kuva1 { get; set; }
