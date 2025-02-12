@@ -193,9 +193,6 @@ namespace RuokaAPI.Controllers
 
 
 
-
-
-
             var tt = _context.Kayttajat.Find(p.Id);
 
             bool onHashattu = tt.Salasana.StartsWith("$2a$") || tt.Salasana.StartsWith("$2b$");
@@ -227,8 +224,7 @@ namespace RuokaAPI.Controllers
             {
 
                 Kayttaja k = new Kayttaja();
-
-                return Ok(k);
+                return Ok(k);//Ei kiitos tällaisia enää, antoi fronttiin virhetilanteessa ok ja oli aika vaikea löytää virhettä Terveisin HenriV
 
             }
 
