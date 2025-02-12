@@ -48,11 +48,9 @@
             if (response.IsSuccessStatusCode)
             {
                 var userData = await response.Content.ReadFromJsonAsync<UserData>();
-
                 if (userData != null)
                 {
                     message = "Kirjautuminen onnistui";
-
                     // Käytä uutta Login-metodia ja lähetä kaikki käyttäjän tiedot
                     await AuthenticationStateProvider.Login(userData);
 

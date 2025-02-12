@@ -11,40 +11,43 @@
 <div>
     <div class="container">
         <div class="form-container">
-            <EditForm Model="kayttaja" OnValidSubmit="HandleManagement" class="main-layout">
+            <EditForm Model="kayttaja" OnValidSubmit="UpdateUser">
                 <DataAnnotationsValidator />
                 <ValidationSummary />
-                <div>
 
-                    <div class="form-group">
-                        <label for="firstname">Etunimi</label>
-                        <InputText id="firstname" @bind-Value="kayttaja.Etunimi" class="form-control" />
-                    </div>
-
-                    <div class="form-group">
-                        <label for="lastname">Sukunimi</label>
-                        <InputText id="lastname" @bind-Value="kayttaja.Sukunimi" class="form-control" />
-                    </div>
-
-                    <div class="form-group">
-                        <label for="email">Sähköpostiosoite</label>
-                        <InputText id="email" @bind-Value="kayttaja.Sahkopostiosoite" class="form-control" />
-                    </div>
-
-                    <div class="form-group">
-                        <label for="username">Käyttäjätunnus</label>
-                        <InputText id="username" @bind-Value="kayttaja.Nimimerkki" class="form-control" />
-                    </div>
-
-                    <div style="margin-bottom: 15px;"></div>
-
-                    <button type="button" @onclick="UpdateUser" class="btn btn-primary">Muokkaa</button>
-                    <button type="button" @onclick="DeleteUser" class="btn btn-primary">Poista</button>
-                    <button type="button" @onclick="ClearForm" class="btn btn-primary">Tyhjennä</button>
-
-                    <div style="margin-bottom: 15px;"></div>
+                <div class="form-group">
+                    <label for="firstname">Etunimi</label>
+                    <InputText id="firstname" @bind-Value="kayttaja.Etunimi" class="form-control" />
                 </div>
+
+                <div class="form-group">
+                    <label for="lastname">Sukunimi</label>
+                    <InputText id="lastname" @bind-Value="kayttaja.Sukunimi" class="form-control" />
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Sähköpostiosoite</label>
+                    <InputText id="email" @bind-Value="kayttaja.Sahkopostiosoite" class="form-control" />
+                </div>
+
+                <div class="form-group">
+                    <label for="username">Käyttäjätunnus</label>
+                    <InputText id="username" @bind-Value="kayttaja.Nimimerkki" class="form-control" />
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Salasana</label>
+                    <InputText id="password" @bind-Value="kayttaja.Salasana" class="form-control" />
+                </div>
+
+                <div class="form-group">
+                    <label for="role">Käyttäjätaso</label>
+                    <InputText id="role" @bind-Value="kayttaja.Kayttajataso" class="form-control" />
+                </div>
+
+                <button type="submit" class="btn btn-primary">Päivitä</button>
             </EditForm>
+
         </div>
 
         @if (user.IsInRole("admin"))
@@ -133,6 +136,7 @@
 @code {
     private List<Kayttaja> users = new();
     private Kayttaja kayttaja = new();
+    private Kayttaja muokattavaKayttaja = new();
     private string message = string.Empty;
     private bool isUserAdminOrUser;
     private ClaimsPrincipal user;
@@ -162,14 +166,6 @@
         }
         else
         {
-            kayttaja = new Kayttaja
-                {
-                    Etunimi = user.FindFirst(ClaimTypes.GivenName)?.Value,
-                    Sukunimi = user.FindFirst(ClaimTypes.Surname)?.Value,
-                    Kayttajataso = user.FindFirst(ClaimTypes.Role)?.Value,
-                    Sahkopostiosoite = user.FindFirst(ClaimTypes.Email)?.Value,
-                    Nimimerkki = user.FindFirst("Nimimerkki")?.Value
-                };
 
         }
     }
@@ -199,45 +195,54 @@
                 Sahkopostiosoite = user.Sahkopostiosoite,
                 Nimimerkki = user.Nimimerkki,
             };
+
     }
     private async Task UpdateUser()
     {
+
+        var h = new Kayttaja
+            {
+                Etunimi = kayttaja.Etunimi,
+                Id = kayttaja.Id,
+                Kayttajataso = kayttaja.Kayttajataso,
+                Nimimerkki = kayttaja.Nimimerkki,
+                Sahkopostiosoite = kayttaja.Sahkopostiosoite,
+                Salasana = kayttaja.Salasana,
+                Sukunimi = kayttaja.Sukunimi,
+            };
+
+
+
         try
         {
-            Kayttaja k = new Kayttaja
-                {
-                    Id = kayttaja.Id,
-                    Etunimi = kayttaja.Etunimi,
-                    Sukunimi = kayttaja.Sukunimi,
-                    Salasana = kayttaja.Salasana,
-                    Kayttajataso = kayttaja.Kayttajataso,
-                    Sahkopostiosoite = kayttaja.Sahkopostiosoite,
-                    Nimimerkki = kayttaja.Nimimerkki,
-                };
-            Console.WriteLine($"Etunimi: {k.Etunimi}, Sukunimi: {k.Sukunimi}, Sähköpostiosoite: {k.Sahkopostiosoite}, Nimimerkki: {k.Nimimerkki}, Salasana: {k.Salasana}, Role: {k.Kayttajataso}, Id: {k.Id}");
-            var response = await Http.PutAsJsonAsync("Kayttaja/PaivitaTietoja", k);
+            
+            var response = await Http.PutAsJsonAsync($"Kayttaja/PaivitaTietoja", h);
 
 
             if (response.IsSuccessStatusCode)
             {
-                message = "Päivitys onnistui!";
-                await getUsers(int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0"),
-                               "Admin",
-                               user.FindFirst(ClaimTypes.Email)?.Value ?? ""); // Päivitä käyttäjien lista
-                kayttaja = new Kayttaja(); // Tyhjennä lomake
-                StateHasChanged(); // Päivitä käyttöliittymä
+                //TARKISTUS
+                message = "Käyttäjätiedot päivitetty!";
+                Console.WriteLine($"Sent to database: {h.Etunimi}");
+                StateHasChanged();
             }
             else
             {
-                message = "Päivitys epäonnistui.";
-                Console.WriteLine($"Virhe: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
+                //TARKISTUS
+                message = "Päivitys epäonnistui. Virheellinen vastaus backendiltä.";
+                var responseContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error: {responseContent}");
             }
         }
         catch (Exception ex)
         {
-            message = "Päivitys epäonnistui: " + ex.Message;
+            //TarKitus
+            message = "Virhe: " + ex.Message;
+            Console.WriteLine($"Exception: {ex.Message}");
         }
     }
+
+
 
     private async Task DeleteUser()
     {

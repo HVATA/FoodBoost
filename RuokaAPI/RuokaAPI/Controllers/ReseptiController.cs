@@ -9,6 +9,9 @@ namespace RuokaAPI.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    // This controller handles all the operations related to recipes (Resepti),
+    // including fetching, adding, updating, deleting recipes, and adding reviews (Arvostelu) to recipes.
+    // Note: This class does not perform actual database queries. Instead, it delegates requests to the repository class.
     public class ReseptiController : ControllerBase
     {
         private readonly ReseptiRepository _repository;
@@ -40,21 +43,20 @@ namespace RuokaAPI.Controllers
             return Ok(resepti);
         }
 
+        [HttpPost]
+        public async Task<ActionResult<Resepti>> LisaaResepti(ReseptiRequest reseptiDto)
+        {
+            var validator = new ReseptiValidator();
+            var validationMessages = validator.Validate(reseptiDto);
 
-        //[HttpPost]
-        //public async Task<ActionResult<Resepti>> LisaaResepti(ReseptiRequest reseptiDto)
-        //{
-        //    var validator = new ReseptiValidator();
-        //    var validationMessages = validator.Validate(reseptiDto);
+            if (validationMessages.Count > 0)
+            {
+                return BadRequest(validationMessages);
+            }
 
-        //    if (validationMessages.Count > 0)
-        //    {
-        //        return BadRequest(validationMessages);
-        //    }
-
-        //    var uusiResepti = await _repository.LisaaAsync(reseptiDto);
-        //    return CreatedAtAction(nameof(HaeReseptit), new { id = uusiResepti.Id }, uusiResepti);
-        //}
+            var uusiResepti = await _repository.LisaaAsync(reseptiDto);
+            return CreatedAtAction(nameof(HaeReseptit), new { id = uusiResepti.Id }, uusiResepti);
+        }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> PaivitaResepti(int id, ReseptiRequest reseptiDto)

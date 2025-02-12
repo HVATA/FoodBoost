@@ -4,7 +4,8 @@ using RuokaAPI.Dtos;
 using RuokaAPI.Properties.Model;
 
 namespace RuokaAPI.Repositories
-{
+{   // This repository handles all the database operations related to recipes (Resepti),
+    // including fetching, adding, updating, deleting recipes, and adding reviews (Arvostelu) to recipes.
     public class ReseptiRepository
     {
         private readonly ruokaContext _konteksti;
@@ -16,11 +17,16 @@ namespace RuokaAPI.Repositories
 
         public async Task<IEnumerable<ReseptiRequest>> HaeReseptitAsync(string[]? ainesosat, string[]? avainsanat)
         {
+            // Start building the query to fetch recipes from the database
             var query = _konteksti.Reseptit
+                // Include related AinesosanMaara and then include related Ainesosa
                 .Include(r => r.AinesosanMaara).ThenInclude(ra => ra.Ainesosa)
+                // Include related Avainsanat
                 .Include(r => r.Avainsanat)
+                // Convert to IQueryable to enable further query modifications
                 .AsQueryable();
 
+            // If ainesosat (ingredients) are provided, filter recipes that contain any of the specified ingredients
             if (ainesosat != null && ainesosat.Length > 0)
             {
                 var haettavatAinesosat = ainesosat.ToList();
@@ -28,6 +34,7 @@ namespace RuokaAPI.Repositories
                     .Any(a => haettavatAinesosat.Contains(a.Ainesosa.Nimi)));
             }
 
+            // If avainsanat (keywords) are provided, filter recipes that contain any of the specified keywords
             if (avainsanat != null && avainsanat.Length > 0)
             {
                 var haettavatAvainsanat = avainsanat.ToList();
@@ -35,10 +42,11 @@ namespace RuokaAPI.Repositories
                     .Any(a => haettavatAvainsanat.Contains(a.Sana)));
             }
 
+            // Project the filtered recipes into ReseptiRequest DTOs and execute the query asynchronously
             return await query
                 .Select(r => new ReseptiRequest
                 {
-                    Id = r.Id,                    
+                    Id = r.Id,
                     Nimi = r.Nimi,
                     Valmistuskuvaus = r.Valmistuskuvaus,
                     Kuva1 = r.Kuva1,
@@ -80,7 +88,10 @@ namespace RuokaAPI.Repositories
         }
 
 
-        // hakee kannasta olemassa olevat ainesosat ja luo uudet ainesosat listaan
+        // A helper function that processes a list of new names.
+        // Removes duplicates from the provided list of new keyword names by checking against existing entities in the
+        // dictionary. If a keyword name exists in the dictionary, it uses the existing entity;
+        // otherwise, it creates a new entity.
         private async Task<List<Ainesosa>> PoistaDuplikaatit(List<string> uudetNimet, Dictionary<string, Ainesosa> olemassaOlevat)
         {
             var kasitellyt = new List<Ainesosa>();
@@ -115,12 +126,19 @@ namespace RuokaAPI.Repositories
             return kasitellyt;
         }
 
+        // This method processes the ingredients of a given recipe request to ensure there are no duplicate ingredients.
+        // It converts the ingredient names to lowercase, fetches existing ingredients from the database, and then calls PoistaDuplikaatit to handle duplicates.
         private async Task<List<Ainesosa>> PoistaDuplikaattiAinesosat(ReseptiRequest resepti)
         {
+            // Convert the ingredient names in the recipe request to lowercase
             var uudetAinesosat = resepti.Ainesosat.Select(a => a.Ainesosa.ToLower()).ToList();
+
+            // Fetch existing ingredients from the database that match the names in the recipe request
             var olemassaOlevatAinesosat = await _konteksti.Ainesosat
                 .Where(x => uudetAinesosat.Contains(x.Nimi.ToLower()))
                 .ToDictionaryAsync(x => x.Nimi.ToLower());
+
+            // Call PoistaDuplikaatit to process the list of ingredient names and ensure there are no duplicates
             return await PoistaDuplikaatit(uudetAinesosat, olemassaOlevatAinesosat);
         }
 
@@ -133,23 +151,35 @@ namespace RuokaAPI.Repositories
             return await PoistaDuplikaatit(uudetAvainsanat, olemassaOlevatAvainsanat);
         }
 
+        // Converts the provided array of ingredient names to lowercase, fetches existing ingredients from the database,
+        // and ensures there are no duplicates by calling PoistaDuplikaatit.
         private async Task<List<Ainesosa>> MuunnaAinesosat(string[] ainesosatNimet)
         {
+            // Convert the ingredient names to lowercase
             var uudetNimet = ainesosatNimet.Select(a => a.ToLower()).ToList();
+
+            // Fetch existing ingredients from the database that match the names
             var olemassaOlevat = await _konteksti.Ainesosat
                 .Where(x => uudetNimet.Contains(x.Nimi.ToLower()))
                 .ToDictionaryAsync(x => x.Nimi.ToLower());
 
+            // Call PoistaDuplikaatit to process the list of ingredient names and ensure there are no duplicates
             return await PoistaDuplikaatit(uudetNimet, olemassaOlevat);
         }
 
+        // Converts the provided array of keyword names to lowercase, fetches existing keywords from the database,
+        // and ensures there are no duplicates by calling PoistaDuplikaatit.
         private async Task<List<Avainsana>> MuunnaAvainsanat(string[] avainsanaNimet)
         {
+            // Convert the keyword names to lowercase
             var uudetSanat = avainsanaNimet.Select(a => a.ToLower()).ToList();
+
+            // Fetch existing keywords from the database that match the names
             var olemassaOlevat = await _konteksti.Avainsanat
                 .Where(x => uudetSanat.Contains(x.Sana.ToLower()))
                 .ToDictionaryAsync(x => x.Sana.ToLower());
 
+            // Call PoistaDuplikaatit to process the list of keyword names and ensure there are no duplicates
             return await PoistaDuplikaatit(uudetSanat, olemassaOlevat);
         }
 

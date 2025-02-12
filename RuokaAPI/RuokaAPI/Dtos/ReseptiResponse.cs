@@ -2,6 +2,9 @@
 
 namespace RuokaAPI.Dtos
 {
+    // This class represents the response DTO for a recipe (Resepti).
+    // It includes properties for the recipe's ID, author ID, name, description, ingredients, keywords, image,
+    // visibility, and reviews.
     public class ReseptiResponse
     {
         public int Id { get; set; }

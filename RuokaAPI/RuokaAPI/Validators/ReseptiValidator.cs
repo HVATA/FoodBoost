@@ -1,10 +1,13 @@
 ﻿using RuokaAPI.Dtos;
 
+// This class is responsible for validating the properties of a ReseptiRequest DTO.
+// It ensures that the description, ingredients, and keywords meet specific criteria such as length and non-null values.
 public class ReseptiValidator
 {
     private const int MaxValmistuskuvausLength = 1024;
     private const int MaxAinesosaLength = 30;
 
+    // Validates the given ReseptiRequest DTO and returns a list of validation messages.
     public List<string> Validate(ReseptiRequest reseptiDto)
     {
         var validationMessages = new List<string>();
@@ -16,6 +19,7 @@ public class ReseptiValidator
         return validationMessages;
     }
 
+    // Validates the description of the recipe and adds validation messages if any issues are found.
     private void ValidateValmistuskuvaus(string valmistuskuvaus, List<string> validationMessages)
     {
         if (string.IsNullOrWhiteSpace(valmistuskuvaus))
@@ -28,6 +32,7 @@ public class ReseptiValidator
         }
     }
 
+    // Validates the ingredients of the recipe and adds validation messages if any issues are found.
     private void ValidateAinesosat(string[] ainesosat, List<string> validationMessages)
     {
         if (ainesosat != null)
@@ -46,6 +51,7 @@ public class ReseptiValidator
         }
     }
 
+    // Validates the keywords of the recipe and adds validation messages if any issues are found.
     private void ValidateAvainsanat(string[] avainsanat, List<string> validationMessages)
     {
         if (avainsanat != null)
