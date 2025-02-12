@@ -1,0 +1,269 @@
+﻿@page "/accounts"
+@layout MainLayout
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject CustomAuthenticationStateProvider CustomAuthStateProvider
+@using RuokaBlazor.Properties.Model
+@using System.Security.Claims
+@using RuokaBlazor.Services
+
+<div>
+    <div class="container">
+        <div class="form-container">
+            <EditForm Model="kayttaja" OnValidSubmit="HandleManagement" class="main-layout">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <div>
+                    <div class="form-group">
+                        <label for="firstname">Käyttäjätaso</label>
+                        <InputText id="user_profile" @bind-Value="kayttaja.Kayttajataso" class="form-control" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="firstname">Etunimi</label>
+                        <InputText id="firstname" @bind-Value="kayttaja.Etunimi" class="form-control" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lastname">Sukunimi</label>
+                        <InputText id="lastname" @bind-Value="kayttaja.Sukunimi" class="form-control" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Sähköpostiosoite</label>
+                        <InputText id="email" @bind-Value="kayttaja.Sahkopostiosoite" class="form-control" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="username">Käyttäjätunnus</label>
+                        <InputText id="username" @bind-Value="kayttaja.Nimimerkki" class="form-control" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Salasana</label>
+                        <InputText id="password" @bind-Value="kayttaja.Salasana" type="password" class="form-control" />
+                    </div>
+
+                    <div style="margin-bottom: 15px;"></div>
+
+                    <button type="button" @onclick="UpdateUser" class="btn btn-primary">Muokkaa</button>
+                    <button type="button" @onclick="DeleteUser" class="btn btn-primary">Poista</button>
+                    <button type="button" @onclick="ClearForm" class="btn btn-primary">Tyhjennä</button>
+
+                    <div style="margin-bottom: 15px;"></div>
+                </div>
+            </EditForm>
+        </div>
+
+        @if (user.IsInRole("admin"))
+        {
+            <div class="user-list">
+                <h3>Käyttäjät</h3>
+                <ul>
+                    @foreach (var user in users)
+                    {
+                        <li @onclick="() => SelectUser(user)" class="user-item">@user.Etunimi</li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+</div>
+<script>
+</script>
+<style>
+    .form-group {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px; /* Lisää tilaa lomakkeen kenttien väliin */
+    }
+
+        .form-group label {
+            margin-right: 10px; /* Etäisyys labelin ja input-kentän välillä */
+            min-width: 120px; /* Määritä leveys, jotta labelit asettuvat tasaisesti */
+        }
+
+    .signup-layout {
+        max-width: 400px; /* Lomakkeen maksimileveys */
+        margin: 0 auto; /* Keskittää lomakkeen */
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+    }
+
+    .dropbtn {
+        background-color: #3498DB;
+        color: white;
+        padding: 16px;
+        font-size: 16px;
+        border: none;
+        cursor: pointer;
+    }
+
+        .dropbtn:hover, .dropbtn:focus {
+            background-color: #2980B9;
+        }
+
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #f1f1f1;
+        min-width: 160px;
+        overflow: auto;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+        z-index: 1;
+    }
+
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+
+    .dropdown a:hover {
+        background-color: #ddd;
+    }
+
+    .show {
+        display: block;
+    }
+</style>
+
+<p>@message</p>
+
+@code {
+    private List<Kayttaja> users = new();
+    private Kayttaja kayttaja = new();
+    private string message = string.Empty;
+    private bool isUserAdminOrUser;
+    private ClaimsPrincipal user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await CustomAuthStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
+
+        //Tää on vaa consolewritelineä varten!
+        var role = user.FindFirst(ClaimTypes.Role)?.Value;
+        var email = user.FindFirst(ClaimTypes.Email)?.Value;
+        var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        Console.WriteLine($"User role: {role}, Email: {email}, User ID: {userId}");
+        //Tää on vaa consolewritelineä varten!
+
+        isUserAdminOrUser = user.IsInRole("admin") || user.IsInRole("user");
+
+        if (user.IsInRole("admin") && !string.IsNullOrEmpty(userId) && !string.IsNullOrEmpty(email))
+        {
+            await getUsers(int.Parse(userId), "Admin", email); // Nyt ID ja email tulevat dynaamisesti
+        }
+    }
+
+
+    private async Task getUsers(int Id, string salasana, string sahkopostiosoite)
+    {
+        try
+        {
+            users = await Http.GetFromJsonAsync<List<Kayttaja>>($@"Kayttaja/Haekaikki/{Id}/{salasana}/{sahkopostiosoite}");
+
+        }
+        catch (Exception ex)
+        {
+            message = "Käyttäjien lataaminen epäonnistui: " + ex.Message;
+        }
+    }
+    private void SelectUser(Kayttaja user)
+    {
+        kayttaja = new Kayttaja
+            {
+                Id = user.Id,
+                Etunimi = user.Etunimi,
+                Sukunimi = user.Sukunimi,
+                Salasana = user.Salasana,
+                Kayttajataso = user.Kayttajataso,
+                Sahkopostiosoite = user.Sahkopostiosoite,
+                Nimimerkki = user.Nimimerkki,
+            };
+    }
+    private async Task UpdateUser()
+    {
+        try
+        {
+            Console.WriteLine($"Päivitetään käyttäjää: {kayttaja.Etunimi} {kayttaja.Sukunimi} {kayttaja.Kayttajataso}");
+
+            var response = await Http.PutAsJsonAsync("Kayttaja/PaivitaTietoja", kayttaja);
+
+            if (response.IsSuccessStatusCode)
+            {
+                message = "Päivitys onnistui!";
+                await getUsers(int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0"),
+                               "Admin",
+                               user.FindFirst(ClaimTypes.Email)?.Value ?? ""); // Päivitä käyttäjien lista
+                kayttaja = new Kayttaja(); // Tyhjennä lomake
+                StateHasChanged(); // Päivitä käyttöliittymä
+            }
+            else
+            {
+                message = "Päivitys epäonnistui.";
+                Console.WriteLine($"Virhe: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
+            }
+        }
+        catch (Exception ex)
+        {
+            message = "Päivitys epäonnistui: " + ex.Message;
+        }
+    }
+
+    private async Task DeleteUser()
+    {
+        if (kayttaja.Id == 0 || string.IsNullOrEmpty(kayttaja.Sahkopostiosoite) || string.IsNullOrEmpty(kayttaja.Salasana))
+        {
+            message = "Poistaminen epäonnistui: Puuttuvat tiedot.";
+            return;
+        }
+
+        try
+        {
+            var response = await Http.DeleteAsync($@"Kayttaja/Poista/{kayttaja.Id}/{kayttaja.Sahkopostiosoite}/{kayttaja.Salasana}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                message = "Käyttäjä poistettu!";
+                await getUsers(int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0"),
+                               "Admin",
+                               user.FindFirst(ClaimTypes.Email)?.Value ?? ""); // Päivitä käyttäjien lista
+                kayttaja = new Kayttaja(); // Tyhjennä lomake
+                StateHasChanged(); // Päivitä käyttöliittymä
+            }
+            else
+            {
+                message = "Poistaminen epäonnistui. Virheellinen vastaus backendiltä.";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = "Virhe: " + ex.Message;
+        }
+    }
+
+
+    private void ClearForm()
+    {
+        kayttaja = new Kayttaja();
+    }
+    private void HandleManagement()
+    {
+
+    }
+
+    private void BackToLogin()
+    {
+        Navigation.NavigateTo("/");
+    }
+}

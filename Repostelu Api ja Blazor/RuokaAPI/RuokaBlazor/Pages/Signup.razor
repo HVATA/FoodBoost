@@ -1,0 +1,82 @@
+﻿@page "/signup"
+@inject NavigationManager Navigation
+@inject HttpClient Http
+@layout SignupLayout
+@using RuokaBlazor.Properties.Model
+
+<EditForm Model="uusiKayttaja" OnSubmit="HandleSignup" class="signup-layout">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="firstname">Etunimi</label>
+        <InputText id="firstname" @bind-Value="uusiKayttaja.Etunimi" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label for="lastname">Sukunimi</label>
+        <InputText id="lastname" @bind-Value="uusiKayttaja.Sukunimi" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label for="email">Sähköpostiosoite</label>
+        <InputText id="email" @bind-Value="uusiKayttaja.Sahkopostiosoite" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label for="username">Käyttäjätunnus</label>
+        <InputText id="username" @bind-Value="uusiKayttaja.Nimimerkki" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label for="password">Salasana</label>
+        <InputText id="password" @bind-Value="uusiKayttaja.Salasana" type="password" class="form-control" />
+    </div>
+
+    <div style="margin-bottom: 15px;"></div>
+
+    <button type="submit" class="btn btn-primary">Rekisteröidy</button>
+
+    <div style="margin-bottom: 15px;"></div>
+
+    <div>
+        <button @onclick="BackToLogin" class="btn btn-link">Peruuta</button>
+    </div>
+
+</EditForm>
+
+<p>@message</p>
+
+@code {
+    private Kayttaja uusiKayttaja = new();
+
+    private string message = string.Empty;
+
+    private async Task HandleSignup()
+    {
+        try
+        {
+            uusiKayttaja.Kayttajataso = "user";
+            var response = await Http.PostAsJsonAsync("Kayttaja/LisaaKayttaja", uusiKayttaja);
+
+            if (response.IsSuccessStatusCode)
+            {
+                message = "Rekisteröinti onnistui!";
+                Navigation.NavigateTo("/home");
+            }
+            else
+            {
+                message = "Rekisteröinti epäonnistui. Yritä uudelleen.";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Virhe rekisteröinnissä: {ex.Message}";
+        }
+    }
+
+    private void BackToLogin()
+    {
+        Navigation.NavigateTo("/");
+    }
+}

@@ -1,0 +1,179 @@
+﻿@page "/resepti/muokkaa/{reseptiId:int}"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@inject TunnistaKayttaja TunnistaKayttaja
+
+
+<h3>Muokkaa reseptiä</h3>
+
+
+
+
+
+
+@if (resepti == null)
+{
+    <p>Ladataan reseptiä...</p>
+}
+else
+{
+    //Ei ole kaikkia kenttiä tetstaan vaan kuvien lähettämistä tuon Kuva1 stringin kautta kantaan ja siitä mihin tarvii
+
+    <EditForm Model="@resepti" OnValidSubmit="TallennaMuutokset">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label>ID:</label>
+            <p>@resepti.Id</p>
+        </div>
+
+        <div class="form-group">
+            <label>Tekijä ID:</label>
+            <p>@resepti.TekijaId</p>
+        </div>
+
+        <div class="form-group">
+            <label for="nimi">Nimi:</label>
+            <InputText id="nimi" @bind-Value="resepti.Nimi" class="form-control" />
+        </div>
+
+        <div class="form-group">
+            <label for="valmistuskuvaus">Valmistuskuvaus:</label>
+            <InputTextArea id="valmistuskuvaus" @bind-Value="resepti.Valmistuskuvaus" class="form-control" />
+        </div>
+
+       
+
+        <div class="form-group">
+            <label>Nykyinen kuva:</label>
+            @if (!string.IsNullOrEmpty(resepti.Kuva1))
+            {
+                <img src="data:image/png;base64,@resepti.Kuva1" width="640" height="480" />
+            }
+            else
+            {
+                <p>Ei kuvaa</p>
+            }
+        </div>
+
+        <div class="form-group">
+            <label for="file-upload">Vaihda kuva:</label>
+            <InputFile id="file-upload" OnChange="OnChange" class="form-control" accept="image/*" />
+        </div>
+
+        <div class="form-group">
+            <label for="katseluoikeus">Katseluoikeus:</label>
+            <select id="katseluoikeus" @bind="resepti.Katseluoikeus" class="form-control">
+                <option value="julkinen">Julkinen</option>
+                <option value="yksityinen">Yksityinen</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Tallenna</button>
+            <button type="button" class="btn btn-secondary" @onclick="Peruuta">Peruuta</button>
+        </div>
+    </EditForm>
+
+
+}
+@code {
+    [Parameter] 
+    public int ReseptiId { get; set; }
+    private ReseptiDto? resepti;
+    private string virhe = "";
+
+    public string? message { get; set; }
+
+    bool onkoLahetetty;
+
+    List<KuvaLuokka> lista = new List<KuvaLuokka>();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        
+        if (string.IsNullOrEmpty(TunnistaKayttaja.Sahkoposti))
+        {
+            NavigationManager.NavigateTo("/kirjaudu", true);
+            return;
+        }
+
+
+        try
+        {
+            resepti = await Http.GetFromJsonAsync<ReseptiDto>($"Resepti/{ReseptiId}");
+        }
+        catch (Exception ex)
+        {
+            virhe = "Virhe ladattaessa reseptiä: " + ex.Message;
+        }
+    }
+
+    public async Task TallennaMuutokset()
+    {
+
+
+
+        try
+        {
+            resepti.Kuva1 = lista[0].KuvaStringBase64;
+
+
+            var response = await Http.PutAsJsonAsync($"Resepti/{resepti.Id}", resepti);
+
+            if (response.IsSuccessStatusCode)
+            {
+                NavigationManager.NavigateTo("/reseptit");
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+            {
+                var errors = await response.Content.ReadFromJsonAsync<List<string>>();
+                virhe = string.Join(", ", errors);
+            }
+            else
+            {
+                virhe = "Päivitys epäonnistui.";
+            }
+        }
+        catch (Exception ex)
+        {
+            virhe = "Virhe tallennettaessa: " + ex.Message;
+        }
+    }
+
+    private void Peruuta()
+    {
+        NavigationManager.NavigateTo("/reseptit");
+    }
+
+    async Task OnChange(InputFileChangeEventArgs e)
+    {
+        message = "Ladataan kuvaa";
+
+        byte[] taulukko;
+
+        var files = e.GetMultipleFiles(); // get the files selected by the users
+        foreach (var file in files)
+        {
+            var resizedFile = await file.RequestImageFileAsync(file.ContentType, 640, 480); // resize the image file tavutaulukko
+            var buf = new byte[resizedFile.Size]; // allocate a buffer to fill with the file's data
+            taulukko = buf;
+            using (var stream = resizedFile.OpenReadStream())
+            {
+                await stream.ReadAsync(buf); // copy the stream to the buffer
+            }
+            KuvaLuokka kuvaLuokka = new KuvaLuokka();
+            kuvaLuokka.KuvaStringBase64 = Convert.ToBase64String(buf);
+
+            lista.Add(kuvaLuokka);
+
+
+           
+            
+        }
+        
+        message = "Kuva on ladattu lähetystä varten";
+    }
+}

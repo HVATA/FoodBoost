@@ -1,0 +1,218 @@
+﻿@page "/home"
+@layout MainLayout
+<div>
+    <div class="search-bar">
+        <div class="search-container">
+            <button @onclick="Search" class="search-btn">Hae</button>
+        </div>
+        <div class="search-container">
+            <div>
+                <input type="text" placeholder="Hae reseptejä nimellä tai ainesosalla..." @bind="SearchQuery" class="search-input" />
+            </div>
+        </div>
+    </div>
+    <div class="dropdown-bar">
+        <div class="dropdown">
+            <button onclick="showIngredientContent()" class="dropbtn">Raaka-aine</button>
+            <div id="ingredientDropdown" class="dropdown-content">
+                <a href="#home">Raaka-aine</a>
+                <a href="#about">Raaka-aine</a>
+                <a href="#contact">Raaka-aine</a>
+            </div>
+        </div>
+        <div class="dropdown">
+            <button onclick="showDishContent()" class="dropbtn">Ruokalaji</button>
+            <div id="dishDropdown" class="dropdown-content">
+                <a href="#home">Ruokalaji</a>
+                <a href="#about">Ruokalaji</a>
+                <a href="#contact">Ruokalaji</a>
+            </div>
+        </div>
+        <div class="dropdown">
+            <button onclick="showDietContent()" class="dropbtn">Ruokavalio</button>
+            <div id="dietDropdown" class="dropdown-content">
+                <a href="#home">Ruokavalio</a>
+                <a href="#about">Ruokavalio</a>
+                <a href="#contact">Ruokavalio</a>
+            </div>
+        </div>
+        <div class="dropdown">
+            <button onclick="showSeasonalContent()" class="dropbtn">Sesonki</button>
+            <div id="seasonalDropdown" class="dropdown-content">
+                <a href="#home">Sesonki</a>
+                <a href="#about">Sesonki</a>
+                <a href="#contact">Sesonki</a>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    /* Klikattaessa näytetään dropdown alamenu*/
+    function showIngredientContent() {
+        document.getElementById("ingredientDropdown").classList.toggle("show");
+    }
+    function showDishContent() {
+        document.getElementById("dishDropdown").classList.toggle("show");
+    }
+    function showDietContent() {
+        document.getElementById("dietDropdown").classList.toggle("show");
+    }
+    function showSeasonalContent() {
+        document.getElementById("seasonalDropdown").classList.toggle("show");
+    }
+
+    // Suljetaan alamenu jos klikataan menu ulkopuolelle
+    window.onclick = function (event) {
+        if (!event.target.matches('.dropbtn')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            var i;
+            for (i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
+                }
+            }
+        }
+    }
+</script>
+<style>
+    .dropbtn {
+        background-color: #3498DB;
+        color: white;
+        padding: 16px;
+        font-size: 16px;
+        border: none;
+        cursor: pointer;
+    }
+
+        .dropbtn:hover, .dropbtn:focus {
+            background-color: #2980B9;
+        }
+
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .search-container {
+        position: relative;
+        display: inline-block;
+    }
+
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #f1f1f1;
+        min-width: 160px;
+        overflow: auto;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+        z-index: 1;
+    }
+
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+
+    .dropdown a:hover {
+        background-color: #ddd;
+    }
+
+    .show {
+        display: block;
+    }
+
+    .search-options-container {
+        position: relative;
+        display: inline-block;
+    }
+
+    .search-btn {
+        background-color: #3498DB;
+        color: white;
+        padding: 16px;
+        font-size: 16px;
+        border: none;
+        cursor: pointer;
+    }
+
+    .search-input {
+        width: 70rem;
+        height: 4rem;
+        position: relative;
+        display: inline-block;
+    }
+
+    .search-results {
+        position: center;
+        width: 10rem;
+        height: 10rem;
+    }
+
+    .recipe-image {
+        width: 100px;
+        height: 100px;
+    }
+
+    .recipe-card {
+        display: flex;
+        justify-content: initial;
+        align-items: center;
+        height: 20rem;
+    }
+</style>
+@code {
+    private string SearchQuery { get; set; } = string.Empty; // Tallentaa hakukyselyn
+    private string SearchResult { get; set; } = string.Empty; // Näyttää tulokset
+    private bool isDropdownVisible = false; // Dropdownin tila
+    private bool showSearchResult = false; // Hakutuloksen näkyvyys
+    private List<Recipe>? TopRecipes;
+
+    private void ToggleDropdown()
+    {
+        isDropdownVisible = !isDropdownVisible;
+    }
+
+    private void Search()
+    {
+        if (!string.IsNullOrEmpty(SearchQuery))
+        {
+            SearchResult = $"Haku: '{SearchQuery}' suoritettu!";
+            showSearchResult = true;
+        }
+        else
+        {
+            SearchResult = "Hakukenttä on tyhjä. Anna hakusana.";
+            showSearchResult = false;
+        }
+    }
+
+    private void FilterByName()
+    {
+        SearchResult = "Suodatus nimellä valittu.";
+        isDropdownVisible = false;
+        showSearchResult = true;
+    }
+
+    private void FilterByIngredient()
+    {
+        SearchResult = "Suodatus ainesosilla valittu.";
+        isDropdownVisible = false;
+        showSearchResult = true;
+    }
+
+    private void FilterByCategory()
+    {
+        SearchResult = "Suodatus kategoriasta valittu.";
+        isDropdownVisible = false;
+        showSearchResult = true;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Hakee 4 katsotuinta reseptiä tietokannasta myöhemmin
+    }
+}
