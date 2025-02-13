@@ -84,7 +84,7 @@ namespace RuokaAPI.Controllers
             Kayttaja? p = await _context.Kayttajat.Where(x => (x.Sahkopostiosoite == sahkopostiosoite)).FirstOrDefaultAsync();
 
 
-           ;
+           
 
 
             if ( p.Salasana == salasana)
@@ -183,10 +183,14 @@ namespace RuokaAPI.Controllers
             }
         }
 
-        [HttpPut("PaivitaTietoja")]
-        public async Task<ActionResult<Kayttaja>> Paivita(Kayttaja p)
+        [HttpPut("PaivitaTietoja")]  
+        public async Task<ActionResult<Kayttaja>> Paivita(PaivitysRequest? paivitysRequest)
         {
+            if (paivitysRequest == null) {
 
+                return BadRequest();
+            }
+            Kayttaja p = paivitysRequest.Kayttaja;
 
 
             var tt = _context.Kayttajat.Find(p.Id);
@@ -194,7 +198,7 @@ namespace RuokaAPI.Controllers
            
            
 
-            if( tt.Sahkopostiosoite==p.Sahkopostiosoite&&p.Sahkopostiosoite==tt.Sahkopostiosoite)
+            if(tt!=null && tt.Sahkopostiosoite==p.Sahkopostiosoite&&p.Salasana==tt.Salasana)
             {
 
                 string? kuva = null;
@@ -206,7 +210,13 @@ namespace RuokaAPI.Controllers
                 tt.Sukunimi = p.Sukunimi;
                 tt.Sahkopostiosoite = p.Sahkopostiosoite;
                 tt.Kayttajataso = p.Kayttajataso;
-                tt.Salasana = p.Salasana;
+
+                if (!string.IsNullOrEmpty(paivitysRequest.uusisalasana))
+                {
+                    tt.Salasana = paivitysRequest.uusisalasana;
+
+                }
+                
                 tt.Nimimerkki = p.Nimimerkki;
 
 
@@ -502,8 +512,7 @@ namespace RuokaAPI.Controllers
 
             if (p.Salasana != request.Kayttaja.Salasana) { 
             
-            return "Virheellinen salasana.";
-            } 
+            } return "Virheellinen salasana.";
 
             // Etsitään suosikki
             var suosikki = await _context.Suosikit

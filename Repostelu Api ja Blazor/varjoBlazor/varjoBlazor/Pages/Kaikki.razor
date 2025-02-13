@@ -117,21 +117,21 @@
 
     protected override async Task OnInitializedAsync()
     {
+        /*
 
-        
         if (string.IsNullOrEmpty(TunnistaKayttaja.Sahkoposti))
-            {
+        {
             NavigationManager.NavigateTo("/kirjaudu", true);
-        return; 
+            return; 
         }
 
-        
+
 
         //hakee käyttäjän p TunnistaKayttäjä palvelu singleton kautta ja kun tällä sivulla on käyttäjien tiedot tarvitaan admin oikeudet
 
-          p = await HaeKayttaja(TunnistaKayttaja.Salasana, TunnistaKayttaja.Sahkoposti);
+        p = await HaeKayttaja(TunnistaKayttaja.Salasana, TunnistaKayttaja.Sahkoposti);
 
-
+        */
 
 
         //Hakee kaikki käyttäjät vain admin
@@ -148,7 +148,7 @@
         lista.Add(3);
 
         //vain admin tason käyttäjä hakee listallisen käyttäjiä
-          kayttajat = await HaeKayttajat(p.Id,TunnistaKayttaja.Salasana,TunnistaKayttaja.Sahkoposti);
+      //  kayttajat = await HaeKayttajat(p.Id,TunnistaKayttaja.Salasana,TunnistaKayttaja.Sahkoposti);
 
 
 
@@ -191,19 +191,26 @@
 
         //Päivitä käyttäjän tietoja 
 
-          /* 
-          * 
-          Kayttaja kayttaja1 = new Kayttaja();
-         kayttaja1.Etunimi = "Mikki";
-         kayttaja1.Sukunimi = "Hiiri";
-          kayttaja1.Nimimerkki = "Mikki";
-         kayttaja1.Kayttajataso = "admin";
-         kayttaja1.Sahkopostiosoite = "iines.ankka@gmail.com";
-        kayttaja1.Salasana = "Iines313";
+        PaivitysRequest? paivitysRequest = new PaivitysRequest();
 
-        await PaivitaTietoja(kayttaja1);
+        Kayttaja kayttaja1 = new Kayttaja();
 
-        */
+
+        kayttaja1.Id = 2;
+        kayttaja1.Etunimi = "Aku";
+        kayttaja1.Sukunimi = "Ankka";
+        kayttaja1.Nimimerkki = "Aku";
+        kayttaja1.Kayttajataso = "admin";
+        kayttaja1.Sahkopostiosoite = "aku.ankka@gmail.com";
+        kayttaja1.Salasana = "7df3a2e5-0e7f-4aa9-bc88-ca83b1088b95";
+
+        paivitysRequest.Kayttaja = kayttaja1;
+        paivitysRequest.uusisalasana = "Aku313";
+
+
+        await PaivitaTietoja(paivitysRequest);
+
+
 
 
         /*
@@ -233,7 +240,7 @@
 
 
 
-    //    string tulos  = await PoistaKayttaja(3,"urho.kekkonen@gmail.com","Urho313");
+        //    string tulos  = await PoistaKayttaja(3,"urho.kekkonen@gmail.com","Urho313");
         int br = 0;
 
 
@@ -246,7 +253,7 @@
 
 
         /*
-         * 
+        * 
         Kayttaja kayttaja2 = new Kayttaja();
 
         kayttaja2.Id = 2;
@@ -265,7 +272,7 @@
 
     }
 
-    
+
 
 
 
@@ -294,26 +301,33 @@
     }
 
 
-    public  async Task<Kayttaja> PaivitaTietoja(Kayttaja k)
+    public  async Task<Kayttaja> PaivitaTietoja(PaivitysRequest? k)
     {
-        string RequestUri = "Kayttaja/PaivitaTietoja";
+        if (k is null)
+        {
+            throw new ArgumentNullException(nameof(k));
+        }
 
-        string email = k.Sahkopostiosoite;
+        
 
-        string salasana = k.Salasana;
+        string email = k.Kayttaja.Sahkopostiosoite;
 
-        Kayttaja h   = await HaeKayttaja(salasana,email);
-
-        h.Etunimi = k.Etunimi;
-        h.Sukunimi = k.Sukunimi;
-        h.Salasana = k.Salasana;
-        h.Kayttajataso = k.Kayttajataso;
-        h.Sahkopostiosoite = k.Sahkopostiosoite;
-        h.Nimimerkki = k.Nimimerkki;
+        string salasana = k.Kayttaja.Salasana;
 
 
 
-        HttpResponseMessage response = await Http.PutAsJsonAsync("Kayttaja/PaivitaTietoja", h);
+      //  Kayttaja h   = await HaeKayttaja(salasana,email);
+        var url = $@"Kayttaja/Tunnistautumistiedot/{salasana}/{email}";
+
+
+        Kayttaja? p = await Http.GetFromJsonAsync<Kayttaja>(url);
+
+     
+        
+
+        
+
+          HttpResponseMessage response = await Http.PutAsJsonAsync("Kayttaja/PaivitaTietoja",k);
 
         if (response.IsSuccessStatusCode)
         {
