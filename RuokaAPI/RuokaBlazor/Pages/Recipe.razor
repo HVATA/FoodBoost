@@ -7,7 +7,11 @@
 @using RuokaBlazor.Properties.Model
 @using RuokaBlazor.Services
 
-@if (resepti == null)
+@if (virheViesti != null)
+{
+    <p>@virheViesti</p>
+}
+else if (resepti == null)
 {
     <p>Ladataan reseptin tietoja...</p>
 }
@@ -141,19 +145,30 @@ else
     [Parameter] public int Id { get; set; }
     private Resepti? resepti;
     private bool kayttajallaOikeudet = false;
+    private string? virheViesti;
 
     protected override async Task OnInitializedAsync()
     {
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         try
         {
             // Hae resepti API:sta
-            resepti = await Http.GetFromJsonAsync<Resepti>($"resepti/{Id}");
+            resepti = await Http.GetFromJsonAsync<Resepti>($"resepti/{Id}", cts.Token);
+            if (resepti == null)
+            {
+                virheViesti = "Valittua reseptiä ei löydy.";
+                return;
+            }
             // Tarkista käyttäjän oikeudet
             kayttajallaOikeudet = await TarkistaKayttajanOikeudet();
         }
+        catch (OperationCanceledException)
+        {
+            virheViesti = "Reseptin lataaminen kesti liian kauan.";
+        }
         catch (Exception ex)
         {
-            Console.WriteLine($"Virhe reseptin tietojen lataamisessa: {ex.Message}");
+            virheViesti = $"Virhe reseptin tietojen lataamisessa: {ex.Message}";
         }
     }
 
