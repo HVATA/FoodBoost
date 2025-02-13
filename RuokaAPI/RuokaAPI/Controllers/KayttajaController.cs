@@ -48,9 +48,6 @@ namespace RuokaAPI.Controllers
 
             if (lista.Count == 0)
             {
-                salasana = x.Salasana;
-                string hash = BCrypt.Net.BCrypt.HashPassword(salasana);
-                x.Salasana = hash;
 
 
                 _context.Kayttajat.Add(x);
@@ -87,10 +84,10 @@ namespace RuokaAPI.Controllers
             Kayttaja? p = await _context.Kayttajat.Where(x => (x.Sahkopostiosoite == sahkopostiosoite)).FirstOrDefaultAsync();
 
 
-            bool onHashattu = p.Salasana.StartsWith("$2a$") || p.Salasana.StartsWith("$2b$");
+           ;
 
 
-            if ((onHashattu && BCrypt.Net.BCrypt.Verify(salasana, p.Salasana)) || (!onHashattu && p.Salasana == salasana))
+            if ( p.Salasana == salasana)
             {
                 return Ok(p);
 
@@ -131,9 +128,9 @@ namespace RuokaAPI.Controllers
             string kayttajataso = "admin";
 
             // Tarkistetaan, että käyttäjä on admin ja tunnistetiedot ovat oikein
-            if ((p != null && p.Kayttajataso.Equals(kayttajataso) &&
-    (p.Salasana == salasana || (p.Salasana.StartsWith("$2a$") || p.Salasana.StartsWith("$2b$")) && BCrypt.Net.BCrypt.Verify(salasana, p.Salasana)) &&
-    p.Sahkopostiosoite == sahkopostiosoite))
+            if (p != null && p.Kayttajataso.Equals(kayttajataso) &&p.Salasana == salasana  &&p.Sahkopostiosoite == sahkopostiosoite)
+    
+    
             {
                 kayttajat = await _context.Kayttajat.ToListAsync();
                 return kayttajat;
@@ -159,10 +156,9 @@ namespace RuokaAPI.Controllers
             }
 
             // Tarkistetaan, onko salasana hajautettu ja validoidaan se
-            bool onHashattu = poistaja.Salasana.StartsWith("$2a$") || poistaja.Salasana.StartsWith("$2b$");
-            bool salasanaOk = onHashattu ? BCrypt.Net.BCrypt.Verify(salasana, poistaja.Salasana) : (poistaja.Salasana == salasana);
+           
 
-            if (!salasanaOk)
+            if (poistaja.Salasana!=salasana)
             {
                 return Unauthorized("Virheellinen salasana.");
             }
@@ -195,10 +191,10 @@ namespace RuokaAPI.Controllers
 
             var tt = _context.Kayttajat.Find(p.Id);
 
-            bool onHashattu = tt.Salasana.StartsWith("$2a$") || tt.Salasana.StartsWith("$2b$");
-            bool salasanaOk = onHashattu ? BCrypt.Net.BCrypt.Verify(p.Salasana, tt.Salasana) : (tt.Salasana == p.Salasana);
+           
+           
 
-            if (salasanaOk && tt.Sahkopostiosoite.Equals(p.Sahkopostiosoite))
+            if( tt.Sahkopostiosoite==p.Sahkopostiosoite&&p.Sahkopostiosoite==tt.Sahkopostiosoite)
             {
 
                 string? kuva = null;
@@ -210,7 +206,7 @@ namespace RuokaAPI.Controllers
                 tt.Sukunimi = p.Sukunimi;
                 tt.Sahkopostiosoite = p.Sahkopostiosoite;
                 tt.Kayttajataso = p.Kayttajataso;
-                tt.Salasana = BCrypt.Net.BCrypt.HashPassword(p.Salasana);
+                tt.Salasana = p.Salasana;
                 tt.Nimimerkki = p.Nimimerkki;
 
 
@@ -223,8 +219,8 @@ namespace RuokaAPI.Controllers
             else
             {
 
-                Kayttaja k = new Kayttaja();
-                return Ok(k);//Ei kiitos tällaisia enää, antoi fronttiin virhetilanteessa ok ja oli aika vaikea löytää virhettä Terveisin HenriV
+               
+                return NoContent();
 
             }
 
@@ -255,9 +251,9 @@ namespace RuokaAPI.Controllers
                 return StatusCode(500, "Jotain meni pieleen!");
             }
 
-            // Päivitetään salasana ja krypatataan se kantaan
+            // Päivitetään salasana 
 
-            tt.Salasana = BCrypt.Net.BCrypt.HashPassword(Uusisalasana);
+            tt.Salasana =Uusisalasana;
             _context.Kayttajat.Update(tt);
             await _context.SaveChangesAsync();
 
@@ -278,12 +274,9 @@ namespace RuokaAPI.Controllers
                     return Unauthorized("Käyttäjää ei löytynyt.");
                 }
 
-                // Tarkistetaan salasana (hashattu tai ei)
-                string salasana = o.Salasana;
-                bool onHashattu = kayttaja.Salasana.StartsWith("$2a$") || kayttaja.Salasana.StartsWith("$2b$");
-                bool salasanaOk = onHashattu ? BCrypt.Net.BCrypt.Verify(salasana, kayttaja.Salasana) : (kayttaja.Salasana == salasana);
+                
 
-                if (!salasanaOk)
+                if (kayttaja.Salasana!=o.Salasana)
                 {
                     return Unauthorized("Virheellinen salasana.");
                 }
@@ -359,19 +352,13 @@ namespace RuokaAPI.Controllers
                 return "Käyttäjää ei löytynyt.";
             }
 
-            // Tarkistetaan salasana (hashattu tai ei)
-            bool onHashattu = p.Salasana.StartsWith("$2a$") || p.Salasana.StartsWith("$2b$");
-
-            bool salasanaOk = onHashattu
-                ? BCrypt.Net.BCrypt.Verify(request.Kayttaja.Salasana, p.Salasana)
-                : (p.Salasana == request.Kayttaja.Salasana);
-
-            if (!salasanaOk)
+           
+            if (p.Salasana!=kayttaja.Salasana)
             {
                 return "Virheellinen salasana.";
             }
 
-            if (salasanaOk)
+            if (p.Salasana==kayttaja.Salasana)
             {
                 // Haetaan käyttäjän aiemmat suosikit kannasta
                 var templista = await _context.Suosikit
@@ -410,16 +397,13 @@ namespace RuokaAPI.Controllers
                 return Suosikkireseptit;
             }
 
-            // Tarkistetaan salasana (hashattu tai ei)
-            string ssana = p.Salasana;
-            bool onHashattu = p.Salasana.StartsWith("$2a$") || p.Salasana.StartsWith("$2b$");
-            bool salasanaOk = onHashattu ? BCrypt.Net.BCrypt.Verify(k.Salasana, p.Salasana) : (k.Salasana == p.Salasana);
-            if (!salasanaOk)
+            
+            if (p.Salasana!=k.Salasana)
             {
                 return Suosikkireseptit = null;
             }
 
-            if (salasanaOk)
+            if (p.Salasana==k.Salasana)
             {
                 suosikit = await _context.Suosikit.Where(x => x.kayttajaID == p.Id).ToListAsync();
 
@@ -451,13 +435,8 @@ namespace RuokaAPI.Controllers
                 return "Käyttäjää ei löytynyt.";
             }
 
-            // Tarkistetaan salasana
-            bool onHashattu = p.Salasana.StartsWith("$2a$") || p.Salasana.StartsWith("$2b$");
-            bool salasanaOk = onHashattu
-                ? BCrypt.Net.BCrypt.Verify(request.Salasana, p.Salasana)
-                : (p.Salasana == request.Salasana);
 
-            if (!salasanaOk)
+            if (p.Salasana!=request.Salasana)
             {
                 return "Virheellinen salasana.";
             }
@@ -481,18 +460,22 @@ namespace RuokaAPI.Controllers
 
             if (p == null) return "Käyttäjää ei löytynyt.";
 
-            bool onHashattu = p.Salasana.StartsWith("$2a$") || p.Salasana.StartsWith("$2b$");
-            bool salasanaOk = onHashattu
-                ? BCrypt.Net.BCrypt.Verify(request.Kayttaja.Salasana, p.Salasana)
-                : (p.Salasana == request.Kayttaja.Salasana);
 
-            if (!salasanaOk) return "Virheellinen salasana.";
+
+            if (p.Salasana != request.Kayttaja.Salasana) { 
+            
+            return "Virheellinen salasana.";
+            } 
 
             // Tarkistetaan, onko resepti jo suosikeissa
             bool onJoSuosikissa = await _context.Suosikit
                 .AnyAsync(x => x.kayttajaID == p.Id && x.reseptiID == request.suosikki.reseptiID);
 
-            if (onJoSuosikissa) return "Resepti on jo suosikeissa.";
+            if (onJoSuosikissa)
+            {
+                return "Resepti on jo suosikeissa.";
+            }
+
 
             // Lisätään uusi suosikki
             _context.Suosikit.Add(new Suosikit
@@ -516,12 +499,11 @@ namespace RuokaAPI.Controllers
 
             if (p == null) return "Käyttäjää ei löytynyt.";
 
-            bool onHashattu = p.Salasana.StartsWith("$2a$") || p.Salasana.StartsWith("$2b$");
-            bool salasanaOk = onHashattu
-                ? BCrypt.Net.BCrypt.Verify(request.Kayttaja.Salasana, p.Salasana)
-                : (p.Salasana == request.Kayttaja.Salasana);
 
-            if (!salasanaOk) return "Virheellinen salasana.";
+            if (p.Salasana != request.Kayttaja.Salasana) { 
+            
+            return "Virheellinen salasana.";
+            } 
 
             // Etsitään suosikki
             var suosikki = await _context.Suosikit
