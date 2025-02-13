@@ -332,7 +332,7 @@
         if (response.IsSuccessStatusCode)
         {
             Kayttaja? j = await response.Content.ReadFromJsonAsync<Kayttaja>();
-            return j ?? throw new Exception("Tyhjä vastaus palvelimelta");
+            // return j ?? throw new Exception("Tyhjä vastaus palvelimelta");
         }
         else
         {
