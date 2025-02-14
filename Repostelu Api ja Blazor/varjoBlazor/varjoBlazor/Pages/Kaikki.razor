@@ -120,9 +120,9 @@
         /*
 
         if (string.IsNullOrEmpty(TunnistaKayttaja.Sahkoposti))
-        {
+            {
             NavigationManager.NavigateTo("/kirjaudu", true);
-            return; 
+        return; 
         }
 
 
@@ -142,13 +142,10 @@
 
         //  string sahkopostiosoite = "aku.ankka@gmail.com";
 
-        List<int> lista = new List<int>();
-        lista.Add(1);
-        lista.Add(2);
-        lista.Add(3);
+       
 
         //vain admin tason käyttäjä hakee listallisen käyttäjiä
-      //  kayttajat = await HaeKayttajat(p.Id,TunnistaKayttaja.Salasana,TunnistaKayttaja.Sahkoposti);
+        //  kayttajat = await HaeKayttajat(p.Id,TunnistaKayttaja.Salasana,TunnistaKayttaja.Sahkoposti);
 
 
 
@@ -196,16 +193,16 @@
         Kayttaja kayttaja1 = new Kayttaja();
 
 
-        kayttaja1.Id = 2;
-        kayttaja1.Etunimi = "Aku";
-        kayttaja1.Sukunimi = "Ankka";
-        kayttaja1.Nimimerkki = "Aku";
+        kayttaja1.Id = 7;
+        kayttaja1.Etunimi = "Urho";
+        kayttaja1.Sukunimi = "Kekkonen";
+        kayttaja1.Nimimerkki = "Urho";
         kayttaja1.Kayttajataso = "admin";
-        kayttaja1.Sahkopostiosoite = "aku.ankka@gmail.com";
-        kayttaja1.Salasana = "7df3a2e5-0e7f-4aa9-bc88-ca83b1088b95";
+        kayttaja1.Sahkopostiosoite = "urho.kekkonen@gmail.com";
+        kayttaja1.Salasana = "Urho313";
 
         paivitysRequest.Kayttaja = kayttaja1;
-        paivitysRequest.uusisalasana = "Aku313";
+       // paivitysRequest.uusisalasana = "Aku313";
 
 
         await PaivitaTietoja(paivitysRequest);
@@ -308,7 +305,7 @@
             throw new ArgumentNullException(nameof(k));
         }
 
-        
+
 
         string email = k.Kayttaja.Sahkopostiosoite;
 
@@ -316,32 +313,36 @@
 
 
 
-      //  Kayttaja h   = await HaeKayttaja(salasana,email);
+        //  Kayttaja h   = await HaeKayttaja(salasana,email);
         var url = $@"Kayttaja/Tunnistautumistiedot/{salasana}/{email}";
 
 
         Kayttaja? p = await Http.GetFromJsonAsync<Kayttaja>(url);
 
-     
-        
 
-        
 
-          HttpResponseMessage response = await Http.PutAsJsonAsync("Kayttaja/PaivitaTietoja",k);
+        Kayttaja? kayttaja = new Kayttaja();
+
+
+        HttpResponseMessage response = await Http.PutAsJsonAsync("Kayttaja/PaivitaTietoja",k);
 
         if (response.IsSuccessStatusCode)
         {
-            Kayttaja? j = await response.Content.ReadFromJsonAsync<Kayttaja>();
-            // return j ?? throw new Exception("Tyhjä vastaus palvelimelta");
+         return   kayttaja = await response.Content.ReadFromJsonAsync<Kayttaja>();
+            
         }
         else
         {
-            throw new Exception($"Virhe päivitettäessä käyttäjää: {response.StatusCode}");
+
+             return kayttaja ?? throw new Exception("Tyhjä vastaus palvelimelta");
+            
+            
+
         }
 
 
 
-
+       
 
 
     }
