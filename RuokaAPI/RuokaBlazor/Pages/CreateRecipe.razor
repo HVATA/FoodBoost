@@ -75,14 +75,14 @@
 </div>
 <style>
     .image-preview {
-        margin-top: 10px;
+    margin-top: 10px;
     }
 
     .preview-image {
-        max-width: 200px;
-        height: auto;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    max-width: 200px;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 </style>
 @code {
@@ -167,31 +167,36 @@
                 .Where(a => !string.IsNullOrWhiteSpace(a))
                 .ToArray();
 
+            Console.WriteLine("Tallennetaan resepti: " + JsonSerializer.Serialize(uusiResepti));
+
             // Lähetetään tiedot API:lle
             var response = await Http.PostAsJsonAsync("resepti", uusiResepti);
 
-
+            // Tarkistetaan, onnistuiko pyyntö
             if (response.IsSuccessStatusCode)
             {
-                // Luetaan API:n palauttama resepti (Resepti, EI ReseptiDto)
-                var tallennettuResepti = await response.Content.ReadFromJsonAsync<ReseptiResponse>();
+                var responseBody = await response.Content.ReadAsStringAsync();
+                Console.WriteLine("Palautettu JSON: " + responseBody);
 
-                Console.WriteLine($"Tallennettu resepti: {JsonSerializer.Serialize(tallennettuResepti)}");
+                // Tarkistetaan, palauttaako API JSON-objektin vai pelkän ID:n
+                if (!string.IsNullOrWhiteSpace(responseBody))
+                {
+                    var createdRecipe = JsonSerializer.Deserialize<ReseptiResponse>(responseBody);
 
-                if (tallennettuResepti != null && tallennettuResepti.Id > 0)
-                {
-                    // Navigoidaan reseptin sivulle
-                    Navigation.NavigateTo($"/recipe/{tallennettuResepti.Id}");
-                }
-                else
-                {
-                    Console.WriteLine("API ei palauttanut kelvollista ID:tä.");
+                    if (createdRecipe != null)
+                    {
+                        Console.WriteLine("Luodun reseptin ID: " + createdRecipe.Id);
+                        Navigation.NavigateTo($"/recipe/{createdRecipe.Id}"); // Siirrytään reseptisivulle
+                    }
+                    else
+                    {
+                        Console.WriteLine("Virhe: Ei voitu deserialisoida reseptiä.");
+                    }
                 }
             }
             else
             {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Virhe tallennuksessa: {response.StatusCode}, Virheviesti: {errorContent}");
+                Console.WriteLine("Reseptin tallennus epäonnistui: " + response.StatusCode);
             }
         }
         catch (JsonException jsonEx)
@@ -203,4 +208,5 @@
             Console.WriteLine($"Poikkeus tallennuksessa: {ex.Message}");
         }
     }
+
 }
