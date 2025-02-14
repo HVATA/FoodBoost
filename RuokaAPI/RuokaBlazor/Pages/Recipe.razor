@@ -2,11 +2,12 @@
 @layout MainLayout
 @inject HttpClient Http
 @inject NavigationManager Navigation
-@inject CustomAuthenticationStateProvider AuthenticationStateProvider
+@inject CustomAuthenticationStateProvider CustomAuthStateProvider
 @inject IJSRuntime JSRuntime
 @using RuokaBlazor.Properties.Model
 @using RuokaBlazor.Services
 @using System.Text.Json
+@using System.Security.Claims
 
 @if (virheViesti != null)
 {
@@ -150,6 +151,9 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        
+        var authState = await CustomAuthStateProvider.GetAuthenticationStateAsync();
+       
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         try
         {
@@ -161,7 +165,7 @@ else
                 return;
             }
             // Tarkista käyttäjän oikeudet
-            kayttajallaOikeudet = await TarkistaKayttajanOikeudet();
+            
         }
         catch (OperationCanceledException)
         {
@@ -204,27 +208,5 @@ else
         Navigation.NavigateTo($"/editRecipe/{resepti?.Id}");
     }
 
-    private async Task<bool> TarkistaKayttajanOikeudet()
-    {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-
-        if (user.Identity != null && user.Identity.IsAuthenticated)
-        {
-            // Tarkista admin-rooli
-            if (user.IsInRole("Admin"))
-            {
-                return true;
-            }
-
-            // Tarkista reseptin tekijä
-            var tekijaIdClaim = user.FindFirst(c => c.Type == "userId")?.Value;
-            if (int.TryParse(tekijaIdClaim, out var userId))
-            {
-                return userId == resepti?.TekijaId;
-            }
-        }
-
-        return false;
-    }
+    
 }

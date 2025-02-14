@@ -6,6 +6,7 @@
 @using System.Text.Json
 @using RuokaBlazor.Services
 @using RuokaBlazor.Properties.Model
+@using System.Security.Claims
 
 <h1>Luo uusi resepti</h1>
 
@@ -88,6 +89,7 @@
 @code {
     private ReseptiRequest uusiResepti = new();
     private string? kuvanEsikatselu;
+    private int tekijaId = 0; // Oletusarvo, jos ID:tä ei saada
 
     protected override async Task OnInitializedAsync()
     {
@@ -98,15 +100,30 @@
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
+       
+
         if (user.Identity != null && user.Identity.IsAuthenticated)
         {
-            var tekijaId = user.FindFirst(c => c.Type == "userId")?.Value;
-            if (int.TryParse(tekijaId, out var id))
+            // Etsitään käyttäjän tekijä-ID
+            var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            Console.WriteLine($"Haettu käyttäjän tekijäId: {userId}"); // Debug-tulostus
+
+            if (int.TryParse(userId, out var id))
             {
-                uusiResepti.TekijaId = id;
+                tekijaId = id;
+                Console.WriteLine($"Käyttäjän TekijaId asetettu: {tekijaId}");
+            }
+            else
+            {
+                Console.WriteLine("Virhe: Käyttäjän TekijaId ei löytynyt tai se ei ole numero.");
             }
         }
+        else
+        {
+            Console.WriteLine("Virhe: Käyttäjä ei ole kirjautunut.");
+        }
     }
+
 
     private async Task KuvaValittu(InputFileChangeEventArgs e)
     {
@@ -158,6 +175,15 @@
     {
         try
         {
+            if (tekijaId == 0)
+            {
+                Console.WriteLine("❌ Virhe: TekijaId ei ole saatavilla. Reseptiä ei tallenneta.");
+                return;
+            }
+
+            // Asetetaan tekijä ID
+            uusiResepti.TekijaId = tekijaId;
+
             // Poistetaan tyhjät arvot
             uusiResepti.Ainesosat = uusiResepti.Ainesosat
                 .Where(a => !string.IsNullOrWhiteSpace(a.Ainesosa) && !string.IsNullOrWhiteSpace(a.Maara))
@@ -167,45 +193,41 @@
                 .Where(a => !string.IsNullOrWhiteSpace(a))
                 .ToArray();
 
-            Console.WriteLine("Tallennetaan resepti: " + JsonSerializer.Serialize(uusiResepti));
+            // Tarkistetaan, mitä lähetetään API:lle
+            string jsonData = JsonSerializer.Serialize(uusiResepti);
+            Console.WriteLine("📤 Lähetetään API:lle: " + jsonData);
 
-            // Lähetetään tiedot API:lle
+            // Lähetetään API:lle
             var response = await Http.PostAsJsonAsync("resepti", uusiResepti);
 
-            // Tarkistetaan, onnistuiko pyyntö
             if (response.IsSuccessStatusCode)
             {
                 var responseBody = await response.Content.ReadAsStringAsync();
-                Console.WriteLine("Palautettu JSON: " + responseBody);
+                Console.WriteLine("📩 API palautti: " + responseBody);
 
-                // Tarkistetaan, palauttaako API JSON-objektin vai pelkän ID:n
-                if (!string.IsNullOrWhiteSpace(responseBody))
+                var createdRecipe = JsonSerializer.Deserialize<ReseptiResponse>(responseBody);
+                if (createdRecipe != null)
                 {
-                    var createdRecipe = JsonSerializer.Deserialize<ReseptiResponse>(responseBody);
-
-                    if (createdRecipe != null)
-                    {
-                        Console.WriteLine("Luodun reseptin ID: " + createdRecipe.Id);
-                        Navigation.NavigateTo($"/recipe/{createdRecipe.Id}"); // Siirrytään reseptisivulle
-                    }
-                    else
-                    {
-                        Console.WriteLine("Virhe: Ei voitu deserialisoida reseptiä.");
-                    }
+                    Console.WriteLine("✅ Luodun reseptin ID: " + createdRecipe.Id);
+                    Navigation.NavigateTo($"/recipe/{createdRecipe.Id}");
+                }
+                else
+                {
+                    Console.WriteLine("❌ Virhe: Ei voitu deserialisoida reseptiä.");
                 }
             }
             else
             {
-                Console.WriteLine("Reseptin tallennus epäonnistui: " + response.StatusCode);
+                Console.WriteLine("❌ Reseptin tallennus epäonnistui: " + response.StatusCode);
             }
         }
         catch (JsonException jsonEx)
         {
-            Console.WriteLine($"JSON-virhe tallennuksessa: {jsonEx.Message}");
+            Console.WriteLine($"❌ JSON-virhe tallennuksessa: {jsonEx.Message}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Poikkeus tallennuksessa: {ex.Message}");
+            Console.WriteLine($"❌ Poikkeus tallennuksessa: {ex.Message}");
         }
     }
 
