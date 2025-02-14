@@ -6,6 +6,7 @@
 @inject IJSRuntime JSRuntime
 @using RuokaBlazor.Properties.Model
 @using RuokaBlazor.Services
+@using System.Text.Json
 
 @if (virheViesti != null)
 {
@@ -57,7 +58,7 @@ else
                 <ul>
                     @foreach (var ainesosa in resepti.Ainesosat)
                     {
-                        <li>@ainesosa</li>
+                        <li>@ainesosa.Ainesosa: @ainesosa.Maara</li>
                     }
                 </ul>
             </div>
@@ -143,7 +144,7 @@ else
 
 @code {
     [Parameter] public int Id { get; set; }
-    private Resepti? resepti;
+    private ReseptiResponse? resepti;
     private bool kayttajallaOikeudet = false;
     private string? virheViesti;
 
@@ -153,7 +154,7 @@ else
         try
         {
             // Hae resepti API:sta
-            resepti = await Http.GetFromJsonAsync<Resepti>($"resepti/{Id}", cts.Token);
+            resepti = await Http.GetFromJsonAsync<ReseptiResponse>($"resepti/{Id}", cts.Token);
             if (resepti == null)
             {
                 virheViesti = "Valittua reseptiä ei löydy.";
@@ -225,16 +226,5 @@ else
         }
 
         return false;
-    }
-
-    public class Resepti
-    {
-        public int Id { get; set; }
-        public string Nimi { get; set; } = string.Empty;
-        public string Valmistuskuvaus { get; set; } = string.Empty;
-        public string Kuva1 { get; set; } = string.Empty;
-        public string[] Ainesosat { get; set; } = Array.Empty<string>();
-        public string[] Avainsanat { get; set; } = Array.Empty<string>();
-        public int TekijaId { get; set; }
     }
 }
