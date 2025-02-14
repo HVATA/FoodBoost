@@ -44,7 +44,8 @@
         {
             var index = i;
             <div class="input-group">
-                <InputText @bind-Value="uusiResepti.Ainesosat[index]" class="form-control" placeholder="Ainesosa" />
+                <InputText @bind-Value="uusiResepti.Ainesosat[index].Ainesosa" class="form-control" placeholder="Ainesosa" />
+                <InputText @bind-Value="uusiResepti.Ainesosat[index].Maara" class="form-control" placeholder="Määrä" />
                 <button type="button" class="btn btn-danger" @onclick="() => PoistaAinesosa(index)">Poista</button>
             </div>
         }
@@ -63,9 +64,9 @@
         <button type="button" class="btn btn-secondary mt-2" @onclick="LisaaAvainsana">+ Lisää avainsana</button>
 
         <!-- Katseluoikeus -->
-        <div class="form-check mt-3">
-            <InputCheckbox id="katseluoikeus" @bind-Value="uusiResepti.OnYksityinen" class="form-check-input" />
-            <label for="katseluoikeus" class="form-check-label">Yksityinen</label>
+        <div class="form-group mt-3">
+            <label for="katseluoikeus">Katseluoikeus:</label>
+            <InputText id="katseluoikeus" @bind-Value="uusiResepti.Katseluoikeus" class="form-control" />
         </div>
 
         <!-- Tallenna -->
@@ -85,13 +86,13 @@
     }
 </style>
 @code {
-    private ReseptiDto uusiResepti = new();
+    private ReseptiRequest uusiResepti = new();
     private string? kuvanEsikatselu;
 
     protected override async Task OnInitializedAsync()
     {
-        uusiResepti.Ainesosat = Array.Empty<string>();
-        uusiResepti.Avainsanat = Array.Empty<string>();
+        uusiResepti.Ainesosat = new AinesosanMaaraDto[] { new AinesosanMaaraDto() };
+        uusiResepti.Avainsanat = new string[] { string.Empty };
 
         // Haetaan kirjautuneen käyttäjän tiedot
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
@@ -106,6 +107,7 @@
             }
         }
     }
+
     private async Task KuvaValittu(InputFileChangeEventArgs e)
     {
         try
@@ -126,11 +128,9 @@
         }
     }
 
-
-
     private void LisaaAinesosa()
     {
-        uusiResepti.Ainesosat = uusiResepti.Ainesosat.Append(string.Empty).ToArray();
+        uusiResepti.Ainesosat = uusiResepti.Ainesosat.Append(new AinesosanMaaraDto()).ToArray();
     }
 
     private void PoistaAinesosa(int index)
@@ -154,21 +154,18 @@
         }
     }
 
-
     private async Task TallennaResepti()
     {
         try
         {
             // Poistetaan tyhjät arvot
             uusiResepti.Ainesosat = uusiResepti.Ainesosat
-                .Where(a => !string.IsNullOrWhiteSpace(a))
+                .Where(a => !string.IsNullOrWhiteSpace(a.Ainesosa) && !string.IsNullOrWhiteSpace(a.Maara))
                 .ToArray();
 
             uusiResepti.Avainsanat = uusiResepti.Avainsanat
                 .Where(a => !string.IsNullOrWhiteSpace(a))
                 .ToArray();
-
-            uusiResepti.Katseluoikeus = uusiResepti.OnYksityinen ? "Yksityinen" : "Julkinen";
 
             // Lähetetään tiedot API:lle
             var response = await Http.PostAsJsonAsync("resepti", uusiResepti);
@@ -176,7 +173,7 @@
             if (response.IsSuccessStatusCode)
             {
                 // Luetaan API:n palauttama resepti (Resepti, EI ReseptiDto)
-                var tallennettuResepti = await response.Content.ReadFromJsonAsync<Resepti>();
+                var tallennettuResepti = await response.Content.ReadFromJsonAsync<ReseptiResponse>();
 
                 Console.WriteLine($"Tallennettu resepti: {JsonSerializer.Serialize(tallennettuResepti)}");
 
@@ -201,21 +198,4 @@
             Console.WriteLine($"Poikkeus tallennuksessa: {ex.Message}");
         }
     }
-
-
-
-
-    public class ReseptiDto
-    {
-        public int Id { get; set; } // ID, joka tulee tietokannasta automaattisesti
-        public int TekijaId { get; set; }
-        public string Nimi { get; set; }
-        public string Valmistuskuvaus { get; set; } = string.Empty;
-        public string[] Ainesosat { get; set; } = Array.Empty<string>();
-        public string[] Avainsanat { get; set; } = Array.Empty<string>();
-        public string Kuva1 { get; set; } = string.Empty;
-        public string Katseluoikeus { get; set; } = string.Empty;
-        public bool OnYksityinen { get; set; }
-    }
-
 }
