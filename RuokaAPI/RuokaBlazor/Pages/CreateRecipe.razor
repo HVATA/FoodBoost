@@ -170,6 +170,7 @@
             // Lähetetään tiedot API:lle
             var response = await Http.PostAsJsonAsync("resepti", uusiResepti);
 
+
             if (response.IsSuccessStatusCode)
             {
                 // Luetaan API:n palauttama resepti (Resepti, EI ReseptiDto)
@@ -192,6 +193,10 @@
                 var errorContent = await response.Content.ReadAsStringAsync();
                 Console.WriteLine($"Virhe tallennuksessa: {response.StatusCode}, Virheviesti: {errorContent}");
             }
+        }
+        catch (JsonException jsonEx)
+        {
+            Console.WriteLine($"JSON-virhe tallennuksessa: {jsonEx.Message}");
         }
         catch (Exception ex)
         {
