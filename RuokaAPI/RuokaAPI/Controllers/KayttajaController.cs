@@ -208,7 +208,7 @@ namespace RuokaAPI.Controllers
 
                 return BadRequest();
             }
-            Kayttaja p = paivitysRequest.Kayttaja;
+            Kayttaja? p = paivitysRequest.Kayttaja;
 
 
             Kayttaja? tt = _context.Kayttajat.Find(p.Id);
@@ -292,6 +292,8 @@ namespace RuokaAPI.Controllers
         [HttpPut("LahetaResepti/{reseptiId}/{vastaanottajanEmail}")]
         public async Task<IActionResult> LahetaResepti(int reseptiId, string vastaanottajanEmail, [FromBody] Kayttaja o)
         {
+            string? kuvaString = "";
+
             try
             {
                 // Tarkistetaan käyttäjä kannasta
@@ -338,8 +340,12 @@ namespace RuokaAPI.Controllers
                     reseptiString += $"- {avainsana.Id}, ({avainsana.Sana})\n";
                 }
 
-              string  kuvaString = "\nKuvat:\n";
-                if (!string.IsNullOrEmpty(resepti.Kuva1)) reseptiString += $"Kuva 1: {resepti.Kuva1}\n";
+               
+                if (!string.IsNullOrEmpty(resepti.Kuva1)) //reseptiString += $"Kuva 1: {resepti.Kuva1}\n";
+                {
+
+                    kuvaString=resepti.Kuva1;
+                }
                 
                 // Lähetetään sähköposti
                 ReseptinLaheys reseptinlahetys = new ReseptinLaheys();

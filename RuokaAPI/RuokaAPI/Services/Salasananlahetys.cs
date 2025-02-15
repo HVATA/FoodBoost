@@ -70,59 +70,24 @@ namespace RuokaAPI.Services
 
 
 
-        public static bool OnKelvollinenBase64Kuva(string base64String)
-        {
-            try
-            {
-                //  Poistetaan "data:image/jpeg;base64," -alkuosa, jos se löytyy
-                if (base64String.StartsWith("data:image"))
-                {
-                    base64String = base64String.Substring(base64String.IndexOf("base64,") + 7);
-                }
-
-                //  Poistetaan rivinvaihdot ja välilyönnit
-                base64String = base64String.Replace("\n", "").Replace("\r", "").Replace(" ", "").Trim();
-
-                //  Tarkistetaan, että Base64-pituus on jaollinen neljällä
-                while (base64String.Length % 4 != 0)
-                {
-                    base64String += "=";
-                }
-
-                //  Muunnetaan Base64 string binääriksi
-                byte[] kuvaBytes = Convert.FromBase64String(base64String);
-
-                //  Tallennetaan väliaikainen kuva (tämä todistaa, että Base64 on oikein)
-                string tempFile = Path.Combine(Path.GetTempPath(), "testikuva.jpg");
-                File.WriteAllBytes(tempFile, kuvaBytes);
-
-                Console.WriteLine($"✅ Base64 on kelvollinen, tallennettu: {tempFile}");
-                return true;
-            }
-            catch (FormatException fe)
-            {
-                Console.WriteLine($" Base64 EI ole kelvollinen kuva: {fe.Message}");
-                return false;
-            }
-        }
-
-
-
-
-        public async Task<bool> LahetaResepti(string email, string otsikko, string reseptis, string kuvaString)
+        public async Task<bool> LahetaResepti(string email, string otsikko, string reseptis, string base64KuvaString)
         {
             string FromMail = "foodboostx@gmail.com";
             string sovellussalasana = "pmtbjpjdhaavzixx";
+            string kuvatiedostoPolku = null;
 
             try
             {
-                // 🔹 **Tarkistetaan Base64 ennen lähetystä**
-                if (!OnKelvollinenBase64Kuva(kuvaString))
+                // 🔹 Luodaan väliaikainen kuvatiedosto Base64-stringistä
+                kuvatiedostoPolku = LuoValiaikainenKuvatiedosto(base64KuvaString);
+
+                if (string.IsNullOrEmpty(kuvatiedostoPolku) || !File.Exists(kuvatiedostoPolku))
                 {
-                    Console.WriteLine("Base64 ei ole kelvollinen, sähköpostia ei lähetetä.");
+                    Console.WriteLine("Kuvaa ei voitu luoda, sähköpostia ei lähetetä.");
                     return false;
                 }
 
+                // 🔹 Luodaan sähköpostiviesti
                 MailMessage message = new MailMessage
                 {
                     From = new MailAddress(FromMail),
@@ -131,43 +96,30 @@ namespace RuokaAPI.Services
                 };
                 message.To.Add(new MailAddress(email));
 
-                string kuvaHtml = "";
-
-                if (!string.IsNullOrEmpty(kuvaString))
+                // 🔹 Luodaan Content-ID (CID) -viittaus kuvaan
+                var linkedResource = new LinkedResource(kuvatiedostoPolku, "image/jpeg")
                 {
-                    try
-                    {
-                        byte[] kuvaBytes = Convert.FromBase64String(kuvaString);
-                        MemoryStream ms = new MemoryStream(kuvaBytes);
+                    ContentId = "ReseptiKuva",
+                    TransferEncoding = System.Net.Mime.TransferEncoding.Base64
+                };
 
-                        var linkedResource = new LinkedResource(ms, "image/jpeg")
-                        {
-                            ContentId = "ReseptiKuva",
-                            TransferEncoding = System.Net.Mime.TransferEncoding.Base64
-                        };
+                // 🔹 Rakennetaan HTML-viesti, jossa kuva upotettuna
+                string htmlContent = $@"
+        <html>
+        <body>
+            <p>Hei, olet saanut jaetun reseptin.</p>
+            <p>{reseptis}</p>
+            <p><img src='cid:ReseptiKuva' width='300'/></p>
+            <p>Powered by FoodBoost</p>
+        </body>
+        </html>";
 
-                        kuvaHtml = "<p><img src='cid:ReseptiKuva' width='300'/></p>";
+                // Luodaan viestin HTML-näkymä ja lisätään kuva
+                AlternateView htmlView = AlternateView.CreateAlternateViewFromString(htmlContent, null, "text/html");
+                htmlView.LinkedResources.Add(linkedResource);
+                message.AlternateViews.Add(htmlView);
 
-                        AlternateView htmlView = AlternateView.CreateAlternateViewFromString($@"
-                <html>
-                <body>
-                    <p>Hei, olet saanut jaetun reseptin.</p>
-                    <p>{reseptis}</p>
-                    {kuvaHtml}
-                    <p>Powered by FoodBoost</p>
-                </body>
-                </html>", null, "text/html");
-
-                        htmlView.LinkedResources.Add(linkedResource);
-                        message.AlternateViews.Add(htmlView);
-                    }
-                    catch (FormatException fe)
-                    {
-                        Console.WriteLine("Virhe Base64-muunnoksessa: " + fe.Message);
-                        return false;
-                    }
-                }
-
+                //Lähetetään sähköposti
                 var smtpClient = new SmtpClient("smtp.gmail.com")
                 {
                     Port = 587,
@@ -177,14 +129,64 @@ namespace RuokaAPI.Services
 
                 await smtpClient.SendMailAsync(message);
 
+                Console.WriteLine("Sähköposti lähetetty onnistuneesti upotetulla kuvalla!");
+
+                //Vapautetaan tiedosto ennen poistamista
+                linkedResource.Dispose();
+                message.Dispose();
+
+                // Poistetaan väliaikainen tiedosto
+                File.Delete(kuvatiedostoPolku);
+                Console.WriteLine($"Väliaikainen tiedosto poistettu: {kuvatiedostoPolku}");
+
                 return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Virhe: " + ex.Message);
+                Console.WriteLine($"Virhe sähköpostin lähetyksessä: {ex.Message}");
                 return false;
+            }
+        }
+
+        public static string LuoValiaikainenKuvatiedosto(string base64String)
+        {
+            try
+            {
+                // Poistetaan mahdollinen "data:image/jpeg;base64," -alkuosa
+                if (base64String.StartsWith("data:image"))
+                {
+                    base64String = base64String.Substring(base64String.IndexOf("base64,") + 7);
+                }
+
+                // Poistetaan rivinvaihdot ja ylimääräiset merkit
+                base64String = base64String.Replace("\n", "").Replace("\r", "").Replace(" ", "").Trim();
+
+                // Tarkistetaan, että Base64-pituus on jaollinen neljällä
+                while (base64String.Length % 4 != 0)
+                {
+                    base64String += "=";
+                }
+
+                // Muunnetaan Base64-stringi binääriksi
+                byte[] kuvaBytes = Convert.FromBase64String(base64String);
+
+                // Luodaan väliaikainen tiedostopolku
+                string tempFilePath = Path.Combine(Path.GetTempPath(), $"kuva_{Guid.NewGuid()}.jpg");
+
+                // Tallennetaan tiedosto
+                File.WriteAllBytes(tempFilePath, kuvaBytes);
+
+                Console.WriteLine($"Väliaikainen kuvatiedosto luotu: {tempFilePath}");
+
+                return tempFilePath;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($" Virhe kuvan luomisessa: {ex.Message}");
+                return null;
             }
         }
 
     }
 }
+       
