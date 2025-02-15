@@ -1,4 +1,4 @@
-﻿
+﻿using System.Text.Json.Serialization;
 
 namespace RuokaBlazor.Properties.Model
     {
@@ -7,7 +7,9 @@ namespace RuokaBlazor.Properties.Model
     // visibility, and reviews.
     public class ReseptiResponse
     {
+        [JsonPropertyName("id")]
         public int Id { get; set; }
+        [JsonPropertyName("tekijaid")]
         public int TekijaId { get; set; }
         public string Nimi { get; set; }
         public string Valmistuskuvaus { get; set; } = string.Empty;

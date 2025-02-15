@@ -2,10 +2,12 @@
 @layout MainLayout
 @inject HttpClient Http
 @inject NavigationManager Navigation
-@inject CustomAuthenticationStateProvider AuthenticationStateProvider
+@inject CustomAuthenticationStateProvider CustomAuthStateProvider
 @inject IJSRuntime JSRuntime
 @using RuokaBlazor.Properties.Model
 @using RuokaBlazor.Services
+@using System.Text.Json
+@using System.Security.Claims
 
 @if (virheViesti != null)
 {
@@ -57,7 +59,7 @@ else
                 <ul>
                     @foreach (var ainesosa in resepti.Ainesosat)
                     {
-                        <li>@ainesosa</li>
+                        <li>@ainesosa.Ainesosa: @ainesosa.Maara</li>
                     }
                 </ul>
             </div>
@@ -143,24 +145,27 @@ else
 
 @code {
     [Parameter] public int Id { get; set; }
-    private Resepti? resepti;
+    private ReseptiResponse? resepti;
     private bool kayttajallaOikeudet = false;
     private string? virheViesti;
 
     protected override async Task OnInitializedAsync()
     {
+        
+        var authState = await CustomAuthStateProvider.GetAuthenticationStateAsync();
+       
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         try
         {
             // Hae resepti API:sta
-            resepti = await Http.GetFromJsonAsync<Resepti>($"resepti/{Id}", cts.Token);
+            resepti = await Http.GetFromJsonAsync<ReseptiResponse>($"resepti/{Id}", cts.Token);
             if (resepti == null)
             {
                 virheViesti = "Valittua reseptiä ei löydy.";
                 return;
             }
             // Tarkista käyttäjän oikeudet
-            kayttajallaOikeudet = await TarkistaKayttajanOikeudet();
+            
         }
         catch (OperationCanceledException)
         {
@@ -203,38 +208,5 @@ else
         Navigation.NavigateTo($"/editRecipe/{resepti?.Id}");
     }
 
-    private async Task<bool> TarkistaKayttajanOikeudet()
-    {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-
-        if (user.Identity != null && user.Identity.IsAuthenticated)
-        {
-            // Tarkista admin-rooli
-            if (user.IsInRole("Admin"))
-            {
-                return true;
-            }
-
-            // Tarkista reseptin tekijä
-            var tekijaIdClaim = user.FindFirst(c => c.Type == "userId")?.Value;
-            if (int.TryParse(tekijaIdClaim, out var userId))
-            {
-                return userId == resepti?.TekijaId;
-            }
-        }
-
-        return false;
-    }
-
-    public class Resepti
-    {
-        public int Id { get; set; }
-        public string Nimi { get; set; } = string.Empty;
-        public string Valmistuskuvaus { get; set; } = string.Empty;
-        public string Kuva1 { get; set; } = string.Empty;
-        public string[] Ainesosat { get; set; } = Array.Empty<string>();
-        public string[] Avainsanat { get; set; } = Array.Empty<string>();
-        public int TekijaId { get; set; }
-    }
+    
 }
