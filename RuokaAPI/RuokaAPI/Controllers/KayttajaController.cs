@@ -34,19 +34,27 @@ namespace RuokaAPI.Controllers
             List<Kayttaja> lista = new List<Kayttaja>();
 
 
+            
 
+            List<Kayttaja> lista2 = new List<Kayttaja>();
 
             string email = x.Sahkopostiosoite;
 
             lista = _context.Kayttajat.Where(x => x.Sahkopostiosoite == email).ToList();
 
             string? salasana = null;
+           
+
+            //laitetaan tähän tuon sähköpostin tarkastuksen lisäksi nimimerkin tarkastus
+            string? nimimerkki = x.Nimimerkki;
 
 
 
 
+            lista2= _context.Kayttajat.Where(x=>x.Nimimerkki == nimimerkki).ToList();
 
-            if (lista.Count == 0)
+
+            if (lista.Count == 0&&lista2.Count==0)
             {
 
 
@@ -55,6 +63,16 @@ namespace RuokaAPI.Controllers
 
                 return "Käyttäjä lisätty";
             }
+
+            if (lista2.Count > 0)
+            {
+
+                return "Nimimerkki on jo käytössä!!";
+
+
+
+            }
+
 
             else
             {
@@ -193,7 +211,7 @@ namespace RuokaAPI.Controllers
             Kayttaja p = paivitysRequest.Kayttaja;
 
 
-            var tt = _context.Kayttajat.Find(p.Id);
+            Kayttaja? tt = _context.Kayttajat.Find(p.Id);
 
            
            
@@ -320,18 +338,13 @@ namespace RuokaAPI.Controllers
                     reseptiString += $"- {avainsana.Id}, ({avainsana.Sana})\n";
                 }
 
-                reseptiString += "\nKuvat:\n";
+              string  kuvaString = "\nKuvat:\n";
                 if (!string.IsNullOrEmpty(resepti.Kuva1)) reseptiString += $"Kuva 1: {resepti.Kuva1}\n";
-                if (!string.IsNullOrEmpty(resepti.Kuva2)) reseptiString += $"Kuva 2: {resepti.Kuva2}\n";
-                if (!string.IsNullOrEmpty(resepti.Kuva3)) reseptiString += $"Kuva 3: {resepti.Kuva3}\n";
-                if (!string.IsNullOrEmpty(resepti.Kuva4)) reseptiString += $"Kuva 4: {resepti.Kuva4}\n";
-                if (!string.IsNullOrEmpty(resepti.Kuva5)) reseptiString += $"Kuva 5: {resepti.Kuva5}\n";
-                if (!string.IsNullOrEmpty(resepti.Kuva6)) reseptiString += $"Kuva 6: {resepti.Kuva6}\n";
-
+                
                 // Lähetetään sähköposti
                 ReseptinLaheys reseptinlahetys = new ReseptinLaheys();
 
-                bool lahetysOk = await reseptinlahetys.LahetaResepti(vastaanottajanEmail, "Jaettu resepti", reseptiString);
+                bool lahetysOk = await reseptinlahetys.LahetaResepti(vastaanottajanEmail, "Jaettu resepti", reseptiString,kuvaString);
 
                 if (!lahetysOk)
                 {
