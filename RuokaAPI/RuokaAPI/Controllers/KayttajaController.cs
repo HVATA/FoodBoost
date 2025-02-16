@@ -46,15 +46,15 @@ namespace RuokaAPI.Controllers
            
 
             //laitetaan tähän tuon sähköpostin tarkastuksen lisäksi nimimerkin tarkastus
-            string? nimimerkki = x.Nimimerkki;
+           // string? nimimerkki = x.Nimimerkki;
+
+            //Voiko olla että esim. 3 nimimerkillä Make99 arvostelee samaa reseptiä mutta eri emaileilla jos ei näytetä julkisesti sähköpostiosoitetta?
 
 
+          //  lista2= _context.Kayttajat.Where(x=>x.Nimimerkki == nimimerkki).ToList();
+            //== 0&&lista2.Count==0
 
-
-            lista2= _context.Kayttajat.Where(x=>x.Nimimerkki == nimimerkki).ToList();
-
-
-            if (lista.Count == 0&&lista2.Count==0)
+            if (lista.Count==0)
             {
 
 
