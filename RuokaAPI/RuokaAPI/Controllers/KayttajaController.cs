@@ -237,7 +237,7 @@ namespace RuokaAPI.Controllers
 
         //salasanan manuaaliseen vaihtoon käyttää KayttajaDTO luokkaa
 
-        [HttpPut("Muutasalasasana")]
+        [HttpPut("Muutasalasana")]
         public async Task<ActionResult<Kayttaja>> MuutaSalasana(KayttajaDTO k)
         {
             Kayttaja? tt = _context.Kayttajat.Find(k.Id);
