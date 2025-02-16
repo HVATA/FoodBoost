@@ -1,3 +1,4 @@
+/*  KÄYTÄ TÄTÄ JOS KOMPONENTTI EI OO OIKEASSA PAIKASSA transform: translateX(x%);    */
 .page {
     position: relative;
     display: flex;

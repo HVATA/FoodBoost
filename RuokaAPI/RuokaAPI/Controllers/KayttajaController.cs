@@ -202,53 +202,32 @@ namespace RuokaAPI.Controllers
         }
 
         [HttpPut("PaivitaTietoja")]  
-        public async Task<ActionResult<Kayttaja>> Paivita(PaivitysRequest? paivitysRequest)
+        public async Task<ActionResult<Kayttaja>> Paivita(Kayttaja k)
         {
-            if (paivitysRequest == null) {
+            Kayttaja? tt = _context.Kayttajat.Find(k.Id);
 
-                return BadRequest();
-            }
-            Kayttaja? p = paivitysRequest.Kayttaja;
-
-
-            Kayttaja? tt = _context.Kayttajat.Find(p.Id);
-
-           
-           
-
-            if(tt!=null && tt.Sahkopostiosoite==p.Sahkopostiosoite&&p.Salasana==tt.Salasana)
+            if(tt!=null && tt.Salasana == k.Salasana)
             {
 
-                string? kuva = null;
 
-
-
-
-                tt.Etunimi = p.Etunimi;
-                tt.Sukunimi = p.Sukunimi;
-                tt.Sahkopostiosoite = p.Sahkopostiosoite;
-                tt.Kayttajataso = p.Kayttajataso;
-
-                if (!string.IsNullOrEmpty(paivitysRequest.uusisalasana))
-                {
-                    tt.Salasana = paivitysRequest.uusisalasana;
-
-                }
-                
-                tt.Nimimerkki = p.Nimimerkki;
+                tt.Etunimi = k.Etunimi;
+                tt.Sukunimi = k.Sukunimi;
+                tt.Sahkopostiosoite = k.Sahkopostiosoite;
+                tt.Kayttajataso = k.Kayttajataso;
+                tt.Salasana = k.Salasana;
+                tt.Nimimerkki = k.Nimimerkki;
 
 
 
                 _context.Kayttajat.Update(tt);
                 await _context.SaveChangesAsync();
 
-                return Ok(tt);
+                return Ok("Onnistuu");
             }
             else
             {
 
-               
-                return NoContent();
+                return BadRequest();
 
             }
 

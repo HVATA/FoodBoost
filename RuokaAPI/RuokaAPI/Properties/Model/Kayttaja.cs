@@ -4,6 +4,7 @@ namespace RuokaAPI.Properties.Model
 {
     public class Kayttaja
     {
+        [JsonPropertyName("id")]
         public int Id { get; set; }
 
         [JsonPropertyName("etunimi")]

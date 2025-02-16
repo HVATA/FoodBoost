@@ -153,6 +153,7 @@
         var userFirstname = user.FindFirst(ClaimTypes.GivenName)?.Value;
         var userLastname = user.FindFirst(ClaimTypes.Surname)?.Value;
         var username = user.FindFirst("Nimimerkki")?.Value;
+        var userPassword = user.FindFirst("Salasana")?.Value;
 
 
         Console.WriteLine($"User role: {role}, Email: {email}, User ID: {userId}");
@@ -160,16 +161,15 @@
 
         isUserAdminOrUser = user.IsInRole("admin") || user.IsInRole("user");
 
-        if (user.IsInRole("admin") && !string.IsNullOrEmpty(userId) && !string.IsNullOrEmpty(email))
+        if (user.IsInRole("admin"))
         {
-            await getUsers(int.Parse(userId), "Admin", email); // Nyt ID ja email tulevat dynaamisesti
+            await getUsers(int.Parse(userId), userPassword, email); // Nyt ID ja email tulevat dynaamisesti
         }
         else
         {
 
         }
     }
-
 
     private async Task getUsers(int Id, string salasana, string sahkopostiosoite)
     {
@@ -183,6 +183,7 @@
             message = "Käyttäjien lataaminen epäonnistui: " + ex.Message;
         }
     }
+
     private void SelectUser(Kayttaja user)
     {
         kayttaja = new Kayttaja
@@ -197,8 +198,10 @@
             };
 
     }
+
     private async Task UpdateUser()
     {
+        
 
         var h = new Kayttaja
             {
@@ -210,12 +213,8 @@
                 Salasana = kayttaja.Salasana,
                 Sukunimi = kayttaja.Sukunimi,
             };
-
-
-
         try
         {
-            
             var response = await Http.PutAsJsonAsync($"Kayttaja/PaivitaTietoja", h);
 
 
@@ -241,8 +240,6 @@
             Console.WriteLine($"Exception: {ex.Message}");
         }
     }
-
-
 
     private async Task DeleteUser()
     {
@@ -276,11 +273,11 @@
         }
     }
 
-
     private void ClearForm()
     {
         kayttaja = new Kayttaja();
     }
+
     private void HandleManagement()
     {
 
