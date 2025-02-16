@@ -64,15 +64,15 @@ namespace RuokaAPI.Controllers
                 return "Käyttäjä lisätty";
             }
 
-            if (lista2.Count > 0)
+          /*  if (lista2.Count > 0)
             {
 
                 return "Nimimerkki on jo käytössä!!";
 
 
 
-            }
-
+           }
+            */ 
 
             else
             {
