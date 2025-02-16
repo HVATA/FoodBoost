@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace RuokaAPI.Properties.Model
+namespace RuokaBlazor.Properties.Model
 {
     public class KayttajaDTO
     {
