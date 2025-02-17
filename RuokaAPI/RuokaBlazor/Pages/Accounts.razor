@@ -269,7 +269,7 @@
                         var userData = await res.Content.ReadFromJsonAsync<UserData>();
                         if (userData != null)
                         {
-                            message = "Kirjautuminen onnistui";
+                            message = "Käyttäjätiedot päivitetty!";
                             await CustomAuthStateProvider.Login(userData);
                         }
                         else
