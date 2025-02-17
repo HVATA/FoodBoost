@@ -242,6 +242,12 @@ namespace RuokaAPI.Controllers
         {
             Kayttaja? tt = _context.Kayttajat.Find(k.Id);
 
+
+            string? uusisalasana = null;
+
+            uusisalasana = k.Uusisalasana;
+
+
             if (tt != null && tt.Salasana == k.Salasana)
             {
 
@@ -250,7 +256,12 @@ namespace RuokaAPI.Controllers
                 tt.Sukunimi = k.Sukunimi;
                 tt.Sahkopostiosoite = k.Sahkopostiosoite;
                 tt.Kayttajataso = k.Kayttajataso;
-                tt.Salasana = k.Uusisalasana;
+                if (!string.IsNullOrEmpty(uusisalasana)) { 
+                
+                 tt.Salasana = k.Uusisalasana;
+                }
+
+               
                 tt.Nimimerkki = k.Nimimerkki;
 
 
