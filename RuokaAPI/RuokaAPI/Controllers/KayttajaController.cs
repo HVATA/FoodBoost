@@ -206,7 +206,7 @@ namespace RuokaAPI.Controllers
         {
             Kayttaja? tt = _context.Kayttajat.Find(k.Id);
 
-            if(tt!=null && tt.Salasana == k.Salasana)
+            if(tt!=null)
             {
 
 
