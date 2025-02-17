@@ -282,18 +282,18 @@ namespace RuokaAPI.Controllers
 
         //pyydetään sähköpostitse uutta salasanaa
 
-        [HttpPut("Salasananpalautus")]
-        public async Task<ActionResult> HaeUusiSalasana(Kayttaja p)
+        [HttpGet("Salasananpalautus/{email}")]
+        public async Task<ActionResult> HaeUusiSalasana(string email)
         {
             // Tarkistetaan, löytyykö käyttäjä
-            var tt = _context.Kayttajat.Find(p.Id);
+            Kayttaja? tt =  _context.Kayttajat.Where(x=>x.Sahkopostiosoite==email).FirstOrDefault();
             if (tt == null)
             {
                 return NotFound("Käyttäjää ei löydy!");
             }
 
             // Tarkistetaan sähköposti
-            if (!tt.Sahkopostiosoite.Equals(p.Sahkopostiosoite))
+            if (!tt.Sahkopostiosoite.Equals(email))
             {
                 return BadRequest("Sähköposti tai ID on väärin.");
             }
