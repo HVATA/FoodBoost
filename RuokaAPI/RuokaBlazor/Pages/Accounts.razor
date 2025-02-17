@@ -39,11 +39,21 @@
                     <label for="password">Salasana</label>
                     <InputText id="password" @bind-Value="kayttaja.Salasana" class="form-control" />
                 </div>
+                <!-- Näytetään nämä kentät vain, jos käyttäjä on admin -->
+                @if (user.IsInRole("admin"))
+                {
+                    <div class="form-group">
+                        <label for="role">Käyttäjätaso</label>
+                        <InputText id="role" @bind-Value="kayttaja.Kayttajataso" class="form-control" />
+                    </div>
+                }
+                else
+                {
+                    <!-- Kentät pysyvät piilossa, mutta niiden arvot ovat edelleen käytettävissä -->
+                    <InputText style="display: none;" id="hidden-password" @bind-Value="kayttaja.Salasana" />
+                    <InputText style="display: none;" id="hidden-role" @bind-Value="kayttaja.Kayttajataso" />
+                }
 
-                <div class="form-group">
-                    <label for="role">Käyttäjätaso</label>
-                    <InputText id="role" @bind-Value="kayttaja.Kayttajataso" class="form-control" />
-                </div>
 
                 <!-- Nyt OnValidSubmit on asetettu vain Päivitä-painikkeelle -->
                 <button type="submit" class="btn btn-primary" @onclick="async () => await UpdateUser()">Päivitä</button>
@@ -70,6 +80,11 @@
 </div>
 
 <style>
+    
+    .admin-only{
+        display: block;
+    }
+
     .form-group {
         display: flex;
         align-items: center;
