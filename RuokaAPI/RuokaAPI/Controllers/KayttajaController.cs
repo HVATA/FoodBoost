@@ -231,6 +231,46 @@ namespace RuokaAPI.Controllers
 
             }
         }
+
+
+        //salasanan manuaaliseen vaihtoon käyttää KayttajaDTO luokkaa
+
+        [HttpPut("Muutasalasana")]
+        public async Task<ActionResult<Kayttaja>> MuutaSalasana(KayttajaDTO k)
+        {
+            Kayttaja? tt = _context.Kayttajat.Find(k.Id);
+
+            if (tt != null && tt.Salasana == k.Salasana)
+            {
+
+
+                tt.Etunimi = k.Etunimi;
+                tt.Sukunimi = k.Sukunimi;
+                tt.Sahkopostiosoite = k.Sahkopostiosoite;
+                tt.Kayttajataso = k.Kayttajataso;
+                tt.Salasana = k.Uusisalasana;
+                tt.Nimimerkki = k.Nimimerkki;
+
+
+
+                _context.Kayttajat.Update(tt);
+                await _context.SaveChangesAsync();
+
+                return Ok("Onnistuu");
+            }
+            else
+            {
+
+                return BadRequest();
+
+            }
+
+
+        }
+
+
+        //pyydetään sähköpostitse uutta salasanaa
+
         [HttpPut("Salasananpalautus")]
         public async Task<ActionResult> HaeUusiSalasana(Kayttaja p)
         {
