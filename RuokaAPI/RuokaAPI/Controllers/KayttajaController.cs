@@ -230,8 +230,6 @@ namespace RuokaAPI.Controllers
                 return BadRequest();
 
             }
-
-
         }
 
 
