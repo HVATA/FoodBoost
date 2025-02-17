@@ -230,8 +230,6 @@ namespace RuokaAPI.Controllers
                 return BadRequest();
 
             }
-
-
         }
         [HttpPut("Salasananpalautus")]
         public async Task<ActionResult> HaeUusiSalasana(Kayttaja p)
