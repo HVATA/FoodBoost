@@ -1,5 +1,13 @@
 ﻿@page "/home"
 @layout MainLayout
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject CustomAuthenticationStateProvider CustomAuthStateProvider
+@using RuokaBlazor.Properties.Model
+@using System.Security.Claims
+@using RuokaBlazor.Services
+@using System.Text.Json;
+
 <div>
     <div class="search-bar">
         <div class="search-container">
@@ -45,9 +53,24 @@
             </div>
         </div>
     </div>
+    <div class="main-content">
+        <ul>
+            @if (recipes != null)
+            {
+                @foreach (var recipe in recipes)
+                {
+                    <li @onclick="() => SelectRecipe(recipe)">@recipe.Nimi</li>
+                }
+            }
+            else
+            {
+                <p>Ladataan reseptejä...</p>
+            }
+        </ul>
+    </div>
 </div>
+
 <script>
-    /* Klikattaessa näytetään dropdown alamenu*/
     function showIngredientContent() {
         document.getElementById("ingredientDropdown").classList.toggle("show");
     }
@@ -61,12 +84,10 @@
         document.getElementById("seasonalDropdown").classList.toggle("show");
     }
 
-    // Suljetaan alamenu jos klikataan menu ulkopuolelle
     window.onclick = function (event) {
         if (!event.target.matches('.dropbtn')) {
             var dropdowns = document.getElementsByClassName("dropdown-content");
-            var i;
-            for (i = 0; i < dropdowns.length; i++) {
+            for (var i = 0; i < dropdowns.length; i++) {
                 var openDropdown = dropdowns[i];
                 if (openDropdown.classList.contains('show')) {
                     openDropdown.classList.remove('show');
@@ -75,6 +96,7 @@
         }
     }
 </script>
+
 <style>
     .dropbtn {
         background-color: #3498DB;
@@ -98,7 +120,6 @@
         position: relative;
         display: inline-block;
     }
-
 
     .dropdown-content {
         display: none;
@@ -125,11 +146,6 @@
         display: block;
     }
 
-    .search-options-container {
-        position: relative;
-        display: inline-block;
-    }
-
     .search-btn {
         background-color: #3498DB;
         color: white;
@@ -146,12 +162,6 @@
         display: inline-block;
     }
 
-    .search-results {
-        position: center;
-        width: 10rem;
-        height: 10rem;
-    }
-
     .recipe-image {
         width: 100px;
         height: 100px;
@@ -164,55 +174,64 @@
         height: 20rem;
     }
 </style>
-@code {
-    private string SearchQuery { get; set; } = string.Empty; // Tallentaa hakukyselyn
-    private string SearchResult { get; set; } = string.Empty; // Näyttää tulokset
-    private bool isDropdownVisible = false; // Dropdownin tila
-    private bool showSearchResult = false; // Hakutuloksen näkyvyys
-    private List<Recipe>? TopRecipes;
 
-    private void ToggleDropdown()
+@code {
+    private string SearchQuery { get; set; } = string.Empty;
+    private bool isIngredientDropdownVisible = false;
+    private bool isDishDropdownVisible = false;
+    private bool isDietDropdownVisible = false;
+    private bool isSeasonalDropdownVisible = false;
+
+    private List<ReseptiRequest>? recipes; // Käytetään nyt ReseptiRequest-luokkaa
+    private string message = string.Empty;
+
+    protected override async Task OnInitializedAsync()
     {
-        isDropdownVisible = !isDropdownVisible;
+        await GetRecipes();
     }
+
+    private void ToggleIngredientDropdown() => isIngredientDropdownVisible = !isIngredientDropdownVisible;
+    private void ToggleDishDropdown() => isDishDropdownVisible = !isDishDropdownVisible;
+    private void ToggleDietDropdown() => isDietDropdownVisible = !isDietDropdownVisible;
+    private void ToggleSeasonalDropdown() => isSeasonalDropdownVisible = !isSeasonalDropdownVisible;
 
     private void Search()
     {
         if (!string.IsNullOrEmpty(SearchQuery))
         {
-            SearchResult = $"Haku: '{SearchQuery}' suoritettu!";
-            showSearchResult = true;
+            message = $"Haku: '{SearchQuery}' suoritettu!";
         }
         else
         {
-            SearchResult = "Hakukenttä on tyhjä. Anna hakusana.";
-            showSearchResult = false;
+            message = "Hakukenttä on tyhjä. Anna hakusana.";
         }
     }
 
-    private void FilterByName()
+    private void SelectRecipe(ReseptiRequest recipe)
     {
-        SearchResult = "Suodatus nimellä valittu.";
-        isDropdownVisible = false;
-        showSearchResult = true;
+        // Navigoi reseptin yksityiskohtiin
+        Navigation.NavigateTo($"/recipe/{recipe.Id}");
     }
 
-    private void FilterByIngredient()
+    private async Task GetRecipes()
     {
-        SearchResult = "Suodatus ainesosilla valittu.";
-        isDropdownVisible = false;
-        showSearchResult = true;
-    }
+        try
+        {
+            recipes = await Http.GetFromJsonAsync<List<ReseptiRequest>>("/Resepti"); // Oikea endpoint
 
-    private void FilterByCategory()
-    {
-        SearchResult = "Suodatus kategoriasta valittu.";
-        isDropdownVisible = false;
-        showSearchResult = true;
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        // Hakee 4 katsotuinta reseptiä tietokannasta myöhemmin
+            if (recipes != null && recipes.Any())
+            {
+                message = "Reseptien haku onnistui!";
+            }
+            else
+            {
+                message = "Ei löytynyt reseptejä.";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Virhe haettaessa reseptejä: {ex.Message}";
+        }
     }
 }
+
