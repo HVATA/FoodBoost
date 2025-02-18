@@ -213,39 +213,53 @@ namespace RuokaAPI.Repositories
         public async Task PaivitaAsync(int id, ReseptiRequest reseptiRequest)
         {
             var resepti = _konteksti.Reseptit
-                .Include(r => r.AinesosanMaara)
+                .Include(r => r.AinesosanMaara).ThenInclude(r => r.Ainesosa)
                 .Include(r => r.Avainsanat)
                 .FirstOrDefault(r => r.Id == id);
             if (resepti == null) return;
 
             var ainesosat = await PoistaDuplikaattiAinesosat(reseptiRequest);
-            resepti.Avainsanat = await PoistaDuplikaattiAvainsanat(reseptiRequest);            
+            resepti.Avainsanat = await PoistaDuplikaattiAvainsanat(reseptiRequest);
             resepti.Katseluoikeus = reseptiRequest.Katseluoikeus;
             resepti.Valmistuskuvaus = reseptiRequest?.Valmistuskuvaus;
             resepti.Tekijäid = reseptiRequest.TekijaId;
             resepti.Kuva1 = reseptiRequest.Kuva1;
             resepti.Nimi = reseptiRequest.Nimi;
+            PoistaAinesosatJoitaEiEnaaKayteta(reseptiRequest, resepti);
+            PaivitaAinesosa(reseptiRequest, resepti, ainesosat);
+            await _konteksti.SaveChangesAsync();
+        }
 
-            foreach (var ainesosaDto in reseptiRequest.Ainesosat)
+        private static void PaivitaAinesosa(ReseptiRequest reseptiRequest, Resepti? resepti, List<Ainesosa> ainesosat)
+        {
+            foreach (var ainesosa in reseptiRequest.Ainesosat)
             {
-                var reseptiAinesosa = resepti.AinesosanMaara
-                    .FirstOrDefault(ra => ra.Ainesosa.Nimi is not null 
-                            && ra.Ainesosa.Nimi.Equals(ainesosaDto.Ainesosa, StringComparison.OrdinalIgnoreCase));
-                if (reseptiAinesosa != null)
+                var onkoAineosaValmiiksiOlemassa = resepti.AinesosanMaara
+                    .FirstOrDefault(ra => ra.Ainesosa.Nimi is not null
+                            && ra.Ainesosa.Nimi.Equals(ainesosa.Ainesosa, StringComparison.OrdinalIgnoreCase));
+                if (onkoAineosaValmiiksiOlemassa != null)
                 {
-                    reseptiAinesosa.Maara = ainesosaDto.Maara;
+                    onkoAineosaValmiiksiOlemassa.Maara = ainesosa.Maara;
                 }
                 else
                 {
                     resepti.AinesosanMaara.Add(new ReseptiAinesosa
                     {
-                        Ainesosa = ainesosat.First(a => a.Nimi == ainesosaDto.Ainesosa),
-                        Maara = ainesosaDto.Maara
+                        Ainesosa = ainesosat.First(a => a.Nimi == ainesosa.Ainesosa),
+                        Maara = ainesosa.Maara
                     });
                 }
             }
+        }
 
-            await _konteksti.SaveChangesAsync();
+        private void PoistaAinesosatJoitaEiEnaaKayteta(ReseptiRequest reseptiRequest, Resepti? resepti)
+        {
+            var ainesosatPyynnossa = reseptiRequest.Ainesosat.Select(a => a.Ainesosa).ToArray();
+            var poistettavatAinesosat = resepti.AinesosanMaara //reseptin kautta haetaan reseptin ainesosamäärät
+                .Select(am => am.Ainesosa)//haetaan pelkät ainesosat ainesosataulusta
+                .Where(a => a.AinesosanMaara.Count == 1 && !ainesosatPyynnossa.Contains(a.Nimi))//suodattaa listaa ehtojen perusteella
+                .ToList();
+            poistettavatAinesosat.ForEach(ainesosa => _konteksti.Ainesosat.Remove(ainesosa));
         }
 
         public async Task PoistaAsync(int id)
