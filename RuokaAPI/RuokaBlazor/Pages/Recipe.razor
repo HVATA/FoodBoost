@@ -2,7 +2,7 @@
 @layout MainLayout
 @inject HttpClient Http
 @inject NavigationManager Navigation
-@inject CustomAuthenticationStateProvider CustomAuthStateProvider
+@inject CustomAuthenticationStateProvider AuthenticationStateProvider
 @inject IJSRuntime JSRuntime
 @using RuokaBlazor.Properties.Model
 @using RuokaBlazor.Services
@@ -151,9 +151,10 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        
-        var authState = await CustomAuthStateProvider.GetAuthenticationStateAsync();
-       
+        // Haetaan kirjautuneen käyttäjän tiedot
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         try
         {
@@ -164,8 +165,19 @@ else
                 virheViesti = "Valittua reseptiä ei löydy.";
                 return;
             }
+
             // Tarkista käyttäjän oikeudet
-            
+            if (user.Identity != null && user.Identity.IsAuthenticated)
+            {
+                var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var userRole = user.FindFirst(ClaimTypes.Role)?.Value;
+
+                if (int.TryParse(userId, out var id))
+                {
+                    // Käyttäjällä on oikeudet, jos hän on admin tai reseptin tekijä
+                    kayttajallaOikeudet = userRole == "admin" || resepti.TekijaId == id;
+                }
+            }
         }
         catch (OperationCanceledException)
         {
@@ -189,7 +201,7 @@ else
                 var response = await Http.DeleteAsync($"resepti/{resepti.Id}");
                 if (response.IsSuccessStatusCode)
                 {
-                    Navigation.NavigateTo("/");
+                    Navigation.NavigateTo("/Home");
                 }
                 else
                 {
@@ -207,6 +219,4 @@ else
     {
         Navigation.NavigateTo($"/editRecipe/{resepti?.Id}");
     }
-
-    
 }

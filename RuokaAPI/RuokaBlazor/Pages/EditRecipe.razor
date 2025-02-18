@@ -1,0 +1,230 @@
+﻿@page "/editRecipe/{Id:int}"
+@layout MainLayout
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject CustomAuthenticationStateProvider AuthenticationStateProvider
+@using System.Text.Json
+@using RuokaBlazor.Services
+@using RuokaBlazor.Properties.Model
+@using System.Security.Claims
+
+<h1>Muokkaa reseptiä</h1>
+
+@if (virheViesti != null)
+{
+    <p>@virheViesti</p>
+}
+else if (resepti == null)
+{
+    <p>Ladataan reseptin tietoja...</p>
+}
+else
+{
+    <div class="form-container">
+        <EditForm Model="resepti" OnValidSubmit="TallennaResepti">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <!-- Reseptin nimi -->
+            <div>
+                <label for="nimi">Reseptin nimi:</label>
+                <InputText id="nimi" @bind-Value="resepti.Nimi" class="form-control" />
+            </div>
+
+            <!-- Valmistuskuvaus -->
+            <div>
+                <label for="valmistuskuvaus">Valmistuskuvaus:</label>
+                <InputTextArea id="valmistuskuvaus" @bind-Value="resepti.Valmistuskuvaus" class="form-control" />
+            </div>
+
+            <!-- Drop box kuvien valintaan -->
+            <div>
+                <label for="kuva">Valitse kuva:</label>
+                <InputFile id="kuva" OnChange="KuvaValittu" class="form-control" />
+                @if (!string.IsNullOrWhiteSpace(kuvanEsikatselu))
+                {
+                    <div class="image-preview">
+                        <img src="@kuvanEsikatselu" alt="Valittu kuva" class="preview-image" />
+                    </div>
+                }
+            </div>
+
+            <!-- Ainesosat -->
+            <h2>Ainesosat</h2>
+            @for (int i = 0; i < resepti.Ainesosat.Length; i++)
+            {
+                var index = i;
+                <div class="input-group">
+                    <InputText @bind-Value="resepti.Ainesosat[index].Ainesosa" class="form-control" placeholder="Ainesosa" />
+                    <InputText @bind-Value="resepti.Ainesosat[index].Maara" class="form-control" placeholder="Määrä" />
+                    <button type="button" class="btn btn-danger" @onclick="() => PoistaAinesosa(index)">Poista</button>
+                </div>
+            }
+            <button type="button" class="btn btn-secondary mt-2" @onclick="LisaaAinesosa">+ Lisää ainesosa</button>
+
+            <!-- Avainsanat -->
+            <h2>Avainsanat</h2>
+            @for (int i = 0; i < resepti.Avainsanat.Length; i++)
+            {
+                var index = i;
+                <div class="input-group">
+                    <InputText @bind-Value="resepti.Avainsanat[index]" class="form-control" placeholder="Avainsana" />
+                    <button type="button" class="btn btn-danger" @onclick="() => PoistaAvainsana(index)">Poista</button>
+                </div>
+            }
+            <button type="button" class="btn btn-secondary mt-2" @onclick="LisaaAvainsana">+ Lisää avainsana</button>
+
+            <!-- Katseluoikeus -->
+            <div class="form-group mt-3">
+                <label for="katseluoikeus">Katseluoikeus:</label>
+                <InputText id="katseluoikeus" @bind-Value="resepti.Katseluoikeus" class="form-control" />
+            </div>
+
+            <!-- Tallenna -->
+            <button type="submit" class="btn btn-primary mt-3">Tallenna</button>
+        </EditForm>
+    </div>
+}
+
+<style>
+    .image-preview {
+        margin-top: 10px;
+    }
+
+    .preview-image {
+        max-width: 200px;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private ReseptiResponse? resepti;
+    private string? kuvanEsikatselu;
+    private string? virheViesti;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        try
+        {
+            // Hae resepti API:sta
+            resepti = await Http.GetFromJsonAsync<ReseptiResponse>($"resepti/{Id}", cts.Token);
+            if (resepti == null)
+            {
+                virheViesti = "Valittua reseptiä ei löydy.";
+                return;
+            }
+
+            // Aseta kuvan esikatselu
+            kuvanEsikatselu = resepti.Kuva1;
+        }
+        catch (OperationCanceledException)
+        {
+            virheViesti = "Reseptin lataaminen kesti liian kauan.";
+        }
+        catch (Exception ex)
+        {
+            virheViesti = $"Virhe reseptin tietojen lataamisessa: {ex.Message}";
+        }
+    }
+
+    private async Task KuvaValittu(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var tiedosto = e.File;
+            using var stream = tiedosto.OpenReadStream(5 * 1024 * 1024); // Maksimikoko: 5MB
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            var kuvaBase64 = Convert.ToBase64String(ms.ToArray());
+
+            // Tallennetaan kuva reseptiin ja esikatseluun
+            resepti.Kuva1 = $"data:{tiedosto.ContentType};base64,{kuvaBase64}";
+            kuvanEsikatselu = resepti.Kuva1;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Virhe kuvan käsittelyssä: {ex.Message}");
+        }
+    }
+
+    private void LisaaAinesosa()
+    {
+        resepti.Ainesosat = resepti.Ainesosat.Append(new AinesosanMaaraDto()).ToArray();
+    }
+
+    private void PoistaAinesosa(int index)
+    {
+        if (index >= 0 && index < resepti.Ainesosat.Length)
+        {
+            resepti.Ainesosat = resepti.Ainesosat.Where((_, i) => i != index).ToArray();
+        }
+    }
+
+    private void LisaaAvainsana()
+    {
+        resepti.Avainsanat = resepti.Avainsanat.Append(string.Empty).ToArray();
+    }
+
+    private void PoistaAvainsana(int index)
+    {
+        if (index >= 0 && index < resepti.Avainsanat.Length)
+        {
+            resepti.Avainsanat = resepti.Avainsanat.Where((_, i) => i != index).ToArray();
+        }
+    }
+
+    private async Task TallennaResepti()
+    {
+        try
+        {
+            // Poistetaan tyhjät arvot
+            resepti.Ainesosat = resepti.Ainesosat
+                .Where(a => !string.IsNullOrWhiteSpace(a.Ainesosa) && !string.IsNullOrWhiteSpace(a.Maara))
+                .ToArray();
+
+            resepti.Avainsanat = resepti.Avainsanat
+                .Where(a => !string.IsNullOrWhiteSpace(a))
+                .ToArray();
+
+            // Tarkistetaan, mitä lähetetään API:lle
+            string jsonData = JsonSerializer.Serialize(resepti);
+            Console.WriteLine("📤 Lähetetään API:lle: " + jsonData);
+
+            // Lähetetään API:lle
+            var response = await Http.PutAsJsonAsync($"resepti/{resepti.Id}", resepti);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseBody = await response.Content.ReadAsStringAsync();
+                Console.WriteLine("📩 API palautti: " + responseBody);
+
+                var updatedRecipe = JsonSerializer.Deserialize<ReseptiResponse>(responseBody);
+                if (updatedRecipe != null)
+                {
+                    Console.WriteLine("✅ Päivitetyn reseptin ID: " + updatedRecipe.Id);
+                    Navigation.NavigateTo($"/recipe/{updatedRecipe.Id}");
+                }
+                else
+                {
+                    Console.WriteLine("❌ Virhe: Ei voitu deserialisoida reseptiä.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("❌ Reseptin tallennus epäonnistui: " + response.StatusCode);
+            }
+        }
+        catch (JsonException jsonEx)
+        {
+            Console.WriteLine($"❌ JSON-virhe tallennuksessa: {jsonEx.Message}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Poikkeus tallennuksessa: {ex.Message}");
+        }
+    }
+}
