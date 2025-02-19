@@ -68,6 +68,53 @@ else
                 <p>@resepti.Valmistuskuvaus</p>
             </div>
         </div>
+
+        <!-- Arvostelut -->
+        <div class="reviews">
+            <h2>Arvostelut</h2>
+            @if (resepti.Arvostelut?.Any() == true)
+            {
+                @foreach (var arvostelu in resepti.Arvostelut)
+                {
+                    <div class="review">
+                        <p><strong>@arvostelu.ArvostelijanNimimerkki</strong> (@arvostelu.Numeroarvostelu/5)</p>
+                        <p>@arvostelu.Vapaateksti</p>
+                    </div>
+                }
+            }
+            else
+            {
+                <p>Ei arvosteluja.</p>
+            }
+        </div>
+
+        <!-- Arvostelulomake -->
+        @if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            <div class="review-form">
+                <h3>Jätä arvostelu</h3>
+                <EditForm Model="uusiArvostelu" OnValidSubmit="LisaaArvostelu">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div>
+                        <label for="numeroarvostelu">Arvosana (1-5):</label>
+                        <InputNumber id="numeroarvostelu" @bind-Value="uusiArvostelu.Numeroarvostelu" class="form-control" />
+                    </div>
+
+                    <div>
+                        <label for="vapaateksti">Kommentti:</label>
+                        <InputTextArea id="vapaateksti" @bind-Value="uusiArvostelu.Vapaateksti" class="form-control" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Lähetä</button>
+                </EditForm>
+            </div>
+        }
+        else
+        {
+            <p>Kirjaudu sisään jättääksesi arvostelun.</p>
+        }
     </div>
 }
 
@@ -141,6 +188,22 @@ else
         background-color: #fff;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
+
+    .reviews {
+        margin-top: 2rem;
+    }
+
+    .review {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background-color: #f9f9f9;
+    }
+
+    .review-form {
+        margin-top: 2rem;
+    }
 </style>
 
 @code {
@@ -148,12 +211,14 @@ else
     private ReseptiResponse? resepti;
     private bool kayttajallaOikeudet = false;
     private string? virheViesti;
+    private ArvosteluRequest uusiArvostelu = new();
+    private ClaimsPrincipal user;
 
     protected override async Task OnInitializedAsync()
     {
         // Haetaan kirjautuneen käyttäjän tiedot
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
+        user = authState.User;
 
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         try
@@ -218,5 +283,40 @@ else
     private void MuokkaaResepti()
     {
         Navigation.NavigateTo($"/editRecipe/{resepti?.Id}");
+    }
+
+    private async Task LisaaArvostelu()
+    {
+        if (resepti == null) return;
+
+        uusiArvostelu.ArvostelijanId = int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+        uusiArvostelu.ArvostelijanNimimerkki = user.Identity.Name;
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync($"resepti/{resepti.Id}/arvostelut", uusiArvostelu);
+            if (response.IsSuccessStatusCode)
+            {
+                // Lisää uusi arvostelu paikallisesti
+                var uusiArvosteluPaikallinen = new Arvostelu
+                    {
+                        ArvostelijanId = uusiArvostelu.ArvostelijanId,
+                        ArvostelijanNimimerkki = uusiArvostelu.ArvostelijanNimimerkki,
+                        Numeroarvostelu = uusiArvostelu.Numeroarvostelu,
+                        Vapaateksti = uusiArvostelu.Vapaateksti
+                    };
+                resepti.Arvostelut = resepti.Arvostelut.Append(uusiArvosteluPaikallinen).ToArray();
+                uusiArvostelu = new ArvosteluRequest(); // Tyhjennä lomake
+                StateHasChanged(); // Päivitä komponentin tila
+            }
+            else
+            {
+                Console.WriteLine($"Virhe arvostelun lisäämisessä: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Poikkeus arvostelun lisäämisessä: {ex.Message}");
+        }
     }
 }

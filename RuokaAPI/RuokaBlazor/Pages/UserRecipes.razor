@@ -1,0 +1,143 @@
+﻿@page "/userRecipes"
+@layout MainLayout
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject CustomAuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JSRuntime
+@using RuokaBlazor.Properties.Model
+@using RuokaBlazor.Services
+@using System.Security.Claims
+@using System.Text.Json
+
+<h1>Omat Reseptit</h1>
+
+@if (virheViesti != null)
+{
+    <p>@virheViesti</p>
+}
+else if (reseptit == null)
+{
+    <p>Ladataan reseptejä...</p>
+}
+else if (!reseptit.Any())
+{
+    <p>Sinulla ei ole vielä reseptejä.</p>
+}
+else
+{
+    <ul class="recipe-list">
+        @foreach (var resepti in reseptit)
+        {
+            <li class="recipe-item">
+                <div class="recipe-info">
+                    <h3>@resepti.Nimi</h3>
+                    <p>@resepti.Valmistuskuvaus</p>
+                </div>
+                <div class="recipe-actions">
+                    <button class="btn btn-primary" @onclick="() => MuokkaaResepti(resepti.Id)">Muokkaa</button>
+                    <button class="btn btn-danger" @onclick="() => PoistaResepti(resepti.Id)">Poista</button>
+                </div>
+            </li>
+        }
+    </ul>
+}
+
+<style>
+    .recipe-list {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    .recipe-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .recipe-info {
+        flex: 1;
+    }
+
+    .recipe-actions {
+        display: flex;
+        gap: 1rem;
+    }
+</style>
+
+@code {
+    private List<ReseptiResponse>? reseptit;
+    private string? virheViesti;
+    private ClaimsPrincipal user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Haetaan kirjautuneen käyttäjän tiedot
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
+
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(userId, out var id))
+            {
+                await HaeOmatReseptit(id);
+            }
+            else
+            {
+                virheViesti = "Virhe: Käyttäjän ID ei ole kelvollinen.";
+            }
+        }
+        else
+        {
+            virheViesti = "Virhe: Käyttäjä ei ole kirjautunut.";
+        }
+    }
+
+    private async Task HaeOmatReseptit(int userId)
+    {
+        try
+        {
+            reseptit = await Http.GetFromJsonAsync<List<ReseptiResponse>>($"resepti/omat/{userId}");
+        }
+        catch (Exception ex)
+        {
+            virheViesti = $"Virhe reseptien lataamisessa: {ex.Message}";
+        }
+    }
+
+    private void MuokkaaResepti(int reseptiId)
+    {
+        Navigation.NavigateTo($"/editRecipe/{reseptiId}");
+    }
+
+    private async Task PoistaResepti(int reseptiId)
+    {
+        var confirm = await JSRuntime.InvokeAsync<bool>("window.confirm", new object[] { "Haluatko varmasti poistaa tämän reseptin?" });
+        if (confirm)
+        {
+            try
+            {
+                var response = await Http.DeleteAsync($"resepti/{reseptiId}");
+                if (response.IsSuccessStatusCode)
+                {
+                    reseptit = reseptit?.Where(r => r.Id != reseptiId).ToList();
+                    StateHasChanged();
+                }
+                else
+                {
+                    Console.WriteLine($"Virhe poistamisessa: {response.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Poikkeus poistamisessa: {ex.Message}");
+            }
+        }
+    }
+}

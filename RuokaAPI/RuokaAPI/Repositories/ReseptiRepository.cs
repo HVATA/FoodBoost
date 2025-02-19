@@ -87,6 +87,28 @@ namespace RuokaAPI.Repositories
                 .FirstOrDefaultAsync();
         }
 
+        public async Task<IEnumerable<ReseptiResponse>> HaeReseptitKayttajalleAsync ( int userId )
+            {
+            return await _konteksti.Reseptit
+                .Where(r => r.Tekijäid == userId)
+                .Select(r => new ReseptiResponse
+                    {
+                    Id = r.Id,
+                    Nimi = r.Nimi,
+                    Valmistuskuvaus = r.Valmistuskuvaus,
+                    Kuva1 = r.Kuva1,
+                    Katseluoikeus = r.Katseluoikeus,
+                    Ainesosat = r.AinesosanMaara.Select(am => new AinesosanMaaraDto
+                        {
+                        Ainesosa = am.Ainesosa.Nimi,
+                        Maara = am.Maara
+                        }).ToArray(),
+                    Avainsanat = r.Avainsanat.Select(a => a.Sana).ToArray(),
+                    Arvostelut = r.Arvostelut.ToArray()
+                    })
+                .ToListAsync();
+            }
+
 
         // A helper function that processes a list of new names.
         // Removes duplicates from the provided list of new keyword names by checking against existing entities in the

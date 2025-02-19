@@ -43,6 +43,18 @@ namespace RuokaAPI.Controllers
             return Ok(resepti);
         }
 
+        [HttpGet("omat/{userId}")]
+        public async Task<ActionResult<IEnumerable<ReseptiResponse>>> HaeOmatReseptit ( int userId )
+            {
+            var reseptit = await _repository.HaeReseptitKayttajalleAsync(userId);
+            if (reseptit == null || !reseptit.Any())
+                {
+                return NotFound("Ei löytynyt reseptejä.");
+                }
+            return Ok(reseptit);
+            }
+
+
         [HttpPost]
         public async Task<ActionResult<Resepti>> LisaaResepti(ReseptiRequest reseptiDto)
         {
