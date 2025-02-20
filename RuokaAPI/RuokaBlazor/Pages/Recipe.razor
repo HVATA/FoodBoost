@@ -69,25 +69,6 @@ else
             </div>
         </div>
 
-        <!-- Arvostelut -->
-        <div class="reviews">
-            <h2>Arvostelut</h2>
-            @if (resepti.Arvostelut?.Any() == true)
-            {
-                @foreach (var arvostelu in resepti.Arvostelut)
-                {
-                    <div class="review">
-                        <p><strong>@arvostelu.ArvostelijanNimimerkki</strong> (@arvostelu.Numeroarvostelu/5)</p>
-                        <p>@arvostelu.Vapaateksti</p>
-                    </div>
-                }
-            }
-            else
-            {
-                <p>Ei arvosteluja.</p>
-            }
-        </div>
-
         <!-- Arvostelulomake -->
         @if (user.Identity != null && user.Identity.IsAuthenticated)
         {
@@ -115,6 +96,25 @@ else
         {
             <p>Kirjaudu sisään jättääksesi arvostelun.</p>
         }
+
+        <!-- Arvostelut -->
+        <div class="reviews">
+            <h2>Arvostelut</h2>
+            @if (resepti.Arvostelut?.Any() == true)
+            {
+                @foreach (var arvostelu in resepti.Arvostelut)
+                {
+                    <div class="review">
+                        <p><strong>@arvostelu.ArvostelijanNimimerkki</strong> (@arvostelu.Numeroarvostelu/5)</p>
+                        <p>@arvostelu.Vapaateksti</p>
+                    </div>
+                }
+            }
+            else
+            {
+                <p>Ei arvosteluja.</p>
+            }
+        </div>
     </div>
 }
 
