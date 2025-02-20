@@ -54,6 +54,21 @@ namespace RuokaAPI.Controllers
             return Ok(reseptit);
             }
 
+        [HttpGet("ainesosat")]
+        public async Task<ActionResult<IEnumerable<string>>> HaeAinesosat()
+        {
+            var ainesosat = await _repository.HaeAinesosatAsync();
+            var ainesosaNimet = ainesosat.Select(a => a.Nimi).ToList();
+            return Ok(ainesosaNimet);
+        }
+
+        [HttpGet("avainsanat")]
+        public async Task<ActionResult<IEnumerable<string>>> HaeAvainsanat()
+        {
+            var avainsanat = await _repository.HaeAvainsanatAsync();
+            var avainsanalista = avainsanat.Select(a => a.Sana).ToList();
+            return Ok(avainsanalista);
+        }
 
         [HttpPost]
         public async Task<ActionResult<Resepti>> LisaaResepti(ReseptiRequest reseptiDto)

@@ -33,10 +33,11 @@ public class ruokaContext : DbContext
                   .WithOne(a => a.Resepti);
 
             entity.HasMany(r => r.Avainsanat)
-                  .WithMany(a => a.Reseptit);
+                  .WithMany(a => a.Reseptit); 
 
             entity.HasMany(r => r.Arvostelut)
                  .WithOne(a => a.Resepti);
+                 
         });
 
         modelBuilder.Entity<Avainsana>(entity =>

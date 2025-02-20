@@ -114,39 +114,24 @@ namespace RuokaAPI.Repositories
         // Removes duplicates from the provided list of new keyword names by checking against existing entities in the
         // dictionary. If a keyword name exists in the dictionary, it uses the existing entity;
         // otherwise, it creates a new entity.
-        private async Task<List<Ainesosa>> PoistaDuplikaatit(List<string> uudetNimet, Dictionary<string, Ainesosa> olemassaOlevat)
+        private async Task<List<Ainesosa>> HaeTaiLuoUusiAinesosa(List<string> ainesosaNimet, Dictionary<string, Ainesosa> olemassaOlevatAinesosat)
         {
-            var kasitellyt = new List<Ainesosa>();
-            foreach (var nimi in uudetNimet)
+            var uusiAinesosalista = new List<Ainesosa>();
+            foreach (var nimi in ainesosaNimet)
             {
-                if (olemassaOlevat.TryGetValue(nimi, out var olemassaOleva))
+                if (olemassaOlevatAinesosat.TryGetValue(nimi, out var olemassaOleva))
                 {
-                    kasitellyt.Add(olemassaOleva);
+                    uusiAinesosalista.Add(olemassaOleva);
                 }
                 else
                 {
-                    kasitellyt.Add(new Ainesosa { Nimi = nimi });
+                    uusiAinesosalista.Add(new Ainesosa { Nimi = nimi });
                 }
             }
-            return kasitellyt;
+            return uusiAinesosalista;
         }
 
-        private async Task<List<Avainsana>> PoistaDuplikaatit(List<string> uudetSanat, Dictionary<string, Avainsana> olemassaOlevat)
-        {
-            var kasitellyt = new List<Avainsana>();
-            foreach (var sana in uudetSanat)
-            {
-                if (olemassaOlevat.TryGetValue(sana, out var olemassaOleva))
-                {
-                    kasitellyt.Add(olemassaOleva);
-                }
-                else
-                {
-                    kasitellyt.Add(new Avainsana { Sana = sana });
-                }
-            }
-            return kasitellyt;
-        }
+       
 
         // This method processes the ingredients of a given recipe request to ensure there are no duplicate ingredients.
         // It converts the ingredient names to lowercase, fetches existing ingredients from the database, and then calls PoistaDuplikaatit to handle duplicates.
@@ -161,18 +146,10 @@ namespace RuokaAPI.Repositories
                 .ToDictionaryAsync(x => x.Nimi.ToLower());
 
             // Call PoistaDuplikaatit to process the list of ingredient names and ensure there are no duplicates
-            return await PoistaDuplikaatit(uudetAinesosat, olemassaOlevatAinesosat);
+            return await HaeTaiLuoUusiAinesosa(uudetAinesosat, olemassaOlevatAinesosat);
         }
 
-        private async Task<List<Avainsana>> PoistaDuplikaattiAvainsanat(ReseptiRequest resepti)
-        {
-            var uudetAvainsanat = resepti.Avainsanat.Select(a => a.ToLower()).ToList();
-            var olemassaOlevatAvainsanat = await _konteksti.Avainsanat
-                .Where(x => uudetAvainsanat.Contains(x.Sana.ToLower()))
-                .ToDictionaryAsync(x => x.Sana.ToLower());
-            return await PoistaDuplikaatit(uudetAvainsanat, olemassaOlevatAvainsanat);
-        }
-
+       
         // Converts the provided array of ingredient names to lowercase, fetches existing ingredients from the database,
         // and ensures there are no duplicates by calling PoistaDuplikaatit.
         private async Task<List<Ainesosa>> MuunnaAinesosat(string[] ainesosatNimet)
@@ -186,28 +163,17 @@ namespace RuokaAPI.Repositories
                 .ToDictionaryAsync(x => x.Nimi.ToLower());
 
             // Call PoistaDuplikaatit to process the list of ingredient names and ensure there are no duplicates
-            return await PoistaDuplikaatit(uudetNimet, olemassaOlevat);
+            return await HaeTaiLuoUusiAinesosa(uudetNimet, olemassaOlevat);
         }
 
-        // Converts the provided array of keyword names to lowercase, fetches existing keywords from the database,
-        // and ensures there are no duplicates by calling PoistaDuplikaatit.
-        private async Task<List<Avainsana>> MuunnaAvainsanat(string[] avainsanaNimet)
-        {
-            // Convert the keyword names to lowercase
-            var uudetSanat = avainsanaNimet.Select(a => a.ToLower()).ToList();
-
-            // Fetch existing keywords from the database that match the names
-            var olemassaOlevat = await _konteksti.Avainsanat
-                .Where(x => uudetSanat.Contains(x.Sana.ToLower()))
-                .ToDictionaryAsync(x => x.Sana.ToLower());
-
-            // Call PoistaDuplikaatit to process the list of keyword names and ensure there are no duplicates
-            return await PoistaDuplikaatit(uudetSanat, olemassaOlevat);
-        }
+               
 
         public async Task<Resepti> LisaaAsync(ReseptiRequest reseptiDto)
         {
             var ainesosat = await MuunnaAinesosat(reseptiDto.Ainesosat.Select(a => a.Ainesosa).ToArray());
+            var avainsanat = _konteksti.Avainsanat
+                .Where(a => reseptiDto.Avainsanat.Contains(a.Sana))
+                .ToList();
             var resepti = new Resepti
             {
                 Tekijäid = reseptiDto.TekijaId,
@@ -215,7 +181,7 @@ namespace RuokaAPI.Repositories
                 Valmistuskuvaus = reseptiDto.Valmistuskuvaus,
                 Kuva1 = reseptiDto.Kuva1,
                 Katseluoikeus = reseptiDto.Katseluoikeus,                
-                Avainsanat = await MuunnaAvainsanat(reseptiDto.Avainsanat)
+                Avainsanat = avainsanat
             };
 
             foreach (var ainesosa in reseptiDto.Ainesosat)
@@ -241,7 +207,9 @@ namespace RuokaAPI.Repositories
             if (resepti == null) return;
 
             var ainesosat = await PoistaDuplikaattiAinesosat(reseptiRequest);
-            resepti.Avainsanat = await PoistaDuplikaattiAvainsanat(reseptiRequest);
+            resepti.Avainsanat = _konteksti.Avainsanat
+                .Where(a => reseptiRequest.Avainsanat.Contains(a.Sana))
+                .ToList();
             resepti.Katseluoikeus = reseptiRequest.Katseluoikeus;
             resepti.Valmistuskuvaus = reseptiRequest?.Valmistuskuvaus;
             resepti.Tekijäid = reseptiRequest.TekijaId;
@@ -314,6 +282,15 @@ namespace RuokaAPI.Repositories
             resepti.Arvostelut.Add(arvostelu);
             await _konteksti.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<List<Ainesosa>> HaeAinesosatAsync()
+        {
+           return await _konteksti.Ainesosat.ToListAsync();
+        }
+        public async Task<List<Avainsana>> HaeAvainsanatAsync()
+        {
+            return await _konteksti.Avainsanat.ToListAsync();
         }
     }
 }
