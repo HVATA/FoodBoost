@@ -11,7 +11,7 @@
 <div>
     <div class="search-bar">
         <div class="search-container">
-            <button @onclick="Search" class="search-btn">Hae</button>
+            <button @onclick="GetRecipesWithSearchquery" class="search-btn">Hae</button>
         </div>
         <div class="search-container">
             <div>
@@ -213,31 +213,51 @@
         await GetKeywords();
     }
 
-    private void ToggleIngredientDropdown()
-    {
-        isIngredientDropdownVisible = !isIngredientDropdownVisible;
-        StateHasChanged(); // Pakottaa näkymän päivityksen
-    }
+    private void ToggleIngredientDropdown() => isIngredientDropdownVisible = !isIngredientDropdownVisible;
+
     private void ToggleKeywordDropdown() => isKeywordDropdownVisible = !isKeywordDropdownVisible;
 
-    private void Search()
-    {
-        Console.WriteLine($"Aloitetaan haku sanalla {SearchQuery}");
-        if (!string.IsNullOrEmpty(SearchQuery) && recipes != null)
-        {
-            
-            message = $"Haku: '{SearchQuery}' suoritettu! {recipes.Count} osumaa.";
-        }
-        else
-        {
-            message = "Hakukenttä on tyhjä tai reseptejä ei ole ladattu.";
-        }
-    }
+
 
     private void SelectRecipe(ReseptiRequest recipe)
     {
         Navigation.NavigateTo($"/recipe/{recipe.Id}");
     }
+
+    private async Task GetRecipesWithSearchquery()
+    {
+        try
+        {
+            Console.WriteLine($"Aloitetaan haku sanalla {SearchQuery}");
+            var queryParams = new List<string>();
+
+            // Tarkistetaan löytyykö hakusana ainesosista
+            if (ingredients.Any(a => a.Nimi == SearchQuery))
+            {
+                queryParams.Add($"ainesosat={Uri.EscapeDataString(SearchQuery)}");
+            }
+
+            // Tarkistetaan löytyykö hakusana avainsanoista
+            if (keywords.Any(k => k.Sana == SearchQuery))
+            {
+                queryParams.Add($"avainsanat={Uri.EscapeDataString(SearchQuery)}");
+            }
+
+            var queryString = queryParams.Any() ? "?" + string.Join("&", queryParams) : string.Empty;
+
+            recipes = await Http.GetFromJsonAsync<List<ReseptiRequest>>($"/Resepti{queryString}");
+
+            if (recipes == null || !recipes.Any())
+            {
+                message = "Ei löytynyt reseptejä.";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Virhe haettaessa reseptejä: {ex.Message}";
+        }
+    }
+
 
     private async Task GetRecipes()
     {
