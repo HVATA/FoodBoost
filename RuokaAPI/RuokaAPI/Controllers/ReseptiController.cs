@@ -23,7 +23,7 @@ namespace RuokaAPI.Controllers
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Resepti>>> HaeReseptit(
-            [FromQuery] string[]? ainesosat,
+            [FromQuery] string[]? ainesosat, //Voi hakea tyhjänä tai ainesosalla tai avainsanalla
             [FromQuery] string[]? avainsanat)
         {
             var reseptit = await _repository.HaeReseptitAsync(ainesosat, avainsanat);

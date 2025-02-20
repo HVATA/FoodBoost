@@ -19,83 +19,73 @@
             </div>
         </div>
     </div>
+
     <div class="dropdown-bar">
+        <!-- Raaka-aine dropdown -->
         <div class="dropdown">
-            <button onclick="showIngredientContent()" class="dropbtn">Raaka-aine</button>
-            <div id="ingredientDropdown" class="dropdown-content">
-                <a href="#home">Raaka-aine</a>
-                <a href="#about">Raaka-aine</a>
-                <a href="#contact">Raaka-aine</a>
-            </div>
+            <button @onclick="ToggleIngredientDropdown" class="dropbtn">Raaka-aine</button>
+            @if (isIngredientDropdownVisible)
+            {
+                <div class="dropdown-content">
+                    @if (ingredients != null && ingredients.Any())
+                    {
+                        @foreach (var ingredient in ingredients)
+                        {
+                            <a href="#">@ingredient.Nimi</a>
+                        }
+                    }
+                    else
+                    {
+                        <p>Ladataan...</p>
+                    }
+                </div>
+            }
         </div>
+
+        <!-- Avainsanat dropdown -->
         <div class="dropdown">
-            <button onclick="showDishContent()" class="dropbtn">Ruokalaji</button>
-            <div id="dishDropdown" class="dropdown-content">
-                <a href="#home">Ruokalaji</a>
-                <a href="#about">Ruokalaji</a>
-                <a href="#contact">Ruokalaji</a>
-            </div>
+            <button @onclick="ToggleKeywordDropdown" class="dropbtn">Avainsanat</button>
+            @if (isKeywordDropdownVisible)
+            {
+                <div class="dropdown-content">
+                    @if (keywords != null && keywords.Any())
+                    {
+                        @foreach (var keyword in keywords)
+                        {
+                            <a href="#">@keyword.Sana</a>
+                        }
+                    }
+                    else
+                    {
+                        <p>Ladataan...</p>
+                    }
+                </div>
+            }
         </div>
-        <div class="dropdown">
-            <button onclick="showDietContent()" class="dropbtn">Ruokavalio</button>
-            <div id="dietDropdown" class="dropdown-content">
-                <a href="#home">Ruokavalio</a>
-                <a href="#about">Ruokavalio</a>
-                <a href="#contact">Ruokavalio</a>
-            </div>
-        </div>
-        <div class="dropdown">
-            <button onclick="showSeasonalContent()" class="dropbtn">Sesonki</button>
-            <div id="seasonalDropdown" class="dropdown-content">
-                <a href="#home">Sesonki</a>
-                <a href="#about">Sesonki</a>
-                <a href="#contact">Sesonki</a>
-            </div>
-        </div>
+
     </div>
+
     <div class="main-content">
-        <ul>
+        <div class="row">
             @if (recipes != null)
             {
                 @foreach (var recipe in recipes)
                 {
-                    <li @onclick="() => SelectRecipe(recipe)">@recipe.Nimi</li>
+                    <div class="column">
+                        <div class="card" @onclick="() => SelectRecipe(recipe)">
+                            <h3>@recipe.Nimi</h3>
+                            <p>@recipe.Valmistuskuvaus</p>
+                        </div>
+                    </div>
                 }
             }
             else
             {
                 <p>Ladataan reseptejä...</p>
             }
-        </ul>
+        </div>
     </div>
 </div>
-
-<script>
-    function showIngredientContent() {
-        document.getElementById("ingredientDropdown").classList.toggle("show");
-    }
-    function showDishContent() {
-        document.getElementById("dishDropdown").classList.toggle("show");
-    }
-    function showDietContent() {
-        document.getElementById("dietDropdown").classList.toggle("show");
-    }
-    function showSeasonalContent() {
-        document.getElementById("seasonalDropdown").classList.toggle("show");
-    }
-
-    window.onclick = function (event) {
-        if (!event.target.matches('.dropbtn')) {
-            var dropdowns = document.getElementsByClassName("dropdown-content");
-            for (var i = 0; i < dropdowns.length; i++) {
-                var openDropdown = dropdowns[i];
-                if (openDropdown.classList.contains('show')) {
-                    openDropdown.classList.remove('show');
-                }
-            }
-        }
-    }
-</script>
 
 <style>
     .dropbtn {
@@ -122,7 +112,6 @@
     }
 
     .dropdown-content {
-        display: none;
         position: absolute;
         background-color: #f1f1f1;
         min-width: 160px;
@@ -173,43 +162,80 @@
         align-items: center;
         height: 20rem;
     }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .column {
+        float: left;
+        width: 25%;
+        padding: 0 10px;
+    }
+
+    .row {
+        margin: 0 -5px;
+    }
+
+        .row:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+    .card {
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+        padding: 16px;
+        text-align: center;
+        background-color: #f1f1f1;
+        cursor: pointer;
+    }
 </style>
 
 @code {
     private string SearchQuery { get; set; } = string.Empty;
     private bool isIngredientDropdownVisible = false;
-    private bool isDishDropdownVisible = false;
-    private bool isDietDropdownVisible = false;
-    private bool isSeasonalDropdownVisible = false;
+    private bool isKeywordDropdownVisible = false;
 
-    private List<ReseptiRequest>? recipes; // Käytetään nyt ReseptiRequest-luokkaa
+    private List<ReseptiRequest>? recipes;
+    private List<Ainesosa>? ingredients;
+    private List<Avainsana>? keywords;
     private string message = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
         await GetRecipes();
+        await GetIngredients();
+        await GetKeywords();
     }
 
-    private void ToggleIngredientDropdown() => isIngredientDropdownVisible = !isIngredientDropdownVisible;
-    private void ToggleDishDropdown() => isDishDropdownVisible = !isDishDropdownVisible;
-    private void ToggleDietDropdown() => isDietDropdownVisible = !isDietDropdownVisible;
-    private void ToggleSeasonalDropdown() => isSeasonalDropdownVisible = !isSeasonalDropdownVisible;
+    private void ToggleIngredientDropdown()
+    {
+        isIngredientDropdownVisible = !isIngredientDropdownVisible;
+        StateHasChanged(); // Pakottaa näkymän päivityksen
+    }
+    private void ToggleKeywordDropdown() => isKeywordDropdownVisible = !isKeywordDropdownVisible;
 
     private void Search()
     {
-        if (!string.IsNullOrEmpty(SearchQuery))
+        Console.WriteLine($"Aloitetaan haku sanalla {SearchQuery}");
+        if (!string.IsNullOrEmpty(SearchQuery) && recipes != null)
         {
-            message = $"Haku: '{SearchQuery}' suoritettu!";
+            
+            message = $"Haku: '{SearchQuery}' suoritettu! {recipes.Count} osumaa.";
         }
         else
         {
-            message = "Hakukenttä on tyhjä. Anna hakusana.";
+            message = "Hakukenttä on tyhjä tai reseptejä ei ole ladattu.";
         }
     }
 
     private void SelectRecipe(ReseptiRequest recipe)
     {
-        // Navigoi reseptin yksityiskohtiin
         Navigation.NavigateTo($"/recipe/{recipe.Id}");
     }
 
@@ -217,13 +243,9 @@
     {
         try
         {
-            recipes = await Http.GetFromJsonAsync<List<ReseptiRequest>>("/Resepti"); // Oikea endpoint
+            recipes = await Http.GetFromJsonAsync<List<ReseptiRequest>>("/Resepti");
 
-            if (recipes != null && recipes.Any())
-            {
-                message = "Reseptien haku onnistui!";
-            }
-            else
+            if (recipes == null || !recipes.Any())
             {
                 message = "Ei löytynyt reseptejä.";
             }
@@ -233,5 +255,50 @@
             message = $"Virhe haettaessa reseptejä: {ex.Message}";
         }
     }
-}
 
+    private async Task GetIngredients()
+    {
+        try
+        {
+            // Haetaan JSON listana merkkijonoja
+            var names = await Http.GetFromJsonAsync<List<string>>("/Resepti/ainesosat");
+
+            if (names != null)
+            {
+                // Muunnetaan merkkijonolista Ainesosa-olioiksi (Ilman Id:tä)
+                ingredients = names.Select(n => new Ainesosa { Nimi = n }).ToList();
+            }
+
+            message = ingredients != null && ingredients.Any() ? "Ainesosat ladattu!" : "Ei löytynyt ainesosia.";
+        }
+        catch (Exception ex)
+        {
+            message = $"Virhe haettaessa ainesosia: {ex.Message}";
+        }
+    }
+
+
+
+
+    private async Task GetKeywords()
+    {
+        try
+        {
+            // Haetaan JSON listana merkkijonoja
+            var words = await Http.GetFromJsonAsync<List<string>>("/Resepti/avainsanat");
+
+            if (words != null)
+            {
+                // Muunnetaan merkkijonolista Avainsana-olioiksi (Ilman Id:tä)
+                keywords = words.Select(w => new Avainsana { Sana = w }).ToList();
+            }
+
+            message = keywords != null && keywords.Any() ? "Avainsanat ladattu!" : "Ei löytynyt avainsanoja.";
+        }
+        catch (Exception ex)
+        {
+            message = $"Virhe haettaessa avainsanoja: {ex.Message}";
+        }
+    }
+
+}
