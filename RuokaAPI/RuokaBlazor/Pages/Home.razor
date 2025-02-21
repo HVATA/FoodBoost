@@ -31,7 +31,12 @@
                     {
                         @foreach (var ingredient in ingredients)
                         {
-                            <a href="#">@ingredient.Nimi</a>
+                            <label>
+                                <input type="checkbox" @bind="ingredient.IsChecked" @bind:event="oninput" @onchange="UpdateSearchQuery"/>
+                                @ingredient.Nimi
+                            </label>
+
+
                         }
                     }
                     else
@@ -52,7 +57,10 @@
                     {
                         @foreach (var keyword in keywords)
                         {
-                            <a href="#">@keyword.Sana</a>
+                            <label>
+                                <input type="checkbox" @bind="keyword.IsChecked" @bind:event="oninput" @onchange="UpdateSearchQuery" />
+                                @keyword.Sana
+                            </label>
                         }
                     }
                     else
@@ -215,6 +223,7 @@
 
     private void ToggleIngredientDropdown()
     {
+
         isIngredientDropdownVisible = !isIngredientDropdownVisible;
         isKeywordDropdownVisible = false;
     }
@@ -235,6 +244,28 @@
     {
         Navigation.NavigateTo($"/recipe/{recipe.Id}");
     }
+
+    private void UpdateSearchQuery()
+    {
+        var selectedIngredients = ingredients?.Where(i => i.IsChecked).Select(i => i.Nimi) ?? new List<string>();
+        var selectedKeywords = keywords?.Where(k => k.IsChecked).Select(k => k.Sana) ?? new List<string>();
+
+        SearchQuery = string.Join(", ", selectedIngredients.Concat(selectedKeywords));
+    }
+
+    private void ToggleIngredientSelection(Ainesosa ingredient, ChangeEventArgs e)
+    {
+        ingredient.IsChecked = (bool)e.Value;
+        UpdateSearchQuery();
+        Console.WriteLine($"Hakusanat: {SearchQuery}");
+    }
+    private void ToggleKeywordSelection(Avainsana keyword, ChangeEventArgs e)
+    {
+        keyword.IsChecked = (bool)e.Value;
+        UpdateSearchQuery();
+        Console.WriteLine($"Hakusanat: {SearchQuery}");
+    }
+
 
     private async Task GetRecipesWithSearchquery()
     {
