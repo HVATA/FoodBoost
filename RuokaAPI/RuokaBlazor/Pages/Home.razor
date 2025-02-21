@@ -20,9 +20,9 @@
         </div>
     </div>
 
-    <div class="dropdown-bar">
+    <div class="dropdown-bar" @onclick="CloseDropdownsOnClickOutside">
         <!-- Raaka-aine dropdown -->
-        <div class="dropdown">
+        <div class="dropdown" @onclick:stopPropagation="true">
             <button @onclick="ToggleIngredientDropdown" class="dropbtn">Raaka-aine</button>
             @if (isIngredientDropdownVisible)
             {
@@ -43,7 +43,7 @@
         </div>
 
         <!-- Avainsanat dropdown -->
-        <div class="dropdown">
+        <div class="dropdown" @onclick:stopPropagation="true">
             <button @onclick="ToggleKeywordDropdown" class="dropbtn">Avainsanat</button>
             @if (isKeywordDropdownVisible)
             {
@@ -213,11 +213,23 @@
         await GetKeywords();
     }
 
-    private void ToggleIngredientDropdown() => isIngredientDropdownVisible = !isIngredientDropdownVisible;
+    private void ToggleIngredientDropdown()
+    {
+        isIngredientDropdownVisible = !isIngredientDropdownVisible;
+        isKeywordDropdownVisible = false;
+    }
 
-    private void ToggleKeywordDropdown() => isKeywordDropdownVisible = !isKeywordDropdownVisible;
+    private void ToggleKeywordDropdown()
+    {
+        isKeywordDropdownVisible = !isKeywordDropdownVisible;
+        isIngredientDropdownVisible = false;
+    }
 
-
+    private void CloseDropdownsOnClickOutside()
+    {
+        isIngredientDropdownVisible = false;
+        isKeywordDropdownVisible = false;
+    }
 
     private void SelectRecipe(ReseptiRequest recipe)
     {
