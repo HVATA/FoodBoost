@@ -36,7 +36,7 @@
                         @foreach (var ingredient in ingredients)
                         {
                             <label>
-                                <input type="checkbox" @bind="ingredient.IsChecked" @bind:event="oninput" @onchange="UpdateSearchQuery"/>
+                                <input type="checkbox" @bind="ingredient.IsChecked" @bind:event="oninput" @onchange="UpdateSearchQuery" />
                                 @ingredient.Nimi
                             </label>
 
@@ -269,100 +269,84 @@
 
     private void UpdateSearchQuery()
     {
-        var selectedIngredients = ingredients?.Where(i => i.IsChecked).Select(i => i.Nimi) ?? new List<string>();
-        var selectedKeywords = keywords?.Where(k => k.IsChecked).Select(k => k.Sana) ?? new List<string>();
+        // Päivitetään hakukenttä valittujen perusteella
+        var selectedIngredients = ingredients.Where(i => i.IsChecked).Select(i => i.Nimi);
+        var selectedKeywords = keywords.Where(k => k.IsChecked).Select(k => k.Sana);
 
         SearchQuery = string.Join(", ", selectedIngredients.Concat(selectedKeywords));
+
+        SearchQueryChanged();
     }
 
-    private void SearchQueryChanged(ChangeEventArgs e)
+    private async Task SearchQueryChanged(ChangeEventArgs? e = null)
     {
-        // Päivitetään hakukenttä
-        var newSearchQuery = e.Value?.ToString() ?? "";
+        // Jos kutsu tuli hakukentältä, päivitetään SearchQuery e.Value:n perusteella
+        if (e != null)
+        {
+            SearchQuery = e.Value?.ToString() ?? "";
+        }
+
+        Console.WriteLine($"Tässä on uusi query: {SearchQuery}");
 
         // Tarkistetaan, onko hakukenttä tyhjä
-        if (string.IsNullOrWhiteSpace(newSearchQuery))
+        if (string.IsNullOrWhiteSpace(SearchQuery))
         {
-            // Jos kenttä on tyhjä, tyhjennetään kaikki valinnat
             foreach (var ingredient in ingredients)
             {
-                ingredient.IsChecked = false; // Poistetaan valinta ainesosista
+                ingredient.IsChecked = false;
             }
 
             foreach (var keyword in keywords)
             {
-                keyword.IsChecked = false; // Poistetaan valinta avainsanoista
+                keyword.IsChecked = false;
             }
 
-            // Asetetaan hakukentän väri neutraaliksi
             SearchInputClass = "search-input";
-
-            Console.WriteLine("Hakukenttä tyhjeni, tyhjennettiin valitut checkboxit.");
         }
         else
         {
-            // Pilkotaan hakusana pilkulla erotettuihin osiin ja siistitään välilyönnit
-            var searchTerms = newSearchQuery.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                                            .Select(s => s.Trim()) // Poistetaan turhat välilyönnit
-                                            .Where(s => !string.IsNullOrWhiteSpace(s)) // Poistetaan tyhjät
-                                            .ToList();
+            var searchTerms = SearchQuery.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                         .Select(s => s.Trim())
+                                         .Where(s => !string.IsNullOrWhiteSpace(s))
+                                         .ToList();
 
-            // Etsitään ne hakusanat, jotka on poistettu hakukentästä
-            var removedTerms = SearchQuery.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                                          .Select(s => s.Trim())
-                                          .Except(searchTerms)
-                                          .ToList();
-
-            // Käydään läpi poistettavat hakusanat ja poistetaan niiden checkboxit
-            foreach (var term in removedTerms)
+            foreach (var ingredient in ingredients)
             {
-                // Poistetaan valinta, jos hakusana löytyy ainesosista
-                var ingredient = ingredients.FirstOrDefault(i => i.Nimi.Equals(term, StringComparison.OrdinalIgnoreCase));
-                if (ingredient != null)
-                {
-                    ingredient.IsChecked = false; // Poistetaan valinta
-                }
-
-                // Poistetaan valinta, jos hakusana löytyy avainsanoista
-                var keyword = keywords.FirstOrDefault(k => k.Sana.Equals(term, StringComparison.OrdinalIgnoreCase));
-                if (keyword != null)
-                {
-                    keyword.IsChecked = false; // Poistetaan valinta
-                }
+                ingredient.IsChecked = searchTerms.Contains(ingredient.Nimi, StringComparer.OrdinalIgnoreCase);
             }
 
-            // Tarkistetaan, onko kaikki annetut hakusanat joko ainesosia tai avainsanoja
+            foreach (var keyword in keywords)
+            {
+                keyword.IsChecked = searchTerms.Contains(keyword.Sana, StringComparer.OrdinalIgnoreCase);
+            }
+
             bool found = searchTerms.All(term =>
                 ingredients.Any(i => i.Nimi.Equals(term, StringComparison.OrdinalIgnoreCase)) ||
                 keywords.Any(k => k.Sana.Equals(term, StringComparison.OrdinalIgnoreCase))
             );
 
-            // Päivitetään hakukentän väri
             SearchInputClass = found ? "search-input valid" : "search-input invalid";
+
+            await GetRecipesWithSearchquery();
         }
-
-        // Päivitetään hakukenttä
-        SearchQuery = newSearchQuery;
-
-        // Debuggaus ja UI-päivitys
-        Console.WriteLine(SearchQuery);
-        StateHasChanged(); // Pakotetaan UI:n päivitys
     }
 
 
-
-    private void ToggleIngredientSelection(Ainesosa ingredient, ChangeEventArgs e)
+    private async void ToggleIngredientSelection(Ainesosa ingredient, ChangeEventArgs e)
     {
-        ingredient.IsChecked = (bool)e.Value;
-        UpdateSearchQuery();
+        ingredient.IsChecked = (bool)e.Value;  // Muutetaan valintaa
+        SearchQueryChanged();  // Päivitetään hakukysely checkboxin muutoksen mukaan
         Console.WriteLine($"Hakusanat: {SearchQuery}");
     }
-    private void ToggleKeywordSelection(Avainsana keyword, ChangeEventArgs e)
+
+    private async void ToggleKeywordSelection(Avainsana keyword, ChangeEventArgs e)
     {
-        keyword.IsChecked = (bool)e.Value;
-        UpdateSearchQuery();
+        keyword.IsChecked = (bool)e.Value;  // Muutetaan valintaa
+        SearchQueryChanged();  // Päivitetään hakukysely checkboxin muutoksen mukaan
         Console.WriteLine($"Hakusanat: {SearchQuery}");
     }
+
+
 
 
     private async Task GetRecipesWithSearchquery()
@@ -428,6 +412,8 @@
             message = $"Virhe haettaessa reseptejä: {ex.Message}";
         }
     }
+
+
 
     private async Task GetRecipes()
     {
