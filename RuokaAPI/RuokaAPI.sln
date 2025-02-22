@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RuokaAPI", "RuokaAPI\RuokaA
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RuokaBlazor", "RuokaBlazor\RuokaBlazor.csproj", "{6B1FF473-57BD-47A8-A8E1-0A2C2AEE983C}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RuokaAPI.Tests", "..\RuokaAPI.Tests\RuokaAPI.Tests.csproj", "{12BAD497-44CE-4B8F-85F8-E67A4F72D377}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{6B1FF473-57BD-47A8-A8E1-0A2C2AEE983C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6B1FF473-57BD-47A8-A8E1-0A2C2AEE983C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6B1FF473-57BD-47A8-A8E1-0A2C2AEE983C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{12BAD497-44CE-4B8F-85F8-E67A4F72D377}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12BAD497-44CE-4B8F-85F8-E67A4F72D377}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12BAD497-44CE-4B8F-85F8-E67A4F72D377}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12BAD497-44CE-4B8F-85F8-E67A4F72D377}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
