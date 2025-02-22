@@ -15,7 +15,11 @@
         </div>
         <div class="search-container">
             <div>
-                <input type="text" placeholder="Hae reseptejä nimellä tai ainesosalla..." @bind="SearchQuery" class="search-input" />
+                <input type="text"
+                       value="@SearchQuery"
+                       @oninput="SearchQueryChanged"
+                       class="@SearchInputClass"
+                       placeholder="Hae reseptejä nimellä tai ainesosalla..." />
             </div>
         </div>
     </div>
@@ -96,6 +100,23 @@
 </div>
 
 <style>
+
+    .search-input {
+        border: 2px solid gray;
+        padding: 5px;
+    }
+
+        .search-input.valid {
+            border: 2px solid green; /* Muuttaa reunuksen vihreäksi */
+            outline: none; /* Poistaa oletuskehykset */
+        }
+
+        .search-input.invalid {
+            border: 2px solid red; /* Muuttaa reunuksen punaiseksi */
+            outline: none;
+        }
+
+
     .dropbtn {
         background-color: #3498DB;
         color: white;
@@ -206,6 +227,7 @@
 
 @code {
     private string SearchQuery { get; set; } = string.Empty;
+    private string SearchInputClass { get; set; } = "search-input"; // Oletusluokka
     private bool isIngredientDropdownVisible = false;
     private bool isKeywordDropdownVisible = false;
 
@@ -253,6 +275,82 @@
         SearchQuery = string.Join(", ", selectedIngredients.Concat(selectedKeywords));
     }
 
+    private void SearchQueryChanged(ChangeEventArgs e)
+    {
+        // Päivitetään hakukenttä
+        var newSearchQuery = e.Value?.ToString() ?? "";
+
+        // Tarkistetaan, onko hakukenttä tyhjä
+        if (string.IsNullOrWhiteSpace(newSearchQuery))
+        {
+            // Jos kenttä on tyhjä, tyhjennetään kaikki valinnat
+            foreach (var ingredient in ingredients)
+            {
+                ingredient.IsChecked = false; // Poistetaan valinta ainesosista
+            }
+
+            foreach (var keyword in keywords)
+            {
+                keyword.IsChecked = false; // Poistetaan valinta avainsanoista
+            }
+
+            // Asetetaan hakukentän väri neutraaliksi
+            SearchInputClass = "search-input";
+
+            Console.WriteLine("Hakukenttä tyhjeni, tyhjennettiin valitut checkboxit.");
+        }
+        else
+        {
+            // Pilkotaan hakusana pilkulla erotettuihin osiin ja siistitään välilyönnit
+            var searchTerms = newSearchQuery.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                            .Select(s => s.Trim()) // Poistetaan turhat välilyönnit
+                                            .Where(s => !string.IsNullOrWhiteSpace(s)) // Poistetaan tyhjät
+                                            .ToList();
+
+            // Etsitään ne hakusanat, jotka on poistettu hakukentästä
+            var removedTerms = SearchQuery.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                          .Select(s => s.Trim())
+                                          .Except(searchTerms)
+                                          .ToList();
+
+            // Käydään läpi poistettavat hakusanat ja poistetaan niiden checkboxit
+            foreach (var term in removedTerms)
+            {
+                // Poistetaan valinta, jos hakusana löytyy ainesosista
+                var ingredient = ingredients.FirstOrDefault(i => i.Nimi.Equals(term, StringComparison.OrdinalIgnoreCase));
+                if (ingredient != null)
+                {
+                    ingredient.IsChecked = false; // Poistetaan valinta
+                }
+
+                // Poistetaan valinta, jos hakusana löytyy avainsanoista
+                var keyword = keywords.FirstOrDefault(k => k.Sana.Equals(term, StringComparison.OrdinalIgnoreCase));
+                if (keyword != null)
+                {
+                    keyword.IsChecked = false; // Poistetaan valinta
+                }
+            }
+
+            // Tarkistetaan, onko kaikki annetut hakusanat joko ainesosia tai avainsanoja
+            bool found = searchTerms.All(term =>
+                ingredients.Any(i => i.Nimi.Equals(term, StringComparison.OrdinalIgnoreCase)) ||
+                keywords.Any(k => k.Sana.Equals(term, StringComparison.OrdinalIgnoreCase))
+            );
+
+            // Päivitetään hakukentän väri
+            SearchInputClass = found ? "search-input valid" : "search-input invalid";
+        }
+
+        // Päivitetään hakukenttä
+        SearchQuery = newSearchQuery;
+
+        // Debuggaus ja UI-päivitys
+        Console.WriteLine(SearchQuery);
+        StateHasChanged(); // Pakotetaan UI:n päivitys
+    }
+
+
+
     private void ToggleIngredientSelection(Ainesosa ingredient, ChangeEventArgs e)
     {
         ingredient.IsChecked = (bool)e.Value;
@@ -274,22 +372,52 @@
             Console.WriteLine($"Aloitetaan haku sanalla {SearchQuery}");
             var queryParams = new List<string>();
 
-            // Tarkistetaan löytyykö hakusana ainesosista
-            if (ingredients.Any(a => a.Nimi == SearchQuery))
+            // Lisätään kaikki valitut ainesosat checkboxeista
+            var selectedIngredients = ingredients
+                .Where(a => a.IsChecked)
+                .Select(a => $"ainesosat={Uri.EscapeDataString(a.Nimi)}");
+            queryParams.AddRange(selectedIngredients);
+
+            // Lisätään kaikki valitut avainsanat checkboxeista
+            var selectedKeywords = keywords
+                .Where(k => k.IsChecked)
+                .Select(k => $"avainsanat={Uri.EscapeDataString(k.Sana)}");
+            queryParams.AddRange(selectedKeywords);
+
+            // Tarkistetaan, onko hakukentässä jotain
+            if (!string.IsNullOrWhiteSpace(SearchQuery))
             {
-                queryParams.Add($"ainesosat={Uri.EscapeDataString(SearchQuery)}");
+                // Pilkotaan hakukentän teksti pilkulla erotettuihin osiin
+                var searchTerms = SearchQuery.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                             .Select(s => s.Trim()) // Poistetaan turhat välilyönnit
+                                             .Where(s => !string.IsNullOrWhiteSpace(s)) // Poistetaan tyhjät
+                                             .ToList();
+
+                foreach (var term in searchTerms)
+                {
+                    // Jos hakusana löytyy ainesosista, lisätään se
+                    if (ingredients.Any(i => i.Nimi.Equals(term, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        queryParams.Add($"ainesosat={Uri.EscapeDataString(term)}");
+                    }
+
+                    // Jos hakusana löytyy avainsanoista, lisätään se
+                    if (keywords.Any(k => k.Sana.Equals(term, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        queryParams.Add($"avainsanat={Uri.EscapeDataString(term)}");
+                    }
+                }
             }
 
-            // Tarkistetaan löytyykö hakusana avainsanoista
-            if (keywords.Any(k => k.Sana == SearchQuery))
-            {
-                queryParams.Add($"avainsanat={Uri.EscapeDataString(SearchQuery)}");
-            }
-
+            // Luodaan querystring API-kutsua varten
             var queryString = queryParams.Any() ? "?" + string.Join("&", queryParams) : string.Empty;
 
+            Console.WriteLine($"API kutsu: /Resepti{queryString}"); // Debuggausta varten
+
+            // Lähetetään pyyntö API:lle
             recipes = await Http.GetFromJsonAsync<List<ReseptiRequest>>($"/Resepti{queryString}");
 
+            // Tarkistetaan, löytyikö reseptejä
             if (recipes == null || !recipes.Any())
             {
                 message = "Ei löytynyt reseptejä.";
@@ -300,7 +428,6 @@
             message = $"Virhe haettaessa reseptejä: {ex.Message}";
         }
     }
-
 
     private async Task GetRecipes()
     {
