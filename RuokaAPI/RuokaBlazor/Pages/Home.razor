@@ -302,6 +302,7 @@
             }
 
             SearchInputClass = "search-input";
+            await GetRecipesWithSearchquery();
         }
         else
         {
@@ -335,15 +336,15 @@
     private async void ToggleIngredientSelection(Ainesosa ingredient, ChangeEventArgs e)
     {
         ingredient.IsChecked = (bool)e.Value;  // Muutetaan valintaa
-        SearchQueryChanged();  // Päivitetään hakukysely checkboxin muutoksen mukaan
-        Console.WriteLine($"Hakusanat: {SearchQuery}");
+        
+        
     }
 
     private async void ToggleKeywordSelection(Avainsana keyword, ChangeEventArgs e)
     {
         keyword.IsChecked = (bool)e.Value;  // Muutetaan valintaa
-        SearchQueryChanged();  // Päivitetään hakukysely checkboxin muutoksen mukaan
-        Console.WriteLine($"Hakusanat: {SearchQuery}");
+        
+       
     }
 
 
@@ -406,6 +407,7 @@
             {
                 message = "Ei löytynyt reseptejä.";
             }
+            StateHasChanged();
         }
         catch (Exception ex)
         {
