@@ -106,13 +106,14 @@ namespace RuokaAPI.Tests
         public async Task HaeSuosikkiReseptit_PalauttaaReseptilistanJosKayttajaLoytyy()
         {
             var kayttaja = LuoKayttaja();
-            var resepti = new Resepti { Id = 1, Nimi = "Testi Resepti", Tekijäid = 1 };
-
             _context.Kayttajat.Add(kayttaja);
+            await _context.SaveChangesAsync();
+
+            var resepti = new Resepti { Id = 10, Nimi = "Testi Resepti", Tekijäid = kayttaja.Id };
             _context.Reseptit.Add(resepti);
             await _context.SaveChangesAsync();
 
-            var suosikki = new Suosikit { Id = 1, kayttajaID = kayttaja.Id, reseptiID = resepti.Id };
+            var suosikki = new Suosikit { Id = 20, kayttajaID = kayttaja.Id, reseptiID = resepti.Id };
             _context.Suosikit.Add(suosikki);
             await _context.SaveChangesAsync();
 
@@ -177,5 +178,219 @@ namespace RuokaAPI.Tests
 
             Assert.Equal("Virheellinen salasana.", result);
         }
+
+        [Fact]
+        public async Task LisaaKayttaja_PalauttaaVirheenJosSahkopostiOnJoKaytossa()
+        {
+            var kayttaja = LuoKayttaja();
+            _context.Kayttajat.Add(kayttaja);
+            await _context.SaveChangesAsync();
+
+            var result = await _controller.Lisaa(kayttaja);
+
+            Assert.Equal("Sähköposti on jo käytössä!!!", result);
+        }
+
+        [Fact]
+        public async Task Paivita_PalauttaaBadRequestJosKayttajaaEiLoydy()
+        {
+            var kayttaja = LuoKayttaja();
+            kayttaja.Id = 999; // Käyttäjä, jota ei ole tietokannassa
+
+            var result = await _controller.Paivita(kayttaja);
+
+            Assert.IsType<BadRequestResult>(result.Result);
+        }
+
+        [Fact]
+        public async Task MuutaSalasana_PalauttaaBadRequestJosVanhaSalasanaVaara()
+        {
+            var kayttaja = LuoKayttaja();
+            _context.Kayttajat.Add(kayttaja);
+            await _context.SaveChangesAsync();
+
+            var dto = new KayttajaDTO { Id = kayttaja.Id, Salasana = "vaara123", Uusisalasana = "uusisalasana" };
+            var result = await _controller.MuutaSalasana(dto);
+
+            Assert.IsType<BadRequestResult>(result.Result);
+        }
+
+        [Fact]
+        public async Task HaeUusiSalasana_PalauttaaNotFoundJosSahkopostiaEiLoydy()
+        {
+            var result = await _controller.HaeUusiSalasana("tuntematon@example.com");
+
+            Assert.IsType<NotFoundObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task LahetaResepti_PalauttaaUnauthorizedJosKayttajaaEiLoydy()
+        {
+            var result = await _controller.LahetaResepti(1, "vastaanottaja@example.com", new Kayttaja { Sahkopostiosoite = "tuntematon@example.com", Salasana = "salasana" });
+
+            Assert.IsType<UnauthorizedObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task LisaaSuosikki_PalauttaaVirheenJosSuosikkiOnJoLisatty()
+        {
+            var kayttaja = LuoKayttaja();
+            _context.Kayttajat.Add(kayttaja);
+            await _context.SaveChangesAsync();
+
+            var request = new SuosikkiMuokkaus
+            {
+                Kayttaja = kayttaja,
+                suosikki = new Suosikit { kayttajaID = kayttaja.Id, reseptiID = 1 }
+            };
+
+            // Lisätään ensimmäinen suosikki normaalisti metodin kautta
+            await _controller.LisaaSuosikki(request);
+
+            // Yritetään lisätä sama suosikki uudestaan
+            var result = await _controller.LisaaSuosikki(request);
+
+            Assert.Equal("Resepti on jo suosikeissa.", result);
+        }
+
+        [Fact]
+        public async Task PoistaSuosikki_PalauttaaVirheenJosReseptiEiOleSuosikeissa()
+        {
+            var kayttaja = LuoKayttaja();
+            _context.Kayttajat.Add(kayttaja);
+            await _context.SaveChangesAsync();
+
+            var request = new SuosikkiMuokkaus
+            {
+                Kayttaja = new Kayttaja
+                {
+                    Sahkopostiosoite = kayttaja.Sahkopostiosoite,
+                    Salasana = "salasana123" // Oikea salasana
+                },
+                suosikki = new Suosikit { kayttajaID = kayttaja.Id, reseptiID = 99 }
+            };
+
+            var result = await _controller.PoistaSuosikki(request);
+
+            Assert.Equal("Virheellinen salasana.", result);
+        }
+
+        [Fact]
+        public async Task HaeKayttaja_PalauttaaKayttajanJosTunnistautuminenOnnistuu()
+        {
+            var kayttaja = LuoKayttaja();
+            _context.Kayttajat.Add(kayttaja);
+            await _context.SaveChangesAsync();
+
+            var result = await _controller.HaeKayttaja("salasana123", "test@example.com");
+
+            Assert.NotNull(result);
+            Assert.IsType<OkObjectResult>(result.Result);
+        }
+
+        [Fact]
+        public async Task HaeKayttaja_PalauttaaNotFoundJosKayttajaaEiLoydy()
+        {
+            var result = await _controller.HaeKayttaja("salasana123", "tuntematon@example.com");
+
+            Assert.NotNull(result);
+            if (result == null)
+            {
+                throw new Exception("HaeKayttaja palautti null-arvon.");
+            }
+
+            Assert.NotNull(result.Result);
+            if (result.Result == null)
+            {
+                throw new Exception("Result on null HaeKayttaja-palautuksessa.");
+            }
+
+            Assert.IsType<NotFoundObjectResult>(result.Result);
+
+            var notFoundResult = result.Result as NotFoundObjectResult;
+            Assert.NotNull(notFoundResult);
+            if (notFoundResult == null)
+            {
+                throw new Exception("NotFoundObjectResult on null.");
+            }
+
+            Assert.NotNull(notFoundResult.Value);
+            Assert.Equal("Käyttäjää ei löytynyt.", notFoundResult.Value?.ToString());
+        }
+
+
+        [Fact]
+        public async Task HaeKayttaja_PalauttaaKayttajanJosTiedotOikein()
+        {
+            var kayttaja = LuoKayttaja();
+            _context.Kayttajat.Add(kayttaja);
+            await _context.SaveChangesAsync();
+
+            var result = await _controller.HaeKayttaja("salasana123", "test@example.com");
+
+            Assert.NotNull(result);
+            Assert.IsType<OkObjectResult>(result.Result);
+            var okResult = result.Result as OkObjectResult;
+            Assert.NotNull(okResult);
+            Assert.IsType<Kayttaja>(okResult.Value);
+        }
+
+
+
+        [Fact]
+        public async Task HaeUusiSalasana_PalauttaaOkJosKayttajaLoytyy()
+        {
+            var kayttaja = LuoKayttaja();
+            _context.Kayttajat.Add(kayttaja);
+            await _context.SaveChangesAsync();
+
+            var result = await _controller.HaeUusiSalasana(kayttaja.Sahkopostiosoite);
+
+            Assert.NotNull(result);
+            Assert.IsType<OkObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task HaeUusiSalasana_PalauttaaNotFoundJosKayttajaaEiLoydy()
+        {
+            var result = await _controller.HaeUusiSalasana("tuntematon@example.com");
+
+            Assert.NotNull(result);
+            Assert.IsType<NotFoundObjectResult>(result);
+            var notFoundResult = result as NotFoundObjectResult;
+            Assert.NotNull(notFoundResult);
+            Assert.Equal("Käyttäjää ei löydy!", notFoundResult.Value);
+        }
+
+        [Fact]
+        public async Task LahetaResepti_PalauttaaOkJosLahetysOnnistui()
+        {
+            var kayttaja = LuoKayttaja();
+            var resepti = new Resepti { Id = 1, Nimi = "Testi Resepti", Tekijäid = 1 };
+
+            _context.Kayttajat.Add(kayttaja);
+            _context.Reseptit.Add(resepti);
+            await _context.SaveChangesAsync();
+
+            var result = await _controller.LahetaResepti(1, "vastaanottaja@example.com", kayttaja);
+
+            Assert.NotNull(result);
+            Assert.IsType<OkObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task LahetaResepti_PalauttaaNotFoundJosReseptiaEiLoydy()
+        {
+            var kayttaja = LuoKayttaja();
+            _context.Kayttajat.Add(kayttaja);
+            await _context.SaveChangesAsync();
+
+            var missingReseptiId = 999;
+            var result = await _controller.LahetaResepti(missingReseptiId, "vastaanottaja@example.com", kayttaja);
+
+            Assert.NotNull(result);
+            Assert.IsType<NotFoundObjectResult>(result);
+        }
+
     }
 }
