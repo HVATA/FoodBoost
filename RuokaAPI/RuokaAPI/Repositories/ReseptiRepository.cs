@@ -15,7 +15,7 @@ namespace RuokaAPI.Repositories
             _konteksti = konteksti;
         }
 
-        public async Task<IEnumerable<ReseptiRequest>> HaeReseptitAsync(string[]? ainesosat, string[]? avainsanat)
+        public async Task<IEnumerable<ReseptiRequest>> HaeReseptitAsync(string[]? ainesosat, string[]? avainsanat, int? userId)
         {
             // Start building the query to fetch recipes from the database
             var query = _konteksti.Reseptit
@@ -25,6 +25,7 @@ namespace RuokaAPI.Repositories
                 .Include(r => r.Avainsanat)
                 // Convert to IQueryable to enable further query modifications
                 .AsQueryable();
+
 
             // If ainesosat (ingredients) are provided, filter recipes that contain any of the specified ingredients
             if (ainesosat != null && ainesosat.Length > 0)
@@ -42,23 +43,28 @@ namespace RuokaAPI.Repositories
                     .Any(a => haettavatAvainsanat.Contains(a.Sana)));
             }
 
+            if (userId is null)
+            {
+                query = query.Where(r => r.Katseluoikeus == "julkinen");
+            }
             // Project the filtered recipes into ReseptiRequest DTOs and execute the query asynchronously
+
             return await query
-                .Select(r => new ReseptiRequest
+            .Select(r => new ReseptiRequest
+            {
+                Id = r.Id,
+                Nimi = r.Nimi,
+                Valmistuskuvaus = r.Valmistuskuvaus,
+                Kuva1 = r.Kuva1,
+                Katseluoikeus = r.Katseluoikeus,
+                Ainesosat = r.AinesosanMaara.Select(am => new AinesosanMaaraDto
                 {
-                    Id = r.Id,
-                    Nimi = r.Nimi,
-                    Valmistuskuvaus = r.Valmistuskuvaus,
-                    Kuva1 = r.Kuva1,
-                    Katseluoikeus = r.Katseluoikeus,
-                    Ainesosat = r.AinesosanMaara.Select(am => new AinesosanMaaraDto
-                    {
-                        Ainesosa = am.Ainesosa.Nimi,
-                        Maara = am.Maara
-                    }).ToArray(),
-                    Avainsanat = r.Avainsanat.Select(a => a.Sana).ToArray()
-                })
-                .ToListAsync();
+                    Ainesosa = am.Ainesosa.Nimi,
+                    Maara = am.Maara
+                }).ToArray(),
+                Avainsanat = r.Avainsanat.Select(a => a.Sana).ToArray()
+            })
+            .ToListAsync();
         }
 
         public async Task<ReseptiResponse?> HaeReseptiAsync(int id)
@@ -86,28 +92,27 @@ namespace RuokaAPI.Repositories
                 })
                 .FirstOrDefaultAsync();
         }
-
-        public async Task<IEnumerable<ReseptiResponse>> HaeReseptitKayttajalleAsync ( int userId )
-            {
+                public async Task<IEnumerable<ReseptiResponse>> HaeReseptitKayttajalleAsync(int userId)
+        {
             return await _konteksti.Reseptit
                 .Where(r => r.Tekijäid == userId)
                 .Select(r => new ReseptiResponse
-                    {
+                {
                     Id = r.Id,
                     Nimi = r.Nimi,
                     Valmistuskuvaus = r.Valmistuskuvaus,
                     Kuva1 = r.Kuva1,
                     Katseluoikeus = r.Katseluoikeus,
                     Ainesosat = r.AinesosanMaara.Select(am => new AinesosanMaaraDto
-                        {
+                    {
                         Ainesosa = am.Ainesosa.Nimi,
                         Maara = am.Maara
-                        }).ToArray(),
+                    }).ToArray(),
                     Avainsanat = r.Avainsanat.Select(a => a.Sana).ToArray(),
                     Arvostelut = r.Arvostelut.ToArray()
-                    })
+                })
                 .ToListAsync();
-            }
+        }
 
 
         // A helper function that processes a list of new names.
@@ -131,7 +136,7 @@ namespace RuokaAPI.Repositories
             return uusiAinesosalista;
         }
 
-       
+
 
         // This method processes the ingredients of a given recipe request to ensure there are no duplicate ingredients.
         // It converts the ingredient names to lowercase, fetches existing ingredients from the database, and then calls PoistaDuplikaatit to handle duplicates.
@@ -149,7 +154,7 @@ namespace RuokaAPI.Repositories
             return await HaeTaiLuoUusiAinesosa(uudetAinesosat, olemassaOlevatAinesosat);
         }
 
-       
+
         // Converts the provided array of ingredient names to lowercase, fetches existing ingredients from the database,
         // and ensures there are no duplicates by calling PoistaDuplikaatit.
         private async Task<List<Ainesosa>> MuunnaAinesosat(string[] ainesosatNimet)
@@ -166,7 +171,7 @@ namespace RuokaAPI.Repositories
             return await HaeTaiLuoUusiAinesosa(uudetNimet, olemassaOlevat);
         }
 
-               
+
 
         public async Task<Resepti> LisaaAsync(ReseptiRequest reseptiDto)
         {
@@ -180,7 +185,7 @@ namespace RuokaAPI.Repositories
                 Nimi = reseptiDto.Nimi,
                 Valmistuskuvaus = reseptiDto.Valmistuskuvaus,
                 Kuva1 = reseptiDto.Kuva1,
-                Katseluoikeus = reseptiDto.Katseluoikeus,                
+                Katseluoikeus = reseptiDto.Katseluoikeus,
                 Avainsanat = avainsanat
             };
 
@@ -286,7 +291,7 @@ namespace RuokaAPI.Repositories
 
         public async Task<List<Ainesosa>> HaeAinesosatAsync()
         {
-           return await _konteksti.Ainesosat.ToListAsync();
+            return await _konteksti.Ainesosat.ToListAsync();
         }
         public async Task<List<Avainsana>> HaeAvainsanatAsync()
         {

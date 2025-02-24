@@ -15,7 +15,11 @@
         </div>
         <div class="search-container">
             <div>
-                <input type="text" placeholder="Hae reseptejä nimellä tai ainesosalla..." @bind="SearchQuery" class="search-input" />
+                <input type="text"
+                       value="@SearchQuery"
+                       @oninput="SearchQueryChanged"
+                       class="@SearchInputClass"
+                       placeholder="Hae reseptejä nimellä tai ainesosalla..." />
             </div>
         </div>
     </div>
@@ -32,7 +36,7 @@
                         @foreach (var ingredient in ingredients)
                         {
                             <label>
-                                <input type="checkbox" @bind="ingredient.IsChecked" @bind:event="oninput" @onchange="UpdateSearchQuery"/>
+                                <input type="checkbox" @bind="ingredient.IsChecked" @bind:event="oninput" @onchange="UpdateSearchQuery" />
                                 @ingredient.Nimi
                             </label>
 
@@ -96,6 +100,23 @@
 </div>
 
 <style>
+
+    .search-input {
+        border: 2px solid gray;
+        padding: 5px;
+    }
+
+        .search-input.valid {
+            border: 2px solid green; /* Muuttaa reunuksen vihreäksi */
+            outline: none; /* Poistaa oletuskehykset */
+        }
+
+        .search-input.invalid {
+            border: 2px solid red; /* Muuttaa reunuksen punaiseksi */
+            outline: none;
+        }
+
+
     .dropbtn {
         background-color: #3498DB;
         color: white;
@@ -206,6 +227,7 @@
 
 @code {
     private string SearchQuery { get; set; } = string.Empty;
+    private string SearchInputClass { get; set; } = "search-input"; // Oletusluokka
     private bool isIngredientDropdownVisible = false;
     private bool isKeywordDropdownVisible = false;
 
@@ -247,24 +269,85 @@
 
     private void UpdateSearchQuery()
     {
-        var selectedIngredients = ingredients?.Where(i => i.IsChecked).Select(i => i.Nimi) ?? new List<string>();
-        var selectedKeywords = keywords?.Where(k => k.IsChecked).Select(k => k.Sana) ?? new List<string>();
+        // Päivitetään hakukenttä valittujen perusteella
+        var selectedIngredients = ingredients.Where(i => i.IsChecked).Select(i => i.Nimi);
+        var selectedKeywords = keywords.Where(k => k.IsChecked).Select(k => k.Sana);
 
         SearchQuery = string.Join(", ", selectedIngredients.Concat(selectedKeywords));
+
+        SearchQueryChanged();
     }
 
-    private void ToggleIngredientSelection(Ainesosa ingredient, ChangeEventArgs e)
+    private async Task SearchQueryChanged(ChangeEventArgs? e = null)
     {
-        ingredient.IsChecked = (bool)e.Value;
-        UpdateSearchQuery();
-        Console.WriteLine($"Hakusanat: {SearchQuery}");
+        // Jos kutsu tuli hakukentältä, päivitetään SearchQuery e.Value:n perusteella
+        if (e != null)
+        {
+            SearchQuery = e.Value?.ToString() ?? "";
+        }
+
+        Console.WriteLine($"Tässä on uusi query: {SearchQuery}");
+
+        // Tarkistetaan, onko hakukenttä tyhjä
+        if (string.IsNullOrWhiteSpace(SearchQuery))
+        {
+            foreach (var ingredient in ingredients)
+            {
+                ingredient.IsChecked = false;
+            }
+
+            foreach (var keyword in keywords)
+            {
+                keyword.IsChecked = false;
+            }
+
+            SearchInputClass = "search-input";
+            await GetRecipesWithSearchquery();
+        }
+        else
+        {
+            var searchTerms = SearchQuery.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                         .Select(s => s.Trim())
+                                         .Where(s => !string.IsNullOrWhiteSpace(s))
+                                         .ToList();
+
+            foreach (var ingredient in ingredients)
+            {
+                ingredient.IsChecked = searchTerms.Contains(ingredient.Nimi, StringComparer.OrdinalIgnoreCase);
+            }
+
+            foreach (var keyword in keywords)
+            {
+                keyword.IsChecked = searchTerms.Contains(keyword.Sana, StringComparer.OrdinalIgnoreCase);
+            }
+
+            bool found = searchTerms.All(term =>
+                ingredients.Any(i => i.Nimi.Equals(term, StringComparison.OrdinalIgnoreCase)) ||
+                keywords.Any(k => k.Sana.Equals(term, StringComparison.OrdinalIgnoreCase))
+            );
+
+            SearchInputClass = found ? "search-input valid" : "search-input invalid";
+
+            await GetRecipesWithSearchquery();
+        }
     }
-    private void ToggleKeywordSelection(Avainsana keyword, ChangeEventArgs e)
+
+
+    private async void ToggleIngredientSelection(Ainesosa ingredient, ChangeEventArgs e)
     {
-        keyword.IsChecked = (bool)e.Value;
-        UpdateSearchQuery();
-        Console.WriteLine($"Hakusanat: {SearchQuery}");
+        ingredient.IsChecked = (bool)e.Value;  // Muutetaan valintaa
+        
+        
     }
+
+    private async void ToggleKeywordSelection(Avainsana keyword, ChangeEventArgs e)
+    {
+        keyword.IsChecked = (bool)e.Value;  // Muutetaan valintaa
+        
+       
+    }
+
+
 
 
     private async Task GetRecipesWithSearchquery()
@@ -274,32 +357,64 @@
             Console.WriteLine($"Aloitetaan haku sanalla {SearchQuery}");
             var queryParams = new List<string>();
 
-            // Tarkistetaan löytyykö hakusana ainesosista
-            if (ingredients.Any(a => a.Nimi == SearchQuery))
+            // Lisätään kaikki valitut ainesosat checkboxeista
+            var selectedIngredients = ingredients
+                .Where(a => a.IsChecked)
+                .Select(a => $"ainesosat={Uri.EscapeDataString(a.Nimi)}");
+            queryParams.AddRange(selectedIngredients);
+
+            // Lisätään kaikki valitut avainsanat checkboxeista
+            var selectedKeywords = keywords
+                .Where(k => k.IsChecked)
+                .Select(k => $"avainsanat={Uri.EscapeDataString(k.Sana)}");
+            queryParams.AddRange(selectedKeywords);
+
+            // Tarkistetaan, onko hakukentässä jotain
+            if (!string.IsNullOrWhiteSpace(SearchQuery))
             {
-                queryParams.Add($"ainesosat={Uri.EscapeDataString(SearchQuery)}");
+                // Pilkotaan hakukentän teksti pilkulla erotettuihin osiin
+                var searchTerms = SearchQuery.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                             .Select(s => s.Trim()) // Poistetaan turhat välilyönnit
+                                             .Where(s => !string.IsNullOrWhiteSpace(s)) // Poistetaan tyhjät
+                                             .ToList();
+
+                foreach (var term in searchTerms)
+                {
+                    // Jos hakusana löytyy ainesosista, lisätään se
+                    if (ingredients.Any(i => i.Nimi.Equals(term, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        queryParams.Add($"ainesosat={Uri.EscapeDataString(term)}");
+                    }
+
+                    // Jos hakusana löytyy avainsanoista, lisätään se
+                    if (keywords.Any(k => k.Sana.Equals(term, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        queryParams.Add($"avainsanat={Uri.EscapeDataString(term)}");
+                    }
+                }
             }
 
-            // Tarkistetaan löytyykö hakusana avainsanoista
-            if (keywords.Any(k => k.Sana == SearchQuery))
-            {
-                queryParams.Add($"avainsanat={Uri.EscapeDataString(SearchQuery)}");
-            }
-
+            // Luodaan querystring API-kutsua varten
             var queryString = queryParams.Any() ? "?" + string.Join("&", queryParams) : string.Empty;
 
+            Console.WriteLine($"API kutsu: /Resepti{queryString}"); // Debuggausta varten
+
+            // Lähetetään pyyntö API:lle
             recipes = await Http.GetFromJsonAsync<List<ReseptiRequest>>($"/Resepti{queryString}");
 
+            // Tarkistetaan, löytyikö reseptejä
             if (recipes == null || !recipes.Any())
             {
                 message = "Ei löytynyt reseptejä.";
             }
+            StateHasChanged();
         }
         catch (Exception ex)
         {
             message = $"Virhe haettaessa reseptejä: {ex.Message}";
         }
     }
+
 
 
     private async Task GetRecipes()
