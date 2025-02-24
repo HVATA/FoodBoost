@@ -177,7 +177,7 @@ namespace RuokaAPI.Tests
                 Etunimi = "Matti",
                 Sukunimi = "Meikäläinen",
                 Nimimerkki = "Testaaja",
-                Kayttajataso = "Peruskäyttäjä"
+                Kayttajataso = "käyttäjä"
             };
 
             var result = await _controller.PoistaSuosikit(vääräKayttaja);
