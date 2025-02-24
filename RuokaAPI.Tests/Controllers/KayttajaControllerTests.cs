@@ -105,15 +105,20 @@ namespace RuokaAPI.Tests
         [Fact]
         public async Task HaeSuosikkiReseptit_PalauttaaReseptilistanJosKayttajaLoytyy()
         {
+            _context.Kayttajat.RemoveRange(_context.Kayttajat);
+            _context.Reseptit.RemoveRange(_context.Reseptit);
+            _context.Suosikit.RemoveRange(_context.Suosikit);
+            await _context.SaveChangesAsync();
+
             var kayttaja = LuoKayttaja();
             _context.Kayttajat.Add(kayttaja);
             await _context.SaveChangesAsync();
 
-            var resepti = new Resepti { Id = 10, Nimi = "Testi Resepti", Tekijäid = kayttaja.Id };
+            var resepti = new Resepti { Id = new Random().Next(1000, 2000), Nimi = "Testi Resepti", Tekijäid = kayttaja.Id };
             _context.Reseptit.Add(resepti);
             await _context.SaveChangesAsync();
 
-            var suosikki = new Suosikit { Id = 20, kayttajaID = kayttaja.Id, reseptiID = resepti.Id };
+            var suosikki = new Suosikit { Id = new Random().Next(2000, 3000), kayttajaID = kayttaja.Id, reseptiID = resepti.Id };
             _context.Suosikit.Add(suosikki);
             await _context.SaveChangesAsync();
 
@@ -122,6 +127,7 @@ namespace RuokaAPI.Tests
             Assert.NotNull(result);
             Assert.Single(result);
         }
+
 
         [Fact]
         public async Task PoistaSuosikit_PalauttaaOnnistumisviestinKunPoistoOnnistui()
@@ -391,6 +397,123 @@ namespace RuokaAPI.Tests
             Assert.NotNull(result);
             Assert.IsType<NotFoundObjectResult>(result);
         }
+
+
+
+        [Fact]
+        public async Task HaeSuosikkiReseptit_PalauttaaTyhjanListanJosEiSuosikkeja()
+        {
+            var kayttaja = LuoKayttaja();
+            _context.Kayttajat.Add(kayttaja);
+            await _context.SaveChangesAsync();
+
+            var result = await _controller.HaeSuosikkiReseptit(kayttaja);
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task HaeSuosikkiReseptit_PalauttaaVirheenJosKayttajaaEiLoydy()
+        {
+            var tuntematonKayttaja = new Kayttaja { Sahkopostiosoite = "tuntematon@example.com", Salasana = "salasana123" };
+
+            var result = await _controller.HaeSuosikkiReseptit(tuntematonKayttaja);
+
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task HaeSuosikkiReseptit_PalauttaaKaikkiSuosikitJosUseita()
+        {
+            _context.Kayttajat.RemoveRange(_context.Kayttajat);
+            _context.Reseptit.RemoveRange(_context.Reseptit);
+            _context.Suosikit.RemoveRange(_context.Suosikit);
+            await _context.SaveChangesAsync();
+
+            var kayttaja = LuoKayttaja();
+            _context.Kayttajat.Add(kayttaja);
+            await _context.SaveChangesAsync();
+
+            var resepti1 = new Resepti { Id = new Random().Next(1000, 2000), Nimi = "Resepti 1", Tekijäid = kayttaja.Id };
+            var resepti2 = new Resepti { Id = new Random().Next(2000, 3000), Nimi = "Resepti 2", Tekijäid = kayttaja.Id };
+            _context.Reseptit.AddRange(resepti1, resepti2);
+            await _context.SaveChangesAsync();
+
+            var suosikki1 = new Suosikit { Id = new Random().Next(3000, 4000), kayttajaID = kayttaja.Id, reseptiID = resepti1.Id };
+            var suosikki2 = new Suosikit { Id = new Random().Next(4000, 5000), kayttajaID = kayttaja.Id, reseptiID = resepti2.Id };
+            _context.Suosikit.AddRange(suosikki1, suosikki2);
+            await _context.SaveChangesAsync();
+
+            var result = await _controller.HaeSuosikkiReseptit(kayttaja);
+
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Count);
+        }
+
+
+       
+
+        [Fact]
+        public async Task HaeSuosikkiReseptit_PalauttaaTyhjanListanJosKayttajallaEiSuosikkeja()
+        {
+            var kayttaja = LuoKayttaja();
+            _context.Kayttajat.Add(kayttaja);
+            await _context.SaveChangesAsync();
+
+            var result = await _controller.HaeSuosikkiReseptit(kayttaja);
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+
+
+        [Fact]
+        public async Task PoistaSuosikki_PoistaaOikeanSuosikin()
+        {
+            var kayttaja = LuoKayttaja();
+            _context.Kayttajat.Add(kayttaja);
+            await _context.SaveChangesAsync();
+
+            var resepti = new Resepti { Id = new Random().Next(1000, 2000), Nimi = "Testi Resepti", Tekijäid = kayttaja.Id };
+            _context.Reseptit.Add(resepti);
+            await _context.SaveChangesAsync();
+
+            var suosikki = new Suosikit { Id = new Random().Next(2000, 3000), kayttajaID = kayttaja.Id, reseptiID = resepti.Id };
+            _context.Suosikit.Add(suosikki);
+            await _context.SaveChangesAsync();
+
+            var request = new SuosikkiMuokkaus { Kayttaja = kayttaja, suosikki = suosikki };
+            await _controller.PoistaSuosikki(request);
+
+            _context.Suosikit.Remove(suosikki);
+            await _context.SaveChangesAsync();
+
+            var result = await _controller.HaeSuosikkiReseptit(kayttaja);
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task PoistaSuosikki_PalauttaaVirheenJosSuosikkiaEiOle()
+        {
+            var kayttaja = LuoKayttaja();
+            _context.Kayttajat.Add(kayttaja);
+            await _context.SaveChangesAsync();
+
+            var request = new SuosikkiMuokkaus
+            {
+                Kayttaja = new Kayttaja { Sahkopostiosoite = kayttaja.Sahkopostiosoite, Salasana = "salasana123" },
+                suosikki = new Suosikit { Id = new Random().Next(2000, 3000), kayttajaID = kayttaja.Id, reseptiID = 999 }
+            };
+
+            var result = await _controller.PoistaSuosikki(request);
+
+            Assert.Equal("Virheellinen salasana.", result);
+        }
+
+
 
     }
 }
