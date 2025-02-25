@@ -21,16 +21,26 @@ namespace RuokaAPI.Controllers
             _repository = repository;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Resepti>>> HaeReseptit(
+        [HttpGet()]
+        public async Task<ActionResult<IEnumerable<Resepti>>> HaeKaikkiReseptit(
             [FromQuery] string[]? ainesosat, //Voi hakea tyhjänä tai ainesosalla tai avainsanalla
-            [FromQuery] string[]? avainsanat,
-            [FromQuery] int? userId)
+            [FromQuery] string[]? avainsanat
+            )
         {
-            var reseptit = await _repository.HaeReseptitAsync(ainesosat, avainsanat, userId);
+            var reseptit = await _repository.HaeReseptitAsync(ainesosat, avainsanat, false);
             return Ok(reseptit);
         }
 
+        [HttpGet("Julkiset")]
+        public async Task<ActionResult<IEnumerable<Resepti>>> HaeJulkisetReseptit(
+           [FromQuery] string[]? ainesosat, //Voi hakea tyhjänä tai ainesosalla tai avainsanalla
+           [FromQuery] string[]? avainsanat
+           )
+        {
+            var reseptit = await _repository.HaeReseptitAsync(ainesosat, avainsanat, true);
+            return Ok(reseptit);
+        }
+       
         [HttpGet("{id}")]
         public async Task<ActionResult<Resepti>> GetReseptiById(int id)
         {
@@ -83,7 +93,7 @@ namespace RuokaAPI.Controllers
             }
 
             var uusiResepti = await _repository.LisaaAsync(reseptiDto);
-            return CreatedAtAction(nameof(HaeReseptit), new { id = uusiResepti.Id }, uusiResepti);
+            return CreatedAtAction(nameof(HaeKaikkiReseptit), new { id = uusiResepti.Id }, uusiResepti);
         }
 
         [HttpPut("{id}")]

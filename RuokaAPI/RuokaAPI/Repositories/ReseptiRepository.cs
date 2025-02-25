@@ -15,7 +15,7 @@ namespace RuokaAPI.Repositories
             _konteksti = konteksti;
         }
 
-        public async Task<IEnumerable<ReseptiRequest>> HaeReseptitAsync(string[]? ainesosat, string[]? avainsanat, int? userId)
+        public async Task<IEnumerable<ReseptiRequest>> HaeReseptitAsync(string[]? ainesosat, string[]? avainsanat, bool haeVainJulkiset)
         {
             // Start building the query to fetch recipes from the database
             var query = _konteksti.Reseptit
@@ -43,7 +43,7 @@ namespace RuokaAPI.Repositories
                     .Any(a => haettavatAvainsanat.Contains(a.Sana)));
             }
 
-            if (userId is null)
+            if (haeVainJulkiset)
             {
                 query = query.Where(r => r.Katseluoikeus == "julkinen");
             }
@@ -92,7 +92,7 @@ namespace RuokaAPI.Repositories
                 })
                 .FirstOrDefaultAsync();
         }
-                public async Task<IEnumerable<ReseptiResponse>> HaeReseptitKayttajalleAsync(int userId)
+        public async Task<IEnumerable<ReseptiResponse>> HaeReseptitKayttajalleAsync(int userId)
         {
             return await _konteksti.Reseptit
                 .Where(r => r.Tekijäid == userId)
@@ -170,8 +170,6 @@ namespace RuokaAPI.Repositories
             // Call PoistaDuplikaatit to process the list of ingredient names and ensure there are no duplicates
             return await HaeTaiLuoUusiAinesosa(uudetNimet, olemassaOlevat);
         }
-
-
 
         public async Task<Resepti> LisaaAsync(ReseptiRequest reseptiDto)
         {
