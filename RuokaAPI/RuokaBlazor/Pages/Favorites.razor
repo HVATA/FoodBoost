@@ -1,4 +1,4 @@
-﻿@page "/home"
+﻿@page "/favorites"
 @layout MainLayout
 @inject HttpClient Http
 @inject NavigationManager Navigation
@@ -334,15 +334,15 @@
     private async void ToggleIngredientSelection(Ainesosa ingredient, ChangeEventArgs e)
     {
         ingredient.IsChecked = (bool)e.Value;  // Muutetaan valintaa
-        
-        
+
+
     }
 
     private async void ToggleKeywordSelection(Avainsana keyword, ChangeEventArgs e)
     {
         keyword.IsChecked = (bool)e.Value;  // Muutetaan valintaa
-        
-       
+
+
     }
 
 

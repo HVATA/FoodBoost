@@ -87,7 +87,8 @@ namespace RuokaAPI.Repositories
                         Maara = am.Maara
                     }).ToArray(),
                     Avainsanat = r.Avainsanat.Select(a => a.Sana).ToArray(),
-                    Arvostelut = r.Arvostelut.ToArray()
+                    Arvostelut = r.Arvostelut.ToArray(),
+                    TekijaId = r.Tekijäid
 
                 })
                 .FirstOrDefaultAsync();
@@ -109,7 +110,8 @@ namespace RuokaAPI.Repositories
                         Maara = am.Maara
                     }).ToArray(),
                     Avainsanat = r.Avainsanat.Select(a => a.Sana).ToArray(),
-                    Arvostelut = r.Arvostelut.ToArray()
+                    Arvostelut = r.Arvostelut.ToArray(),
+                    TekijaId = r.Tekijäid
                 })
                 .ToListAsync();
         }
