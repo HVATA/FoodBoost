@@ -54,20 +54,36 @@
 
         <!-- Avainsanat -->
         <h2>Avainsanat</h2>
-        @for (int i = 0; i < uusiResepti.Avainsanat.Length; i++)
-        {
-            var index = i;
-            <div class="input-group">
-                <InputText @bind-Value="uusiResepti.Avainsanat[index]" class="form-control" placeholder="Avainsana" />
-                <button type="button" class="btn btn-danger" @onclick="() => PoistaAvainsana(index)">Poista</button>
-            </div>
-        }
-        <button type="button" class="btn btn-secondary mt-2" @onclick="LisaaAvainsana">+ Lisää avainsana</button>
+        <div class="keyword-container">
+            @if (keywords != null && keywords.Any())
+            {
+                @for (int i = 0; i < keywords.Count; i += 10)
+                {
+                    <div class="keyword-column">
+                        @foreach (var keyword in keywords.Skip(i).Take(10))
+                        {
+                            <div class="keyword-item">
+                                <label>
+                                    <input type="checkbox" @bind="keyword.IsChecked" @bind:event="oninput" />
+                                    @keyword.Sana
+                                </label>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <p>Ladataan avainsanoja...</p>
+            }
+        </div>
 
         <!-- Katseluoikeus -->
         <div class="form-group mt-3">
-            <label for="katseluoikeus">Katseluoikeus:</label>
-            <InputText id="katseluoikeus" @bind-Value="uusiResepti.Katseluoikeus" class="form-control" />
+            <label>
+                <input type="checkbox" @bind="isPrivate" @bind:event="oninput" />
+                Näkyy vain rekisteröityneille
+            </label>
         </div>
 
         <!-- Tallenna -->
@@ -76,20 +92,38 @@
 </div>
 <style>
     .image-preview {
-    margin-top: 10px;
+        margin-top: 10px;
     }
 
     .preview-image {
-    max-width: 200px;
-    height: auto;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        max-width: 200px;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .keyword-container {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .keyword-column {
+        display: flex;
+        flex-direction: column;
+        margin-right: 20px;
+    }
+
+    .keyword-item {
+        margin-bottom: 10px;
     }
 </style>
 @code {
     private ReseptiRequest uusiResepti = new();
     private string? kuvanEsikatselu;
     private int tekijaId = 0; // Oletusarvo, jos ID:tä ei saada
+    private List<Avainsana>? keywords;
+    private string message = string.Empty;
+    private bool isPrivate = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -99,8 +133,6 @@
         // Haetaan kirjautuneen käyttäjän tiedot
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-
-       
 
         if (user.Identity != null && user.Identity.IsAuthenticated)
         {
@@ -122,8 +154,31 @@
         {
             Console.WriteLine("Virhe: Käyttäjä ei ole kirjautunut.");
         }
+
+        // Haetaan avainsanat
+        await GetKeywords();
     }
 
+    private async Task GetKeywords()
+    {
+        try
+        {
+            // Haetaan JSON listana merkkijonoja
+            var words = await Http.GetFromJsonAsync<List<string>>("/Resepti/avainsanat");
+
+            if (words != null)
+            {
+                // Muunnetaan merkkijonolista Avainsana-olioiksi (Ilman Id:tä)
+                keywords = words.Select(w => new Avainsana { Sana = w }).ToList();
+            }
+
+            message = keywords != null && keywords.Any() ? "Avainsanat ladattu!" : "Ei löytynyt avainsanoja.";
+        }
+        catch (Exception ex)
+        {
+            message = $"Virhe haettaessa avainsanoja: {ex.Message}";
+        }
+    }
 
     private async Task KuvaValittu(InputFileChangeEventArgs e)
     {
@@ -184,6 +239,9 @@
             // Asetetaan tekijä ID
             uusiResepti.TekijaId = tekijaId;
 
+            // Asetetaan katseluoikeus
+            uusiResepti.Katseluoikeus = isPrivate ? "Yksityinen" : "Julkinen";
+
             // Poistetaan tyhjät arvot
             uusiResepti.Ainesosat = uusiResepti.Ainesosat
                 .Where(a => !string.IsNullOrWhiteSpace(a.Ainesosa) && !string.IsNullOrWhiteSpace(a.Maara))
@@ -230,5 +288,4 @@
             Console.WriteLine($"❌ Poikkeus tallennuksessa: {ex.Message}");
         }
     }
-
 }

@@ -64,20 +64,36 @@ else
 
             <!-- Avainsanat -->
             <h2>Avainsanat</h2>
-            @for (int i = 0; i < resepti.Avainsanat.Length; i++)
-            {
-                var index = i;
-                <div class="input-group">
-                    <InputText @bind-Value="resepti.Avainsanat[index]" class="form-control" placeholder="Avainsana" />
-                    <button type="button" class="btn btn-danger" @onclick="() => PoistaAvainsana(index)">Poista</button>
-                </div>
-            }
-            <button type="button" class="btn btn-secondary mt-2" @onclick="LisaaAvainsana">+ Lisää avainsana</button>
+            <div class="keyword-container">
+                @if (keywords != null && keywords.Any())
+                {
+                    @for (int i = 0; i < keywords.Count; i += 10)
+                    {
+                        <div class="keyword-column">
+                            @foreach (var keyword in keywords.Skip(i).Take(10))
+                            {
+                                <div class="keyword-item">
+                                    <label>
+                                        <input type="checkbox" @bind="keyword.IsChecked" @bind:event="oninput" />
+                                        @keyword.Sana
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p>Ladataan avainsanoja...</p>
+                }
+            </div>
 
             <!-- Katseluoikeus -->
             <div class="form-group mt-3">
-                <label for="katseluoikeus">Katseluoikeus:</label>
-                <InputText id="katseluoikeus" @bind-Value="resepti.Katseluoikeus" class="form-control" />
+                <label>
+                    <input type="checkbox" @bind="isPrivate" @bind:event="oninput" />
+                    Näkyy vain rekisteröityneille
+                </label>
             </div>
 
             <!-- Tallenna -->
@@ -97,6 +113,21 @@ else
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
+
+    .keyword-container {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .keyword-column {
+        display: flex;
+        flex-direction: column;
+        margin-right: 20px;
+    }
+
+    .keyword-item {
+        margin-bottom: 10px;
+    }
 </style>
 
 @code {
@@ -104,6 +135,9 @@ else
     private ReseptiResponse? resepti;
     private string? kuvanEsikatselu;
     private string? virheViesti;
+    private List<Avainsana>? keywords;
+    private bool isPrivate = false;
+    private int reseptiId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -120,6 +154,15 @@ else
 
             // Aseta kuvan esikatselu
             kuvanEsikatselu = resepti.Kuva1;
+
+            // Aseta katseluoikeus
+            isPrivate = resepti.Katseluoikeus == "Yksityinen";
+
+            // Tallenna reseptin ID
+            reseptiId = resepti.Id;
+
+            // Haetaan avainsanat
+            await GetKeywords();
         }
         catch (OperationCanceledException)
         {
@@ -128,6 +171,31 @@ else
         catch (Exception ex)
         {
             virheViesti = $"Virhe reseptin tietojen lataamisessa: {ex.Message}";
+        }
+    }
+
+    private async Task GetKeywords()
+    {
+        try
+        {
+            // Haetaan JSON listana merkkijonoja
+            var words = await Http.GetFromJsonAsync<List<string>>("/Resepti/avainsanat");
+
+            if (words != null)
+            {
+                // Muunnetaan merkkijonolista Avainsana-olioiksi (Ilman Id:tä)
+                keywords = words.Select(w => new Avainsana { Sana = w }).ToList();
+
+                // Asetetaan valitut avainsanat
+                foreach (var keyword in keywords)
+                {
+                    keyword.IsChecked = resepti.Avainsanat.Contains(keyword.Sana);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            virheViesti = $"Virhe avainsanojen haussa: {ex.Message}";
         }
     }
 
@@ -181,13 +249,17 @@ else
     {
         try
         {
+            // Asetetaan katseluoikeus
+            resepti.Katseluoikeus = isPrivate ? "Yksityinen" : "Julkinen";
+
             // Poistetaan tyhjät arvot
             resepti.Ainesosat = resepti.Ainesosat
                 .Where(a => !string.IsNullOrWhiteSpace(a.Ainesosa) && !string.IsNullOrWhiteSpace(a.Maara))
                 .ToArray();
 
-            resepti.Avainsanat = resepti.Avainsanat
-                .Where(a => !string.IsNullOrWhiteSpace(a))
+            resepti.Avainsanat = keywords
+                .Where(k => k.IsChecked)
+                .Select(k => k.Sana)
                 .ToArray();
 
             // Tarkistetaan, mitä lähetetään API:lle
@@ -199,19 +271,8 @@ else
 
             if (response.IsSuccessStatusCode)
             {
-                var responseBody = await response.Content.ReadAsStringAsync();
-                Console.WriteLine("📩 API palautti: " + responseBody);
-
-                var updatedRecipe = JsonSerializer.Deserialize<ReseptiResponse>(responseBody);
-                if (updatedRecipe != null)
-                {
-                    Console.WriteLine("✅ Päivitetyn reseptin ID: " + updatedRecipe.Id);
-                    Navigation.NavigateTo($"/recipe/{updatedRecipe.Id}");
-                }
-                else
-                {
-                    Console.WriteLine("❌ Virhe: Ei voitu deserialisoida reseptiä.");
-                }
+                Console.WriteLine("✅ Resepti päivitetty onnistuneesti.");
+                Navigation.NavigateTo($"/recipe/{reseptiId}");
             }
             else
             {
