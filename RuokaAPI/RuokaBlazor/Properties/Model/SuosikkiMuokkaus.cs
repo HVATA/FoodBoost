@@ -4,9 +4,8 @@
     {
         //ei kantaan, luokkana joka pitää kerralla sisällään kaksi muuta luokkaa suosikki muokkaustoimintoja varten
 
-       public Kayttaja? Kayttaja {  get; set; } 
-
-       public Resepti? resepti { get; set; }
+       public Kayttaja? Kayttaja {  get; set; }
+        public Suosikit? suosikki { get; set; }
 
     }
 }

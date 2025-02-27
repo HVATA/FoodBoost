@@ -4,7 +4,9 @@
     {
         public int Id { get; set; }
         public int Tekijäid { get; set; }
-        public List<Ainesosa> Ainesosat { get; set; } = new();
+        public string Nimi { get; set; }
+        //public string Kategoria { get; set; }
+        public List<ReseptiAinesosa> AinesosanMaara { get; set; } = new();//kuvaa suhdetta Reseptin ja AinesosaReseptitaulun välillä
         public string? Valmistuskuvaus { get; set; }
         public string? Kuva1 { get; set; }
         public string? Kuva2 { get; set; }
@@ -13,6 +15,7 @@
         public string? Kuva5 { get; set; }
         public string? Kuva6 { get; set; }
         public List<Avainsana> Avainsanat { get; set; } = new();
+        public List<Arvostelu> Arvostelut { get; set; } = new();
         public string? Katseluoikeus { get; set; }
     }
 }

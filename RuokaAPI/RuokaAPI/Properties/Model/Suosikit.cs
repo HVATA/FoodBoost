@@ -8,13 +8,5 @@
 
         public int reseptiID { get; set; }
 
-
-
-
-
-
-
-
-
     }
 }

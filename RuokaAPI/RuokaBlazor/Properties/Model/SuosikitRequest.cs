@@ -7,8 +7,5 @@
         public List<Suosikit>? Suosikitlista { get; set; }
         public Kayttaja? Kayttaja { get; set; }
 
-
-
-
     }
 }

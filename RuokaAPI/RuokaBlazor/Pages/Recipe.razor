@@ -33,13 +33,14 @@ else
         </div>
 
         <!-- Napit näkyvät vain, jos käyttäjä on admin tai reseptin tekijä -->
-        @if (kayttajallaOikeudet)
-        {
-            <div class="action-buttons">
+        <div class="action-buttons">
+            @if (kayttajallaOikeudet)
+            {
                 <button class="btn btn-primary" @onclick="MuokkaaResepti">Muokkaa</button>
                 <button class="btn btn-danger" @onclick="PoistaResepti">Poista</button>
-            </div>
-        }
+            }
+            <button class="favorite-star-button" @onclick="AddToFavorites"></button>
+        </div>
 
         <!-- Avainsanat -->
         <div class="tags">
@@ -144,6 +145,30 @@ else
 }
 
 <style>
+    .favorite-star-button {
+        width: 50px;
+        height: 50px;
+        background-color: gold;
+        border: none;
+        cursor: pointer;
+        clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+        font-size: 0;
+        position: relative;
+    }
+
+        .favorite-star-button:before {
+            content: "★"; /* Tähti merkki */
+            font-size: 40px;
+            color: white;
+            position: absolute;
+            top: 25%;
+            left: 22%;
+        }
+
+        .favorite-star-button:hover {
+            background-color: #f1c40f; /* Hover-efekti */
+        }
+
     .recipe-header {
         display: flex;
         flex-direction: column;
@@ -264,6 +289,7 @@ else
 @code {
     [Parameter] public int Id { get; set; }
     private ReseptiResponse? resepti;
+    private Resepti recipeForFavs;
     private bool kayttajallaOikeudet = false;
     private string? virheViesti;
     private ArvosteluRequest uusiArvostelu = new();
@@ -273,6 +299,9 @@ else
     private bool modalVisible = false;
     private Kayttaja kayttaja;
     private bool shareRecipeSuccess = false;
+    public SuosikkiMuokkaus request;
+    public Suosikit suosikit;
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -298,7 +327,6 @@ else
                 Salasana = userPassword,
                 Kayttajataso = userRole
             };
-
 
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         try
@@ -346,7 +374,7 @@ else
             {
                 message = "Resepti lähetettiin onnistuneesti sähköpostiin!";
                 shareRecipeSuccess = true;  // Asetetaan true, kun onnistuu
-                
+
             }
             else
             {
@@ -390,6 +418,46 @@ else
     private void MuokkaaResepti()
     {
         Navigation.NavigateTo($"/editRecipe/{resepti?.Id}");
+    }
+
+    private async void AddToFavorites()
+    {
+        try
+        {
+            // Alustetaan suosikit-objekti
+            suosikit = new Suosikit
+                {
+                    Id = 0,
+                    kayttajaID = kayttaja.Id,
+                    reseptiID = resepti.Id
+                };
+
+            // Alustetaan SuosikkiMuokkaus-objekti
+            request = new SuosikkiMuokkaus
+                {
+                    Kayttaja = kayttaja,
+                    suosikki = suosikit
+                };
+
+            // URL ei tarvitse SuosikkiMuokkaus-objektia
+            string url = "Kayttaja/Lisaasuosikki"; // Ei tarvitse liittää objektia URL:iin
+
+            // Lähetetään POST-pyyntö SuosikkiMuokkaus-objektilla
+            HttpResponseMessage response = await Http.PostAsJsonAsync(url, request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                message = "Resepti lisättiin suosikkeihin onnistuneesti!";
+            }
+            else
+            {
+                message = await response.Content.ReadAsStringAsync(); // Backendin virheilmoitus
+            }
+        }
+        catch (Exception ex)
+        {
+            message = "Virhe: " + ex.Message;
+        }
     }
 
     private async Task LisaaArvostelu()
