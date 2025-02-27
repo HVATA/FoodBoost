@@ -1,0 +1,123 @@
+﻿
+.search-input {
+    border: 2px solid gray;
+    padding: 5px;
+}
+
+.search-input.valid {
+    border: 2px solid green; /* Muuttaa reunuksen vihreäksi */
+    outline: none; /* Poistaa oletuskehykset */
+}
+
+.search-input.invalid {
+    border: 2px solid red; /* Muuttaa reunuksen punaiseksi */
+    outline: none;
+}
+
+
+.dropbtn {
+    background-color: #3498DB;
+    color: white;
+    padding: 16px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+}
+
+    .dropbtn:hover, .dropbtn:focus {
+        background-color: #2980B9;
+    }
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.search-container {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    position: absolute;
+    background-color: #f1f1f1;
+    min-width: 160px;
+    overflow: auto;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+    .dropdown-content a {
+        color: black;
+        padding: 12px 16px;
+        text-decoration: none;
+        display: block;
+    }
+
+.dropdown a:hover {
+    background-color: #ddd;
+}
+
+.show {
+    display: block;
+}
+
+.search-btn {
+    background-color: #3498DB;
+    color: white;
+    padding: 16px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+}
+
+.search-input {
+    width: 70rem;
+    height: 4rem;
+    position: relative;
+    display: inline-block;
+}
+
+.recipe-image {
+    width: 100px;
+    height: 100px;
+}
+
+.recipe-card {
+    display: flex;
+    justify-content: initial;
+    align-items: center;
+    height: 20rem;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.column {
+    float: left;
+    width: 25%;
+    padding: 0 10px;
+}
+
+.row {
+    margin: 0 -5px;
+}
+
+    .row:after {
+        content: "";
+        display: table;
+        clear: both;
+    }
+
+.card {
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    padding: 16px;
+    text-align: center;
+    background-color: #f1f1f1;
+    cursor: pointer;
+}

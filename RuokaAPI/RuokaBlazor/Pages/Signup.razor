@@ -1,8 +1,10 @@
 ﻿@page "/signup"
 @inject NavigationManager Navigation
 @inject HttpClient Http
+@inject CustomAuthenticationStateProvider AuthenticationStateProvider
 @layout SignupLayout
 @using RuokaBlazor.Properties.Model
+@using RuokaBlazor.Services
 
 <EditForm Model="uusiKayttaja" OnSubmit="HandleSignup" class="signup-layout">
     <DataAnnotationsValidator />
@@ -49,7 +51,7 @@
 
 @code {
     private Kayttaja uusiKayttaja = new();
-
+    private Kayttaja kayttaja = new();
     private string message = string.Empty;
 
     private async Task HandleSignup()
@@ -62,7 +64,8 @@
             if (response.IsSuccessStatusCode)
             {
                 message = "Rekisteröinti onnistui!";
-                Navigation.NavigateTo("/home");
+                HandleLogin();
+
             }
             else
             {
@@ -75,8 +78,40 @@
         }
     }
 
+    private async Task HandleLogin()
+    {
+        kayttaja = uusiKayttaja;
+        try
+        {
+            var response = await Http.GetAsync($"Kayttaja/Tunnistautumistiedot/{kayttaja.Salasana}/{kayttaja.Sahkopostiosoite}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var userData = await response.Content.ReadFromJsonAsync<UserData>();
+                if (userData != null)
+                {
+                    message = "Kirjautuminen onnistui";
+                    await AuthenticationStateProvider.Login(userData);
+                    Navigation.NavigateTo("/");
+                }
+                else
+                {
+                    message = "Käyttäjätietojen hakeminen epäonnistui.";
+                }
+            }
+            else
+            {
+                message = "Virheellinen sähköpostiosoite tai salasana";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = "Error during login: " + ex.Message;
+        }
+    }
+
     private void BackToLogin()
     {
-        Navigation.NavigateTo("/");
+        Navigation.NavigateTo("/login");
     }
 }

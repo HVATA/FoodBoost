@@ -238,7 +238,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await GetRecipes();
+        await GetFavoriteRecipes();
         await GetIngredients();
         await GetKeywords();
     }
@@ -415,7 +415,7 @@
 
 
 
-    private async Task GetRecipes()
+    private async Task GetFavoriteRecipes()
     {
         try
         {

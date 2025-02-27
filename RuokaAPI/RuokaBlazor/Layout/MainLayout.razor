@@ -1,54 +1,74 @@
 ﻿@using System.Security.Claims
 @using RuokaBlazor.Services
+@using Microsoft.AspNetCore.Components.Web
 @inherits LayoutComponentBase
 @inject NavigationManager Navigation
-@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject CustomAuthenticationStateProvider AuthenticationStateProvider
+
 
 
 <div class="page">
     <main>
         <div class="main-header">
-            <a href="/home" class="homenappi">RuokaBoost-Home</a>
-            <a href="/userRecipes">Omat reseptit</a>
-            <a href="/settings">Asetukset(EITOIMI)</a>
-            <a href="/createRecipe">Luo uusi resepti</a>
+            <a href="/" class="homenappi">RuokaBoost-Home</a>
+            @if (isLoggedIn)
+            {
+                <a href="/userRecipes">Omat reseptit</a>
+                <a href="/createRecipe">Luo uusi resepti</a>
+                <a href="/favorites">Suosikit</a>
+            }
+            else
+            {
+                <h1>Kirjaudu sisään aktivoidaksesi lisää ominaisuuksia </h1>
+            }
             @if (isUserAdminOrUser)
             {
                 <a href="/accounts">Käyttäjähallinta</a>
             }
-            <a href="/favorites">Suosikit</a>
-            <a href="/" @onclick="Logout">Kirjaudu ulos</a>
+            @if (!isLoggedIn)
+            {
+                <a href="/login">Kirjaudu sisään</a>
+            }
+            else
+            {
+                <div class="user-info" @onclick="ToggleDropdown">
+                    <span>@userName</span>
+                </div>
+                @if (showDropdown)
+                {
+                    <div class="dropdown-menu">
+                        <a href="/settings">Asetukset</a>
+                        <a href="/" @onclick="Logout">Kirjaudu ulos</a>
+                    </div>
+                }
+            }
         </div>
         <div class="main-body">
             @Body
         </div>
     </main>
 </div>
-
-<style>
-    .main-header {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        background-color: #f4f4f4;
-    }
-
-    .main-body {
-        display: flex;
-        justify-content: center;
-        background-color: #f4f4f4;
-    }
-</style>
-
 @code {
     private bool isUserAdminOrUser;
     private ClaimsPrincipal user;
+    private bool isLoggedIn;
+    private string userName;
+    private bool showDropdown = false; // Lisää tämä muuttuja
 
     protected override async Task OnInitializedAsync()
     {
+
+        // Tarkistetaan, onko käyttäjä kirjautunut sisään
+        isLoggedIn = await AuthenticationStateProvider.IsUserLoggedIn();
+
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         user = authState.User;
+
+        if (isLoggedIn)
+        {
+            userName = user.FindFirst(ClaimTypes.GivenName)?.Value; // Näytetään käyttäjätunnus
+            Console.WriteLine($"UserName: {userName}"); // Debugging
+        }
 
         // Tarkista roolit ClaimTypes.Role -claimista
         var role = user.FindFirst(ClaimTypes.Role)?.Value;
@@ -60,13 +80,28 @@
         Console.WriteLine($"Is user authenticated: {user.Identity.IsAuthenticated}");
     }
 
+    private void CloseDropdownsOnClickOutside()
+    {
+        showDropdown = false;
+    }
+
+    private void ToggleDropdown()
+    {
+        showDropdown = !showDropdown;
+    }
+
     private async Task Logout()
     {
         // Poista kirjautumistiedot localStoragesta ja päivitä autentikointitila
         var customAuthStateProvider = (CustomAuthenticationStateProvider)AuthenticationStateProvider;
         await customAuthStateProvider.Logout();
         Console.WriteLine("Ulos kirjautuminen onnistui!");
-        // Suuntaa käyttäjä takaisin kirjautumissivulle (tai haluamaasi sivuun)
-        Navigation.NavigateTo("/"); // Tämä on esimerkki, voit ohjata mihin tahansa tarpeen mukaan
+
+        // Suuntaa käyttäjä takaisin kirjautumissivulle ja lataa sivu uudelleen
+        Navigation.NavigateTo("/", forceLoad: true); // Tämä lataa sivun uudelleen
+
+        // Varmista, että UI päivittyy oikein
+        StateHasChanged();
     }
+
 }

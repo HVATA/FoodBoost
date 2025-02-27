@@ -1,4 +1,4 @@
-/*  KÄYTÄ TÄTÄ JOS KOMPONENTTI EI OO OIKEASSA PAIKASSA transform: translateX(x%);    */
+/* Yleiset tyylit */
 .page {
     position: relative;
     display: flex;
@@ -8,6 +8,8 @@
 main {
     flex: 1;
 }
+
+/* Pääotsikko */
 .main-header {
     background-color: #f7f7f7;
     border-bottom: 1px solid #d6d5d5;
@@ -17,29 +19,37 @@ main {
     align-items: center;
 }
 
+    /* Header linkit ja napit */
     .main-header ::deep a, .main-header ::deep .btn-link {
-        white-space: nowrap;
+        white-space: normal; /* Sallii rivinvaihdon */
         margin-left: 1.5rem;
         text-decoration: none;
     }
 
-    .main-header ::deep a:hover, .main-header ::deep .btn-link:hover {
-        text-decoration: underline;
+        .main-header ::deep a:hover, .main-header ::deep .btn-link:hover {
+            text-decoration: underline;
+        }
+
+        .main-header ::deep a:first-child {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+    .main-header a:last-child {
+        position: relative;
+        z-index: 2; /* Pitää napin päällä muihin elementteihin verrattuna */
     }
 
-    .main-header ::deep a:first-child {
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
+/* Responsiiviset tyylit */
 @media (max-width: 640.98px) {
     .main-header {
         justify-content: space-between;
+        height: auto; /* Automaattinen korkeus */
     }
 
-    .main-header ::deep a, .main-header ::deep .btn-link {
-        margin-left: 0;
-    }
+        .main-header ::deep a, .main-header ::deep .btn-link {
+            margin-left: 0;
+        }
 }
 
 @media (min-width: 641px) {
@@ -60,14 +70,88 @@ main {
         z-index: 1;
     }
 
-    .main-header.auth ::deep a:first-child {
-        flex: 1;
-        text-align: right;
-        width: 0;
-    }
+        .main-header.auth ::deep a:first-child {
+            flex: 1;
+            text-align: right;
+            width: 0;
+        }
 
-    .main-header, search-options-container {
+    .main-header, .search-options-container {
         padding-left: 2rem !important;
         padding-right: 1.5rem !important;
     }
+}
+
+/* Pääsisältö */
+.main-body {
+    display: flex;
+    justify-content: center;
+    background-color: #f4f4f4;
+}
+
+/* Käyttöliittymän käyttäjävalikko */
+.user-menu {
+    position: relative;
+    display: inline-block;
+}
+
+.user-info {
+    display: inline;
+    cursor: pointer; /* Näyttää sormikursorin, kun elementtiä klikataan */
+    padding: 5px 10px; /* Varmistaa, että alue on klikattavissa */
+    border-radius: 5px; /* Kulmat pyöristetään */
+    transition: background-color 0.3s, box-shadow 0.3s; /* Pehmeä siirtyminen */
+    font-weight: bold;
+}
+
+    .user-info:hover {
+        background-color: #ddd; /* Vaalean harmaa taustaväri hoverin aikana */
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); /* Lisää varjo hoverin aikana */
+    }
+
+    .user-info span {
+        user-select: none; /* Estää tekstin valinnan */
+    }
+
+.dropdown-menu {
+    display: block; /* Näytetään, jos showDropdown on tosi */
+    position: absolute;
+    background-color: #f4f4f4;
+    border: 1px solid #ddd;
+    top: 100%;
+    right: 0;
+    min-width: 150px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    padding: 5px 0;
+}
+
+    .dropdown-menu a {
+        padding: 8px 16px;
+        display: block;
+        text-decoration: none;
+        color: #333;
+    }
+
+        .dropdown-menu a:hover {
+            background-color: #ddd;
+        }
+
+.user-menu .dropdown-menu {
+    display: block;
+}
+
+.fas.fa-caret-down {
+    margin-left: 5px;
+}
+
+/* Responsiiviset tyylit käyttäjätietojen osalta */
+@media (max-width: 640px) {
+    .user-info {
+        font-size: 0.9rem;
+    }
+}
+
+/* Komponentin siirto */
+.page {
+    transform: translateX(0%); /* Tämä voi olla mukautettavissa tarpeen mukaan */
 }

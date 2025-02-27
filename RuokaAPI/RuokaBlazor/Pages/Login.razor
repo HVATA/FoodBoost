@@ -1,4 +1,4 @@
-﻿@page "/"
+﻿@page "/login"
 @inject NavigationManager Navigation
 @inject HttpClient Http
 @inject CustomAuthenticationStateProvider AuthenticationStateProvider
@@ -144,7 +144,7 @@
                     message = "Kirjautuminen onnistui";
                     forgotPassword = false;
                     await AuthenticationStateProvider.Login(userData);
-                    Navigation.NavigateTo("/home");
+                    Navigation.NavigateTo("/");
                 }
                 else
                 {
@@ -210,7 +210,7 @@
     private void GuestLogin()
     {
         AuthenticationStateProvider.Logout();
-        Navigation.NavigateTo("/home");
+        Navigation.NavigateTo("/");
     }
 
     private void GoToSignup()
