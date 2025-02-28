@@ -53,6 +53,7 @@
         <button type="button" class="btn btn-secondary mt-2" @onclick="LisaaAinesosa">+ Lisää ainesosa</button>
 
         <!-- Avainsanat -->
+        
         <h2>Avainsanat</h2>
         <div class="keyword-container">
             @if (keywords != null && keywords.Any())
@@ -77,6 +78,7 @@
                 <p>Ladataan avainsanoja...</p>
             }
         </div>
+
 
         <!-- Katseluoikeus -->
         <div class="form-group mt-3">
@@ -157,7 +159,9 @@
 
         // Haetaan avainsanat
         await GetKeywords();
+        Console.WriteLine($"Avainsanojen määrä: {keywords?.Count ?? 0}"); // Debug-tulostus
     }
+
 
     private async Task GetKeywords()
     {
@@ -170,6 +174,7 @@
             {
                 // Muunnetaan merkkijonolista Avainsana-olioiksi (Ilman Id:tä)
                 keywords = words.Select(w => new Avainsana { Sana = w }).ToList();
+                Console.WriteLine($"Ladatut avainsanat: {string.Join(", ", words)}"); // Debug-tulostus
             }
 
             message = keywords != null && keywords.Any() ? "Avainsanat ladattu!" : "Ei löytynyt avainsanoja.";
@@ -177,8 +182,10 @@
         catch (Exception ex)
         {
             message = $"Virhe haettaessa avainsanoja: {ex.Message}";
+            Console.WriteLine(message); // Debug-tulostus
         }
     }
+
 
     private async Task KuvaValittu(InputFileChangeEventArgs e)
     {
@@ -247,8 +254,10 @@
                 .Where(a => !string.IsNullOrWhiteSpace(a.Ainesosa) && !string.IsNullOrWhiteSpace(a.Maara))
                 .ToArray();
 
-            uusiResepti.Avainsanat = uusiResepti.Avainsanat
-                .Where(a => !string.IsNullOrWhiteSpace(a))
+            // Kerätään valitut avainsanat
+            uusiResepti.Avainsanat = keywords
+                .Where(k => k.IsChecked)
+                .Select(k => k.Sana)
                 .ToArray();
 
             // Tarkistetaan, mitä lähetetään API:lle
@@ -288,4 +297,5 @@
             Console.WriteLine($"❌ Poikkeus tallennuksessa: {ex.Message}");
         }
     }
+
 }

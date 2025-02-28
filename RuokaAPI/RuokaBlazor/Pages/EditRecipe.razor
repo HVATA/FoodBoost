@@ -45,9 +45,11 @@ else
                 {
                     <div class="image-preview">
                         <img src="@kuvanEsikatselu" alt="Valittu kuva" class="preview-image" />
+                        <button type="button" class="btn btn-danger mt-2" @onclick="PoistaKuva">Poista kuva</button>
                     </div>
                 }
             </div>
+
 
             <!-- Ainesosat -->
             <h2>Ainesosat</h2>
@@ -218,6 +220,14 @@ else
             Console.WriteLine($"Virhe kuvan käsittelyssä: {ex.Message}");
         }
     }
+
+    private void PoistaKuva()
+    {
+        resepti.Kuva1 = string.Empty;
+        kuvanEsikatselu = null;
+    }
+
+
 
     private void LisaaAinesosa()
     {
