@@ -83,7 +83,7 @@
                 @foreach (var recipe in recipes)
                 {
                     <div class="column">
-                        <div class="card" @onclick="() => SelectRecipe(recipe)">
+                        <div class="card" @onclick="() => SelectRecipe(recipe)" style="background-image: url('@recipe.Kuva1'); background-size: cover; background-position: center;">
                             <h3>@recipe.Nimi</h3>
                             <p>@recipe.Valmistuskuvaus</p>
                         </div>
@@ -212,7 +212,6 @@
         }
     }
 
-
     private async void ToggleIngredientSelection(Ainesosa ingredient, ChangeEventArgs e)
     {
         ingredient.IsChecked = (bool)e.Value;  // Muutetaan valintaa
@@ -226,9 +225,6 @@
         
        
     }
-
-
-
 
     private async Task GetRecipesWithSearchquery()
     {
@@ -349,9 +345,6 @@
             message = $"Virhe haettaessa ainesosia: {ex.Message}";
         }
     }
-
-
-
 
     private async Task GetKeywords()
     {
