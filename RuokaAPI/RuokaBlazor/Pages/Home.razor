@@ -83,7 +83,7 @@
                 @foreach (var recipe in recipes)
                 {
                     <div class="column">
-                        <div class="card" @onclick="() => SelectRecipe(recipe)" style="background-image: url('@recipe.Kuva1'); background-size: cover; background-position: center;">
+                        <div class="card" @onclick="() => SelectRecipe(recipe)">
                             <h3>@recipe.Nimi</h3>
                             <p>@recipe.Valmistuskuvaus</p>
                         </div>
@@ -105,7 +105,9 @@
     private bool isKeywordDropdownVisible = false;
     private bool isLoggedIn;
 
-    private List<ReseptiRequest>? recipes;
+    [Parameter]
+    public List<ReseptiRequest>? recipes { get; set; } // Julkinen property, jotta testit voivat asettaa sen
+
     private List<Ainesosa>? ingredients;
     private List<Avainsana>? keywords;
     private string message = string.Empty;
@@ -113,16 +115,12 @@
     protected override async Task OnInitializedAsync()
     {
         isLoggedIn = await AuthenticationStateProvider.IsUserLoggedIn();
-        if (isLoggedIn)
-        {
-            await GetAllRecipes();
-        }
-        else
-        {
-            await GetPublicRecipes();
-        }
-        await GetIngredients();
-        await GetKeywords();
+
+        var recipesTask= GetRecipes();
+        var ingredientsTask = GetIngredients();
+        var keywordsTask = GetKeywords();
+
+        await Task.WhenAll(recipesTask, ingredientsTask, keywordsTask);
     }
 
     private void ToggleIngredientDropdown()
@@ -215,15 +213,15 @@
     private async void ToggleIngredientSelection(Ainesosa ingredient, ChangeEventArgs e)
     {
         ingredient.IsChecked = (bool)e.Value;  // Muutetaan valintaa
-        
-        
+
+
     }
 
     private async void ToggleKeywordSelection(Avainsana keyword, ChangeEventArgs e)
     {
         keyword.IsChecked = (bool)e.Value;  // Muutetaan valintaa
-        
-       
+
+
     }
 
     private async Task GetRecipesWithSearchquery()
@@ -291,28 +289,19 @@
         }
     }
 
-    private async Task GetPublicRecipes()
+    private async Task GetRecipes()
     {
         try
         {
-            recipes = await Http.GetFromJsonAsync<List<ReseptiRequest>>("/Resepti/Julkiset");
-
-            if (recipes == null || !recipes.Any())
+            if (isLoggedIn)
             {
-                message = "Ei löytynyt reseptejä.";
+                recipes = await Http.GetFromJsonAsync<List<ReseptiRequest>>("/Resepti");
             }
-        }
-        catch (Exception ex)
-        {
-            message = $"Virhe haettaessa reseptejä: {ex.Message}";
-        }
-    }
+            else
+            {
+                recipes = await Http.GetFromJsonAsync<List<ReseptiRequest>>("/Resepti/Julkiset");
+            }
 
-    private async Task GetAllRecipes()
-    {
-        try
-        {
-            recipes = await Http.GetFromJsonAsync<List<ReseptiRequest>>("/Resepti");
 
             if (recipes == null || !recipes.Any())
             {
