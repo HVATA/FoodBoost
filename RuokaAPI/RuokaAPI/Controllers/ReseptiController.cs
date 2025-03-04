@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RuokaAPI.Data;
 using RuokaAPI.Dtos;
 using RuokaAPI.Properties.Model;
 using RuokaAPI.Repositories;

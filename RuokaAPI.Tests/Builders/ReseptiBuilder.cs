@@ -1,14 +1,12 @@
-﻿using RuokaAPI.Tests.Builders;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using RuokaAPI.Properties.Model;
-using RuokaAPI.Tests.Builders;
 
 
-namespace ToDoListDemo.Tests.Builders
+namespace RuokaAPI.Tests.Builders
 {
     public class ReseptiBuilder
     {
@@ -23,11 +21,7 @@ namespace ToDoListDemo.Tests.Builders
                 Nimi = "Testi Resepti",
                 Valmistuskuvaus = "Tämä on testiresepti",
                 Katseluoikeus = "Julkinen",
-                AinesosanMaara = new List<ReseptiAinesosa>
-                {
-                    new ReseptiAinesosaBuilder().Build(),
-                    new ReseptiAinesosaBuilder().WithId(2).WithAinesosaId(2).WithMaara("100").Build()
-                },
+                AinesosanMaara = new List<ReseptiAinesosa>(),                
                 Avainsanat = new List<Avainsana>
                 {
                     new AvainsanaBuilder().Build(),
@@ -66,9 +60,13 @@ namespace ToDoListDemo.Tests.Builders
             return this;
         }
 
-        public ReseptiBuilder WithAinesosanMaara(List<ReseptiAinesosa> ainesosat)
+        public ReseptiBuilder WithAinesosanMaara(Ainesosa ainesosa, string maara)
         {
-            _resepti.AinesosanMaara = ainesosat;
+            _resepti.AinesosanMaara.Add(new ReseptiAinesosa
+            {
+                Ainesosa = ainesosa,
+                Maara = maara
+            });
             return this;
         }
 

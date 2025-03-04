@@ -15,7 +15,7 @@ namespace RuokaAPI.Repositories
             _konteksti = konteksti;
         }
 
-        public async Task<IEnumerable<ReseptiRequest>> HaeReseptitAsync(string[]? ainesosat, string[]? avainsanat, bool haeVainJulkiset)
+        public async Task<IEnumerable<ReseptiResponse>> HaeReseptitAsync(string[]? ainesosat, string[]? avainsanat, bool haeVainJulkiset)
         {
             // Start building the query to fetch recipes from the database
             var query = _konteksti.Reseptit
@@ -50,7 +50,7 @@ namespace RuokaAPI.Repositories
             // Project the filtered recipes into ReseptiRequest DTOs and execute the query asynchronously
 
             return await query
-            .Select(r => new ReseptiRequest
+            .Select(r => new ReseptiResponse
             {
                 Id = r.Id,
                 Nimi = r.Nimi,
@@ -62,7 +62,8 @@ namespace RuokaAPI.Repositories
                     Ainesosa = am.Ainesosa.Nimi,
                     Maara = am.Maara
                 }).ToArray(),
-                Avainsanat = r.Avainsanat.Select(a => a.Sana).ToArray()
+                Avainsanat = r.Avainsanat.Select(a => a.Sana).ToArray(),
+                Arvostelut = r.Arvostelut.ToArray(),
             })
             .ToListAsync();
         }
@@ -173,23 +174,23 @@ namespace RuokaAPI.Repositories
             return await HaeTaiLuoUusiAinesosa(uudetNimet, olemassaOlevat);
         }
 
-        public async Task<Resepti> LisaaAsync(ReseptiRequest reseptiDto)
+        public async Task<Resepti> LisaaAsync(ReseptiRequest reseptiRequest)
         {
-            var ainesosat = await MuunnaAinesosat(reseptiDto.Ainesosat.Select(a => a.Ainesosa).ToArray());
+            var ainesosat = await MuunnaAinesosat(reseptiRequest.Ainesosat.Select(a => a.Ainesosa).ToArray());
             var avainsanat = _konteksti.Avainsanat
-                .Where(a => reseptiDto.Avainsanat.Contains(a.Sana))
+                .Where(a => reseptiRequest.Avainsanat.Contains(a.Sana))
                 .ToList();
             var resepti = new Resepti
             {
-                Tekijäid = reseptiDto.TekijaId,
-                Nimi = reseptiDto.Nimi,
-                Valmistuskuvaus = reseptiDto.Valmistuskuvaus,
-                Kuva1 = reseptiDto.Kuva1,
-                Katseluoikeus = reseptiDto.Katseluoikeus,
+                Tekijäid = reseptiRequest.TekijaId,
+                Nimi = reseptiRequest.Nimi,
+                Valmistuskuvaus = reseptiRequest.Valmistuskuvaus,
+                Kuva1 = reseptiRequest.Kuva1,
+                Katseluoikeus = reseptiRequest.Katseluoikeus,
                 Avainsanat = avainsanat
             };
 
-            foreach (var ainesosa in reseptiDto.Ainesosat)
+            foreach (var ainesosa in reseptiRequest.Ainesosat)
             {
                 resepti.AinesosanMaara.Add(new ReseptiAinesosa
                 {
