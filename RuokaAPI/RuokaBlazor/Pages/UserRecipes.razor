@@ -4,6 +4,7 @@
 @inject NavigationManager Navigation
 @inject CustomAuthenticationStateProvider AuthenticationStateProvider
 @inject IJSRuntime JSRuntime
+
 @using RuokaBlazor.Properties.Model
 @using RuokaBlazor.Services
 @using System.Security.Claims
@@ -160,4 +161,12 @@ else
             }
         }
     }
+    public async Task SetRecipes(List<ReseptiResponse> recipes)
+    {
+        reseptit = recipes;
+        await InvokeAsync(StateHasChanged);
+    }
+
+
+
 }
