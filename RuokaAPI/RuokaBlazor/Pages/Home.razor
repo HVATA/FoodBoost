@@ -108,8 +108,14 @@
     [Parameter]
     public List<ReseptiRequest>? recipes { get; set; } // Julkinen property, jotta testit voivat asettaa sen
 
-    private List<Ainesosa>? ingredients;
-    private List<Avainsana>? keywords;
+    [Parameter]
+    public List<Ainesosa>? ingredients { get; set; } // Tee tästä parametri testejä varten
+
+    [Parameter]
+    public List<Avainsana>? keywords { get; set; } // Tee tästä parametri testejä varten
+
+
+
     private string message = string.Empty;
 
     protected override async Task OnInitializedAsync()

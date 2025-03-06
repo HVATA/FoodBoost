@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using System.Security.Claims;
 using RuokaBlazor.Services;
+using Moq;
+using System.Collections.Generic;
+using System.Linq;
 
 public class HomeTests : TestContext
 {
@@ -43,9 +46,18 @@ public class HomeTests : TestContext
         // Arrange
         var recipes = new List<ReseptiRequest>
         {
-            new ReseptiRequest { Nimi = "Testi Resepti", Valmistuskuvaus = "Tämä on testikuvaus", Kuva1 = "testikuva.jpg" }
+            new ReseptiRequest
+            {
+                Id = 1,
+                TekijaId = 1001,
+                Nimi = "Testi Resepti",
+                Valmistuskuvaus = "Tämä on testikuvaus",
+                Avainsanat = new[] { "pasta", "helppo" },
+                Ainesosat = new[] { new AinesosanMaaraDto { Ainesosa = "Spaghetti", Maara = "200g" } }
+            }
         };
 
+        //Act
         var component = RenderComponent<Home>();
 
         // 🔹 Pakotetaan komponentti käyttämään mockattuja reseptejä
@@ -74,4 +86,63 @@ public class HomeTests : TestContext
         // Assert: Tarkistetaan, että latausviesti näkyy
         Assert.Contains("Ladataan reseptejä...", component.Markup);
     }
+
+    [Fact]
+    public async void HomeComponent_Search_ReturnsCorrectRecipes()
+    {
+        // Arrange: Testidata kahdelle reseptille
+        var recipes = new List<ReseptiRequest>
+    {
+        new ReseptiRequest
+        {
+            Id = 1,
+            TekijaId = 1001,
+            Nimi = "Pasta Carbonara",
+            Valmistuskuvaus = "Herkullinen pasta",
+            Avainsanat = new[] { "pasta", "italialainen" },
+            Ainesosat = new[] { new AinesosanMaaraDto { Ainesosa = "Spaghetti", Maara = "200g" } }
+        },
+        new ReseptiRequest
+        {
+            Id = 2,
+            TekijaId = 1002,
+            Nimi = "Marjapiirakka",
+            Valmistuskuvaus = "Makea herkku",
+            Avainsanat = new[] { "leivonta", "jälkiruoka" },
+            Ainesosat = new[] { new AinesosanMaaraDto { Ainesosa = "Mustikka", Maara = "100g" } }
+        }
+    };
+
+        var ingredients = new List<Ainesosa>
+    {
+        new Ainesosa { Nimi = "Spaghetti", IsChecked = false },
+        new Ainesosa { Nimi = "Mustikka", IsChecked = false }
+    };
+
+        var keywords = new List<Avainsana>
+    {
+        new Avainsana { Sana = "pasta", IsChecked = false },
+        new Avainsana { Sana = "leivonta", IsChecked = false }
+    };
+
+        var component = RenderComponent<Home>(parameters => parameters
+            .Add(p => p.recipes, recipes)
+            .Add(p => p.ingredients, ingredients) // Nyt voi lisätä ingredients!
+            .Add(p => p.keywords, keywords)       // Nyt voi lisätä keywords!
+        );
+
+        // Simuloidaan hakua avainsanalla "pasta"
+        component.Find("input").Input("leivonta");
+        component.Find("button.search-btn").Click();
+
+        // Odotetaan, että Blazor päivittää UI:n
+        await Task.Delay(200); // Pieni viive UI-päivitykselle
+
+
+        // Assert: Varmistetaan, että vain "Pasta Carbonara" näkyy ja "Marjapiirakka" ei
+        Assert.Contains("Marjapiirakka", component.Markup);
+        Assert.DoesNotContain("Pasta Carbonara", component.Markup);
+    }
+
+
 }
