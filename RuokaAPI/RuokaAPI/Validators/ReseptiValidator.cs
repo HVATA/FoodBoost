@@ -15,8 +15,17 @@ public class ReseptiValidator
         ValidateValmistuskuvaus(reseptiDto.Valmistuskuvaus, validationMessages);
         ValidateAinesosat(reseptiDto.Ainesosat.Select(a => a.Ainesosa).ToArray(), validationMessages);
         ValidateAvainsanat(reseptiDto.Avainsanat, validationMessages);
+        ValidateNimi(reseptiDto.Nimi, validationMessages);
 
         return validationMessages;
+    }
+
+    private void ValidateNimi(string nimi, List<string> validationMessages)
+    {
+       if (string.IsNullOrWhiteSpace(nimi))
+        {
+            validationMessages.Add("Nimi cannot be null or empty.");
+        }
     }
 
     // Validates the description of the recipe and adds validation messages if any issues are found.

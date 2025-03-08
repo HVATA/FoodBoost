@@ -24,20 +24,19 @@ namespace RuokaAPI.Tests.Controllers
         public ReseptiControllerTests()
         {
             _context = new DatabaseContextBuilder()
-                .SeedDatabase()
+                .SeedDatabase()                
                 .Build();  //luodaan konteksti, joka käyttää muistissa olevaa tietokantaa
             var repository = new ReseptiRepository(_context);//luodaan repository, joka käyttää kontekstia
             _sut = new ReseptiController(repository);//luodaan controller, joka käyttää repositorya
         }
 
-
         [Fact] //Testataan GetReseptit-metodi
         public async Task PitaisiPalauttaaKaikkiReseptit()
         {
-           
+
             //Act
             var result = await _sut.HaeKaikkiReseptit(null, null);
-            
+
             Assert.NotNull(result);
             Assert.IsType<OkObjectResult>(result.Result);//resultin pitäisi olla OkObjectResult
 
@@ -61,11 +60,13 @@ namespace RuokaAPI.Tests.Controllers
             var resepti = okResult.Value as ReseptiResponse;
             Assert.Equal(id, resepti.Id);
         }
+
+
         [Fact]//
         public async Task PitaisiPalauttaaOmatReseptit()
         {
             //Arrange
-           
+
             var userId = DatabaseContextBuilder.YksityinenReseptiTietokannassa.Tekijäid;
 
             //Act
@@ -77,14 +78,15 @@ namespace RuokaAPI.Tests.Controllers
             var reseptit = okResult.Value as List<ReseptiResponse>;
             Assert.NotNull(reseptit);//??
             Assert.All(reseptit, r => Assert.Equal(userId, r.TekijaId));
-            
+
         }
+
         [Fact]
         public async Task PitaisiPalauttaaJulkisetReseptit()//palautta kun 
         {
             //Act
             var result = await _sut.HaeJulkisetReseptit(null, null);
-           
+
             Assert.NotNull(result);
             Assert.IsType<OkObjectResult>(result.Result);
             var okResult = result.Result as OkObjectResult;
@@ -98,7 +100,7 @@ namespace RuokaAPI.Tests.Controllers
         public async Task PitaisiPalauttaaAinesosat()//pitäisi palauttaa ainesosat string-listauksena
         {
             var result = await _sut.HaeAinesosat();
-            
+
             Assert.NotNull(result);
             Assert.IsType<OkObjectResult>(result.Result);
             var okResult = result.Result as OkObjectResult;
@@ -136,6 +138,7 @@ namespace RuokaAPI.Tests.Controllers
             var reseptit = okResult.Value as List<ReseptiResponse>;//muutetaan OkObjectResult IEnumerableksi
             Assert.Equal(2, reseptit.Count());
         }
+
         [Fact] //Testataan GetReseptit-metodi
         public async Task PitaisiPalauttaaReseptitAvainsanalla()
         {
@@ -156,7 +159,7 @@ namespace RuokaAPI.Tests.Controllers
         {
 
             //Act
-            var result = await _sut.HaeKaikkiReseptit(["Kukkakaali"], ["Aamupala","Herkku"]);
+            var result = await _sut.HaeKaikkiReseptit(["Kukkakaali"], ["Aamupala", "Herkku"]);
 
             Assert.NotNull(result);
             Assert.IsType<OkObjectResult>(result.Result);//resultin pitäisi olla OkObjectResult
@@ -166,5 +169,90 @@ namespace RuokaAPI.Tests.Controllers
             Assert.Equal(2, reseptit.Count());
         }
 
+        [Fact]
+        public async Task PitaisiLisataResepti()
+        {
+            //Arrange
+            var builder = new ReseptiBuilder();
+            var uusiReseptiRequest = builder.BuildRequest();
+
+
+            //Act
+            var result = await _sut.LisaaResepti(uusiReseptiRequest);
+
+            Assert.IsType<CreatedAtActionResult>(result.Result);
+            Assert.Equal(3, _context.Reseptit.Count());
+
+        }
+
+        [Fact]
+        public async Task PitaisiPaivittaaResepti()
+        {
+            //Arrange
+            var id = 5;
+            var builder = new ReseptiBuilder();
+            var resepti = builder.WithId(id).Build();
+            _context.Reseptit.Add(resepti);          
+            _context.SaveChanges();
+            var paivitettyReseptiRequest = builder.WithId(id).WithNimi("Paivitetty").BuildRequest();
+
+            //Act
+            var result = await _sut.PaivitaResepti(id, paivitettyReseptiRequest);
+
+            Assert.IsType<NoContentResult>(result);
+            var paivitettyResepti = await _context.Reseptit.FindAsync(id);
+            Assert.Equal("Paivitetty", paivitettyResepti.Nimi);
+        }
+
+        [Fact]
+        public async Task PitaisiPoistaaResepti()
+        {
+            //Arrange
+            var id = DatabaseContextBuilder.JulkinenReseptiTietokannassa.Id;
+            //Act
+            var result = await _sut.PoistaResepti(id);
+
+            Assert.IsType<NoContentResult>(result);
+            var poistettuResepti = await _context.Reseptit.FindAsync(id);
+            Assert.Null(poistettuResepti);
+        }
+
+        [Fact]
+        public async Task PitaisiPalauttaaNotFoundJosReseptiaEiLoydy()
+        {
+            //Arrange
+            var id = 1000;
+            //Act
+            var result = await _sut.GetReseptiById(id);
+
+            Assert.IsType<NotFoundResult>(result.Result);
+        }
+
+        [Fact]
+        public async Task PitaisiPalauttaaBadRequestJosReseptiEiKelpaa()
+        {
+            //Arrange
+            var builder = new ReseptiBuilder();
+            var uusiReseptiRequest = builder.WithNimi(null).BuildRequest();
+
+            //Act
+            var result = await _sut.LisaaResepti(uusiReseptiRequest);
+
+            Assert.IsType<BadRequestObjectResult>(result.Result);
+        }
+
+        [Fact]
+        public async Task PitaisiLisataArvostelu()
+        {
+            //Arrange
+            var id = DatabaseContextBuilder.JulkinenReseptiTietokannassa.Id;
+            var builder = new ArvosteluBuilder();
+            var arvosteluRequest = builder.Build();
+            //Act
+            var result = await _sut.LisaaArvostelu(id, arvosteluRequest);
+
+            Assert.IsType<CreatedResult>(result);
+            Assert.Equal(1, _context.Arvostelut.Count());
+        }
     }
 }

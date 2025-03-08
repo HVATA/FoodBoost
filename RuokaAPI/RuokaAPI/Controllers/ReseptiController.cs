@@ -94,7 +94,7 @@ namespace RuokaAPI.Controllers
             }
 
             var uusiResepti = await _repository.LisaaAsync(reseptiDto);
-            return CreatedAtAction(nameof(HaeKaikkiReseptit), new { id = uusiResepti.Id }, uusiResepti);
+            return CreatedAtAction(nameof(LisaaResepti), new { id = uusiResepti.Id }, uusiResepti);
         }
 
         [HttpPut("{id}")]
@@ -130,7 +130,7 @@ namespace RuokaAPI.Controllers
         }
 
         [HttpPost("{id}/arvostelut")]
-        public async Task<ActionResult> LisaaArvostelu(int id, ArvosteluRequest request)
+        public async Task<IActionResult> LisaaArvostelu(int id, ArvosteluRequest request)
         {
             var validator = new ArvosteluValidator();
             var validationMessages = validator.Validate(request);

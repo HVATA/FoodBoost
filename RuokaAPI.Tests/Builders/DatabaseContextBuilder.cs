@@ -20,14 +20,14 @@ namespace RuokaAPI.Tests.Builders
         private static Avainsana Herkku = new AvainsanaBuilder().WithId(5).WithNimi("Herkku").Build();
         
         public static readonly Resepti JulkinenReseptiTietokannassa = new ReseptiBuilder()
-            .WithId(1)
+            .WithId(2)
             .WithNimi("Testi Resepti 1")
             .WithKatseluoikeus("julkinen")
             .WithAinesosanMaara(Kukkakaali, "1 kpl")
             .WithAvainsanat([Aamupala, Nopea])
             .Build();
         public static readonly Resepti YksityinenReseptiTietokannassa = new ReseptiBuilder()
-            .WithId(2)
+            .WithId(3)
             .WithNimi("Testi Resepti 2")
             .WithKatseluoikeus("Yksityinen")
             .WithAinesosanMaara(Kukkakaali, "1 kpl")
@@ -38,9 +38,11 @@ namespace RuokaAPI.Tests.Builders
         public DatabaseContextBuilder()
         {
             var options = new DbContextOptionsBuilder<ruokaContext>()
-                .UseInMemoryDatabase(databaseName: "TestDatabase")
+                .UseInMemoryDatabase(databaseName: "TestDatabase")                
                 .Options;
             _context = new ruokaContext(options);//luodaan konteksti, joka käyttää muistissa olevaa tietokantaa
+            _context.Database.EnsureDeleted();
+            _context.Database.EnsureCreated();
         }
 
         public DatabaseContextBuilder SeedDatabase()

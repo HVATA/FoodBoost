@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using RuokaAPI.Dtos;
 using RuokaAPI.Properties.Model;
 
 
@@ -77,5 +78,20 @@ namespace RuokaAPI.Tests.Builders
         }
 
         public Resepti Build() => _resepti;
+
+        public ReseptiRequest BuildRequest() => new ReseptiRequest
+        {
+            TekijaId = _resepti.Tekijäid,
+            Nimi = _resepti.Nimi,
+            Valmistuskuvaus = _resepti.Valmistuskuvaus,
+            Katseluoikeus = _resepti.Katseluoikeus,
+            Ainesosat = _resepti.AinesosanMaara.Select(a => new AinesosanMaaraDto
+            {
+                Ainesosa = a.Ainesosa.Nimi,
+                Maara = a.Maara
+            }).ToArray(),
+            Avainsanat = _resepti.Avainsanat.Select(a => a.Sana).ToArray()
+        };
     }
+
 }
