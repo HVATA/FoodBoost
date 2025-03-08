@@ -10,6 +10,11 @@
 
 <h1>Luo uusi resepti</h1>
 
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
 <div class="form-container">
     <EditForm Model="uusiResepti" OnValidSubmit="TallennaResepti">
         <DataAnnotationsValidator />
@@ -18,13 +23,13 @@
         <!-- Reseptin nimi -->
         <div>
             <label for="nimi">Reseptin nimi:</label>
-            <InputText id="nimi" @bind-Value="uusiResepti.Nimi" class="form-control" />
+            <InputText id="nimi" name="nimi" @bind-Value="uusiResepti.Nimi" class="form-control" />
         </div>
 
         <!-- Valmistuskuvaus -->
         <div>
             <label for="valmistuskuvaus">Valmistuskuvaus:</label>
-            <InputTextArea id="valmistuskuvaus" @bind-Value="uusiResepti.Valmistuskuvaus" class="form-control" />
+            <InputTextArea id="valmistuskuvaus" name="valmistuskuvaus" @bind-Value="uusiResepti.Valmistuskuvaus" class="form-control" />
         </div>
 
         <!-- Drop box kuvien valintaan -->
@@ -53,7 +58,6 @@
         <button type="button" class="btn btn-secondary mt-2" @onclick="LisaaAinesosa">+ Lisää ainesosa</button>
 
         <!-- Avainsanat -->
-        
         <h2>Avainsanat</h2>
         <div class="keyword-container">
             @if (keywords != null && keywords.Any())
@@ -78,7 +82,6 @@
                 <p>Ladataan avainsanoja...</p>
             }
         </div>
-
 
         <!-- Katseluoikeus -->
         <div class="form-group mt-3">
@@ -125,6 +128,7 @@
     private int tekijaId = 0; // Oletusarvo, jos ID:tä ei saada
     private List<Avainsana>? keywords;
     private string message = string.Empty;
+    private string successMessage = string.Empty;
     private bool isPrivate = false;
 
     protected override async Task OnInitializedAsync()
@@ -162,7 +166,6 @@
         Console.WriteLine($"Avainsanojen määrä: {keywords?.Count ?? 0}"); // Debug-tulostus
     }
 
-
     private async Task GetKeywords()
     {
         try
@@ -185,7 +188,6 @@
             Console.WriteLine(message); // Debug-tulostus
         }
     }
-
 
     private async Task KuvaValittu(InputFileChangeEventArgs e)
     {
@@ -276,6 +278,7 @@
                 if (createdRecipe != null)
                 {
                     Console.WriteLine("✅ Luodun reseptin ID: " + createdRecipe.Id);
+                    successMessage = "Resepti tallennettu onnistuneesti";
                     Navigation.NavigateTo($"/recipe/{createdRecipe.Id}");
                 }
                 else
@@ -297,5 +300,4 @@
             Console.WriteLine($"❌ Poikkeus tallennuksessa: {ex.Message}");
         }
     }
-
 }
