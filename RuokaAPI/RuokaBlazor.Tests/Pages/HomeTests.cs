@@ -9,6 +9,13 @@ using RuokaBlazor.Services;
 using Moq;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http.Json;
+using System;
+using RichardSzalay.MockHttp;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+
 
 public class HomeTests : TestContext
 {
@@ -88,60 +95,113 @@ public class HomeTests : TestContext
     }
 
     [Fact]
-    public async void HomeComponent_Search_ReturnsCorrectRecipes()
+    public async Task HomeComponent_Search_ReturnsCorrectRecipes()
     {
-        // Arrange: Testidata kahdelle reseptille
-        var recipes = new List<ReseptiRequest>
-    {
-        new ReseptiRequest
+        // 🔹 Mockattu reseptilista
+        var allRecipes = new List<ReseptiRequest>
         {
-            Id = 1,
-            TekijaId = 1001,
-            Nimi = "Pasta Carbonara",
-            Valmistuskuvaus = "Herkullinen pasta",
-            Avainsanat = new[] { "pasta", "italialainen" },
-            Ainesosat = new[] { new AinesosanMaaraDto { Ainesosa = "Spaghetti", Maara = "200g" } }
-        },
-        new ReseptiRequest
-        {
-            Id = 2,
-            TekijaId = 1002,
-            Nimi = "Marjapiirakka",
-            Valmistuskuvaus = "Makea herkku",
-            Avainsanat = new[] { "leivonta", "jälkiruoka" },
-            Ainesosat = new[] { new AinesosanMaaraDto { Ainesosa = "Mustikka", Maara = "100g" } }
-        }
-    };
+            new ReseptiRequest
+            {
+                Id = 1,
+                TekijaId = 1001,
+                Nimi = "Pasta Carbonara",
+                Valmistuskuvaus = "Herkullinen pasta",
+                Avainsanat = new[] { "Pasta", "Italialainen" },
+                Ainesosat = new[] { new AinesosanMaaraDto { Ainesosa = "Spaghetti", Maara = "200g" } }
+            },
+            new ReseptiRequest
+            {
+                Id = 2,
+                TekijaId = 1002,
+                Nimi = "Marjapiirakka",
+                Valmistuskuvaus = "Makea herkku",
+                Avainsanat = new[] { "Leivonta", "Jälkiruoka" },
+                Ainesosat = new[] { new AinesosanMaaraDto { Ainesosa = "Mustikka", Maara = "100g" } }
+            }
+        };
 
         var ingredients = new List<Ainesosa>
-    {
-        new Ainesosa { Nimi = "Spaghetti", IsChecked = false },
-        new Ainesosa { Nimi = "Mustikka", IsChecked = false }
-    };
+        {
+            new Ainesosa { Nimi = "Spaghetti", IsChecked = false },
+            new Ainesosa { Nimi = "Mustikka", IsChecked = false }
+        };
 
         var keywords = new List<Avainsana>
-    {
-        new Avainsana { Sana = "pasta", IsChecked = false },
-        new Avainsana { Sana = "leivonta", IsChecked = false }
-    };
+        {
+            new Avainsana { Sana = "Pasta", IsChecked = false },
+            new Avainsana { Sana = "Leivonta", IsChecked = false }
+        };
 
-        var component = RenderComponent<Home>(parameters => parameters
-            .Add(p => p.recipes, recipes)
-            .Add(p => p.ingredients, ingredients) // Nyt voi lisätä ingredients!
-            .Add(p => p.keywords, keywords)       // Nyt voi lisätä keywords!
-        );
+        // 🔹 Mockataan HttpClient vastaamaan API-pyyntöihin oikein
+        var mockHttp = new MockHttpMessageHandler();
 
-        // Simuloidaan hakua avainsanalla "pasta"
-        component.Find("input").Input("leivonta");
-        component.Find("button.search-btn").Click();
+        // Jos API-kutsussa on "ainesosat" tai "avainsanat", palautetaan vain täsmäävät reseptit
+        mockHttp.When(HttpMethod.Get, "/Resepti*")
+        .Respond(req =>
+        {
+            var uri = req.RequestUri;
+            if (uri == null) return new HttpResponseMessage(HttpStatusCode.BadRequest);
 
-        // Odotetaan, että Blazor päivittää UI:n
-        await Task.Delay(200); // Pieni viive UI-päivitykselle
+            var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
+
+            // Haetaan kaikki "ainesosat" ja "avainsanat" parametrit
+            var requestedIngredients = queryParams.GetValues("ainesosat") ?? Array.Empty<string>();
+            var requestedKeywords = queryParams.GetValues("avainsanat") ?? Array.Empty<string>();
+
+            // Suodatetaan reseptit, jotka sisältävät KAIKKI haetut ainesosat JA vähintään yhden avainsanan
+            var filteredRecipes = allRecipes
+                .Where(r =>
+                    (requestedIngredients.Length == 0 || requestedIngredients.All(ingredient =>
+                        r.Ainesosat.Any(a => a.Ainesosa.Equals(ingredient, StringComparison.OrdinalIgnoreCase))))
+                    &&
+                    (requestedKeywords.Length == 0 || requestedKeywords.Any(keyword =>
+                        r.Avainsanat.Any(a => a.Equals(keyword, StringComparison.OrdinalIgnoreCase)))))
+                .ToList();
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = JsonContent.Create(filteredRecipes)
+            };
+        });
 
 
-        // Assert: Varmistetaan, että vain "Pasta Carbonara" näkyy ja "Marjapiirakka" ei
-        Assert.Contains("Marjapiirakka", component.Markup);
-        Assert.DoesNotContain("Pasta Carbonara", component.Markup);
+
+        var httpClient = new HttpClient(mockHttp) { BaseAddress = new Uri("https://localhost") };
+
+        Services.AddSingleton(httpClient);
+
+        // 🔹 Testikomponentin alustaminen mockatulla HTTP-palvelulla
+        var component = RenderComponent<Home>();
+
+        // 🛠 **Varmistetaan, että `recipes`, `ingredients` ja `keywords` eivät ole null**
+        component.Instance.recipes ??= new List<ReseptiRequest>();
+        component.Instance.ingredients ??= new List<Ainesosa>();
+        component.Instance.keywords ??= new List<Avainsana>();
+
+        // 🔹 Pakotetaan komponentti käyttämään mockattua dataa
+        component.Instance.recipes = allRecipes;
+        component.Instance.ingredients = ingredients;
+        component.Instance.keywords = keywords;
+        component.Render();
+
+        // 🔹 Syötetään hakukenttään "Pasta"
+        var input = component.Find("input");
+        input.Input("Spaghetti");
+
+        // 🔹 Kutsutaan haun päivitys
+        await component.InvokeAsync(() => component.Instance.SearchQueryChanged());
+
+        // 🔹 Pakotetaan UI-päivitys ja odotetaan
+        await Task.Delay(500);
+        component.Render();
+
+        // ✅ Debug: Tulosta komponentin HTML-markup
+        Console.WriteLine("Lopullinen Markup:");
+        Console.WriteLine(component.Markup);
+
+        // ✅ Varmistetaan, että "Pasta Carbonara" näkyy, mutta "Marjapiirakka" ei
+        Assert.Contains("Pasta Carbonara", component.Markup);
+        Assert.DoesNotContain("Marjapiirakka", component.Markup);
     }
 
 

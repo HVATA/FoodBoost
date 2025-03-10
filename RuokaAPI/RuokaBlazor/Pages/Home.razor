@@ -164,7 +164,7 @@
         SearchQueryChanged();
     }
 
-    private async Task SearchQueryChanged(ChangeEventArgs? e = null)
+    public async Task SearchQueryChanged(ChangeEventArgs? e = null)
     {
         // Jos kutsu tuli hakukentältä, päivitetään SearchQuery e.Value:n perusteella
         if (e != null)
