@@ -540,7 +540,9 @@ namespace RuokaAPI.Controllers
 
             if (p.Salasana != request.Kayttaja.Salasana) { 
             
-            } return "Virheellinen salasana.";
+            return "Virheellinen salasana.";
+            
+            } 
 
             // Etsitään suosikki
             var suosikki = await _context.Suosikit
