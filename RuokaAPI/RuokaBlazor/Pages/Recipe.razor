@@ -8,6 +8,8 @@
 @using RuokaBlazor.Services
 @using System.Text.Json
 @using System.Security.Claims
+@using System.Net.Http.Json
+@using System.Text
 
 @if (virheViesti != null)
 {
@@ -39,7 +41,9 @@ else
                 <button class="btn btn-primary" @onclick="MuokkaaResepti">Muokkaa</button>
                 <button class="btn btn-danger" @onclick="PoistaResepti">Poista</button>
             }
-            <button class="favorite-star-button" @onclick="AddToFavorites"></button>
+            <button class="favorite-star-button @(isFavorite ? "filled" : "")" @onclick="ToggleFavorite">
+                ★
+            </button>
         </div>
 
         <!-- Avainsanat -->
@@ -148,21 +152,21 @@ else
     .favorite-star-button {
         width: 50px;
         height: 50px;
-        background-color: gold;
-        border: none;
+        background-color: transparent; /* Läpinäkyvä tausta */
+        border: 2px solid gold; /* Kullankeltaiset rajaviivat */
+        border-radius: 50%;
         cursor: pointer;
-        clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-        font-size: 0;
-        position: relative;
+        font-size: 40px;
+        color: gold; /* Alussa vain rajaviivat näkyvissä */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.3s, color 0.3s;
     }
 
-        .favorite-star-button:before {
-            content: "★"; /* Tähti merkki */
-            font-size: 40px;
+        .favorite-star-button.filled {
+            background-color: gold; /* Kun suosikki, täytetään */
             color: white;
-            position: absolute;
-            top: 25%;
-            left: 22%;
         }
 
         .favorite-star-button:hover {
@@ -301,7 +305,8 @@ else
     private bool shareRecipeSuccess = false;
     public SuosikkiMuokkaus request;
     public Suosikit suosikit;
-
+    private bool isFavorite = false;
+    private List<Resepti> recipes;
 
     protected override async Task OnInitializedAsync()
     {
@@ -358,7 +363,48 @@ else
         {
             virheViesti = $"Virhe reseptin tietojen lataamisessa: {ex.Message}";
         }
+
+        try
+        {
+            // Suoritetaan PUT-pyyntö ja lähetetään Kayttaja-objekti request-bodyssa
+            string url = "/Kayttaja/Haesuosikkireseptit";
+            HttpResponseMessage response = await Http.PutAsJsonAsync(url, kayttaja);
+
+            // Tarkistetaan onko pyyntö onnistunut
+            if (response.IsSuccessStatusCode)
+            {
+                // Luetaan JSON-tulos ja muunnetaan se listaksi Resepti-objekteja
+                recipes = await response.Content.ReadFromJsonAsync<List<Resepti>>();
+
+                // Debugging: Tarkistetaan, että reseptit tulevat oikein
+                Console.WriteLine($"Reseptit: {recipes?.Count ?? 0}");
+
+                if (recipes == null || !recipes.Any())
+                {
+                    message = "Ei löytynyt reseptejä.";
+                }
+            }
+            else
+            {
+                message = await response.Content.ReadAsStringAsync(); // Backendin virheilmoitus
+            }
+
+            foreach(Resepti recipe in recipes)
+            {
+                if(recipe.Nimi == resepti.Nimi)
+                {
+                    resepti.Id = recipe.Id;
+                    ToggleFavorite();
+                }
+            };
+
+        }
+        catch (Exception ex)
+        {
+            message = $"Virhe haettaessa reseptejä: {ex.Message}";
+        }
     }
+
     private async Task ShareRecipeEmail()
     {
         try
@@ -420,7 +466,77 @@ else
         Navigation.NavigateTo($"/editRecipe/{resepti?.Id}");
     }
 
-    private async void AddToFavorites()
+    private async Task ToggleFavorite()
+    {
+        isFavorite = !isFavorite;
+        if (isFavorite)
+        {
+            await AddToFavorites();
+        }
+        else if (!isFavorite)
+        {
+            await DeleteFromFavorites();
+        }
+
+    }
+
+    private async Task DeleteFromFavorites()
+    {
+        try
+        {
+            // Luodaan poistettava suosikki-objekti
+            var request = new SuosikkiMuokkaus
+                {
+                    Kayttaja = new Kayttaja
+                    {
+                        Id = kayttaja.Id, // Varmistetaan, että ID on mukana
+                        Etunimi = kayttaja.Etunimi,
+                        Sukunimi = kayttaja.Sukunimi,
+                        Nimimerkki = kayttaja.Nimimerkki,
+                        Sahkopostiosoite = kayttaja.Sahkopostiosoite,
+                        Salasana = kayttaja.Salasana,
+                        Kayttajataso = kayttaja.Kayttajataso
+                    },
+                    suosikki = new Suosikit
+                    {
+                        Id = 0, // Varmistetaan, että ID on mukana (backend voi vaatia)
+                        kayttajaID = kayttaja.Id,
+                        reseptiID = resepti.Id
+                    }
+                };
+
+            // Muunnetaan JSON-muotoon
+            var jsonRequest = JsonSerializer.Serialize(request);
+            var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
+
+            // Luodaan DELETE-pyyntö
+            var requestMessage = new HttpRequestMessage(HttpMethod.Delete, "Kayttaja/Poistasuosikki")
+                {
+                    Content = content
+                };
+
+            // Lähetetään pyyntö
+            HttpResponseMessage response = await Http.SendAsync(requestMessage);
+
+            if (response.IsSuccessStatusCode)
+            {
+                message = "Resepti poistettiin suosikeista onnistuneesti!";
+                isFavorite = false; // Päivitetään tila onnistuneen poiston jälkeen
+            }
+            else
+            {
+                message = await response.Content.ReadAsStringAsync(); // Backendin virheilmoitus
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Virhe suosikin poistamisessa: {ex.Message}";
+        }
+    }
+
+
+
+    private async Task AddToFavorites()
     {
         try
         {

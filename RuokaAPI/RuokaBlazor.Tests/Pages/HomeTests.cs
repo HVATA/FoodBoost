@@ -15,6 +15,9 @@ using System;
 using RichardSzalay.MockHttp;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Components;
+using System.Reflection;
+using RuokaBlazor.Tests.Mocks;
 
 
 public class HomeTests : TestContext
@@ -203,6 +206,38 @@ public class HomeTests : TestContext
         Assert.Contains("Pasta Carbonara", component.Markup);
         Assert.DoesNotContain("Marjapiirakka", component.Markup);
     }
+
+    [Fact]
+    public void HomeComponent_SelectRecipe_NavigatesToCorrectUrl()
+    {
+        // 🔹 Alustetaan Blazorin NavigationManager kunnolla
+        var mockNavMan = new Mock<NavigationManager>(MockBehavior.Loose);
+        Services.AddScoped<NavigationManager, MockNavigationManager>(); // Käytetään mockia
+        var navMan = Services.GetRequiredService<NavigationManager>();
+
+        // 🔹 Luodaan testidata (resepti)
+        var recipe = new ReseptiRequest
+        {
+            Id = 123,
+            Nimi = "Testi Resepti",
+            Valmistuskuvaus = "Testikuvaus",
+            Kuva1 = "testikuva.jpg"
+        };
+
+        // 🔹 Renderöidään komponentti (pakollista, jotta NavigationManager toimii)
+        var component = RenderComponent<Home>();
+
+        // 🔹 Haetaan `SelectRecipe`-metodi reflektiolla, koska se voi olla private
+        var method = component.Instance.GetType().GetMethod("SelectRecipe",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        // 🔹 Kutsutaan SelectRecipe-metodia
+        method?.Invoke(component.Instance, new object[] { recipe });
+
+        // 🔹 Tarkistetaan, että navigointi on kutsuttu oikealla URL:lla
+        Assert.Equal($"/recipe/{recipe.Id}", ((MockNavigationManager)navMan).LastUri);
+    }
+
 
 
 }
