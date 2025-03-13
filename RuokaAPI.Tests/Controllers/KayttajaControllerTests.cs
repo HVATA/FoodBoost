@@ -262,10 +262,12 @@ namespace RuokaAPI.Tests
         [Fact]
         public async Task PoistaSuosikki_PalauttaaVirheenJosReseptiEiOleSuosikeissa()
         {
+            // Luodaan testikäyttäjä
             var kayttaja = LuoKayttaja();
             _context.Kayttajat.Add(kayttaja);
             await _context.SaveChangesAsync();
 
+            // Luodaan pyyntö, jossa on olemassa oleva käyttäjä, mutta reseptiä ei ole suosikeissa
             var request = new SuosikkiMuokkaus
             {
                 Kayttaja = new Kayttaja
@@ -273,12 +275,14 @@ namespace RuokaAPI.Tests
                     Sahkopostiosoite = kayttaja.Sahkopostiosoite,
                     Salasana = "salasana123" // Oikea salasana
                 },
-                suosikki = new Suosikit { kayttajaID = kayttaja.Id, reseptiID = 99 }
+                suosikki = new Suosikit { kayttajaID = kayttaja.Id, reseptiID = 99 } // Tämä resepti ei ole suosikeissa
             };
 
+            // Suoritetaan poisto ja tarkistetaan tulos
             var result = await _controller.PoistaSuosikki(request);
 
-            Assert.Equal("Virheellinen salasana.", result);
+            
+            Assert.Equal("Resepti ei ole suosikeissa.", result);
         }
 
         [Fact]
@@ -472,24 +476,29 @@ namespace RuokaAPI.Tests
         [Fact]
         public async Task PoistaSuosikki_PoistaaOikeanSuosikin()
         {
+            // Luodaan testikäyttäjä
             var kayttaja = LuoKayttaja();
             _context.Kayttajat.Add(kayttaja);
             await _context.SaveChangesAsync();
 
+            // Luodaan testiresepti
             var resepti = new Resepti { Id = new Random().Next(1000, 2000), Nimi = "Testi Resepti", Tekijäid = kayttaja.Id };
             _context.Reseptit.Add(resepti);
             await _context.SaveChangesAsync();
 
+            // Lisätään resepti käyttäjän suosikiksi
             var suosikki = new Suosikit { Id = new Random().Next(2000, 3000), kayttajaID = kayttaja.Id, reseptiID = resepti.Id };
             _context.Suosikit.Add(suosikki);
             await _context.SaveChangesAsync();
 
+            // Varmistetaan, että suosikki on tallennettu
+            Assert.NotEmpty(_context.Suosikit.ToList());
+
+            // Suoritetaan suosikin poisto
             var request = new SuosikkiMuokkaus { Kayttaja = kayttaja, suosikki = suosikki };
             await _controller.PoistaSuosikki(request);
 
-            _context.Suosikit.Remove(suosikki);
-            await _context.SaveChangesAsync();
-
+            // Haetaan tietokannasta suosikit ja varmistetaan, että se on tyhjä
             var result = await _controller.HaeSuosikkiReseptit(kayttaja);
             Assert.NotNull(result);
             Assert.Empty(result);
@@ -498,19 +507,23 @@ namespace RuokaAPI.Tests
         [Fact]
         public async Task PoistaSuosikki_PalauttaaVirheenJosSuosikkiaEiOle()
         {
+            // Luodaan testikäyttäjä
             var kayttaja = LuoKayttaja();
             _context.Kayttajat.Add(kayttaja);
             await _context.SaveChangesAsync();
 
+            // Luodaan pyyntö, jossa on olemassa oleva käyttäjä, mutta suosikkia ei ole tietokannassa
             var request = new SuosikkiMuokkaus
             {
                 Kayttaja = new Kayttaja { Sahkopostiosoite = kayttaja.Sahkopostiosoite, Salasana = "salasana123" },
-                suosikki = new Suosikit { Id = new Random().Next(2000, 3000), kayttajaID = kayttaja.Id, reseptiID = 999 }
+                suosikki = new Suosikit { Id = new Random().Next(2000, 3000), kayttajaID = kayttaja.Id, reseptiID = 999 } // Tämä suosikki ei ole lisätty
             };
 
+            // Suoritetaan poisto ja tarkistetaan tulos
             var result = await _controller.PoistaSuosikki(request);
 
-            Assert.Equal("Virheellinen salasana.", result);
+            
+            Assert.Equal("Resepti ei ole suosikeissa.", result);
         }
 
 
