@@ -526,6 +526,73 @@ namespace RuokaAPI.Tests
             Assert.Equal("Resepti ei ole suosikeissa.", result);
         }
 
+        [Fact]
+        public async Task PoistaKaiikiTuotokset_PalauttaaOnnistumisviestinJosAdminPoistaa()
+        {
+            var admin = new Kayttaja { Id = 2, Sahkopostiosoite = "admin@example.com", Salasana = "admin123", Kayttajataso = "admin", Etunimi = "Admin", Sukunimi = "Testaaja", Nimimerkki = "SuperAdmin" };
+            var kayttaja = new Kayttaja { Id = 1, Sahkopostiosoite = "test@example.com", Salasana = "salasana123", Etunimi = "Matti", Sukunimi = "Meikäläinen", Nimimerkki = "Testaaja", Kayttajataso = "Peruskäyttäjä" };
+
+            _context.Kayttajat.AddRange(admin, kayttaja);
+            await _context.SaveChangesAsync();
+
+            var result = await _controller.PoistaKaiikiTuotokset(kayttaja.Id, admin);
+
+            Assert.Equal("Kaikki löydetyt käyttäjän tuotokset ja käyttäjä on poistettu palvelusta!!", result);
+        }
+
+        [Fact]
+        public async Task PoistaKaiikiTuotokset_PalauttaaVirheviestinJosPoistajaaEiLoydy()
+        {
+            var kayttaja = new Kayttaja { Id = 1, Sahkopostiosoite = "test@example.com", Salasana = "salasana123", Etunimi = "Matti", Sukunimi = "Meikäläinen", Nimimerkki = "Testaaja", Kayttajataso = "Peruskäyttäjä" };
+            _context.Kayttajat.Add(kayttaja);
+            await _context.SaveChangesAsync();
+
+            var tuntematonKayttaja = new Kayttaja { Sahkopostiosoite = "tuntematon@example.com", Salasana = "salasana123", Etunimi = "Tuntematon", Sukunimi = "Henkilö", Nimimerkki = "EiLoydy", Kayttajataso = "admin" };
+            var result = await _controller.PoistaKaiikiTuotokset(kayttaja.Id, tuntematonKayttaja);
+
+            Assert.Equal("Käyttäjää ei löytynyt.", result);
+        }
+
+        [Fact]
+        public async Task PoistaKaiikiTuotokset_PalauttaaVirheviestinJosSalasanaVaarin()
+        {
+            var admin = new Kayttaja { Id = 2, Sahkopostiosoite = "admin@example.com", Salasana = "admin123", Kayttajataso = "admin", Etunimi = "Admin", Sukunimi = "Testaaja", Nimimerkki = "SuperAdmin" };
+            _context.Kayttajat.Add(admin);
+            await _context.SaveChangesAsync();
+
+            var vääräSalasanaKayttaja = new Kayttaja { Sahkopostiosoite = "admin@example.com", Salasana = "vääräsalasana", Etunimi = "Admin", Sukunimi = "Testaaja", Nimimerkki = "SuperAdmin", Kayttajataso = "admin" };
+            var result = await _controller.PoistaKaiikiTuotokset(1, vääräSalasanaKayttaja);
+
+            Assert.Equal("Virheellinen salasana.", result);
+        }
+
+        [Fact]
+        public async Task PoistaKaiikiTuotokset_PalauttaaVirheviestinJosEiAdmin()
+        {
+            var kayttaja = new Kayttaja { Id = 1, Sahkopostiosoite = "test@example.com", Salasana = "salasana123", Kayttajataso = "Peruskäyttäjä", Etunimi = "Matti", Sukunimi = "Meikäläinen", Nimimerkki = "Testaaja" };
+            _context.Kayttajat.Add(kayttaja);
+            await _context.SaveChangesAsync();
+
+            var result = await _controller.PoistaKaiikiTuotokset(1, kayttaja);
+
+            Assert.Equal("Käyttäjän tuotoksia ei löytynyt tai poistajalla ei ollut oikeuksia!!", result);
+        }
+
+        [Fact]
+        public async Task PoistaKaiikiTuotokset_PalauttaaOnnistumisviestinVaikkaEiTuotoksia()
+        {
+            var admin = new Kayttaja { Id = 2, Sahkopostiosoite = "admin@example.com", Salasana = "admin123", Kayttajataso = "admin", Etunimi = "Admin", Sukunimi = "Testaaja", Nimimerkki = "SuperAdmin" };
+            var kayttaja = new Kayttaja { Id = 1, Sahkopostiosoite = "test@example.com", Salasana = "salasana123", Etunimi = "Matti", Sukunimi = "Meikäläinen", Nimimerkki = "Testaaja", Kayttajataso = "Peruskäyttäjä" };
+            _context.Kayttajat.AddRange(admin, kayttaja);
+            await _context.SaveChangesAsync();
+
+            var result = await _controller.PoistaKaiikiTuotokset(kayttaja.Id, admin);
+
+            Assert.Equal("Kaikki löydetyt käyttäjän tuotokset ja käyttäjä on poistettu palvelusta!!", result);
+        }
+
+
+
 
 
     }

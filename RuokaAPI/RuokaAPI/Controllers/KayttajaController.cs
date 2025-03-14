@@ -6,6 +6,7 @@ using RuokaAPI.Properties.Model;
 using RuokaAPI.Services;
 using BCrypt.Net;
 using Azure.Core;
+using System.Globalization;
 
 
 
@@ -34,7 +35,7 @@ namespace RuokaAPI.Controllers
             List<Kayttaja> lista = new List<Kayttaja>();
 
 
-            
+
 
             List<Kayttaja> lista2 = new List<Kayttaja>();
 
@@ -43,18 +44,18 @@ namespace RuokaAPI.Controllers
             lista = _context.Kayttajat.Where(x => x.Sahkopostiosoite == email).ToList();
 
             string? salasana = null;
-           
+
 
             //laitetaan tähän tuon sähköpostin tarkastuksen lisäksi nimimerkin tarkastus
-           // string? nimimerkki = x.Nimimerkki;
+            // string? nimimerkki = x.Nimimerkki;
 
             //Voiko olla että esim. 3 nimimerkillä Make99 arvostelee samaa reseptiä mutta eri emaileilla jos ei näytetä julkisesti sähköpostiosoitetta?
 
 
-          //  lista2= _context.Kayttajat.Where(x=>x.Nimimerkki == nimimerkki).ToList();
+            //  lista2= _context.Kayttajat.Where(x=>x.Nimimerkki == nimimerkki).ToList();
             //== 0&&lista2.Count==0
 
-            if (lista.Count==0)
+            if (lista.Count == 0)
             {
 
 
@@ -64,15 +65,15 @@ namespace RuokaAPI.Controllers
                 return "Käyttäjä lisätty";
             }
 
-          /*  if (lista2.Count > 0)
-            {
+            /*  if (lista2.Count > 0)
+              {
 
-                return "Nimimerkki on jo käytössä!!";
+                  return "Nimimerkki on jo käytössä!!";
 
 
 
-           }
-            */ 
+             }
+              */
 
             else
             {
@@ -127,9 +128,9 @@ namespace RuokaAPI.Controllers
             string kayttajataso = "admin";
 
             // Tarkistetaan, että käyttäjä on admin ja tunnistetiedot ovat oikein
-            if (p != null && p.Kayttajataso.Equals(kayttajataso) &&p.Salasana == salasana  &&p.Sahkopostiosoite == sahkopostiosoite)
-    
-    
+            if (p != null && p.Kayttajataso.Equals(kayttajataso) && p.Salasana == salasana && p.Sahkopostiosoite == sahkopostiosoite)
+
+
             {
                 kayttajat = await _context.Kayttajat.ToListAsync();
                 return kayttajat;
@@ -155,9 +156,9 @@ namespace RuokaAPI.Controllers
             }
 
             // Tarkistetaan, onko salasana hajautettu ja validoidaan se
-           
 
-            if (poistaja.Salasana!=salasana)
+
+            if (poistaja.Salasana != salasana)
             {
                 return Unauthorized("Virheellinen salasana.");
             }
@@ -182,12 +183,12 @@ namespace RuokaAPI.Controllers
             }
         }
 
-        [HttpPut("PaivitaTietoja")]  
+        [HttpPut("PaivitaTietoja")]
         public async Task<ActionResult<Kayttaja>> Paivita(Kayttaja k)
         {
             Kayttaja? tt = _context.Kayttajat.Find(k.Id);
 
-            if(tt!=null)
+            if (tt != null)
             {
 
 
@@ -235,12 +236,13 @@ namespace RuokaAPI.Controllers
                 tt.Sukunimi = k.Sukunimi;
                 tt.Sahkopostiosoite = k.Sahkopostiosoite;
                 tt.Kayttajataso = k.Kayttajataso;
-                if (!string.IsNullOrEmpty(uusisalasana)) { 
-                
-                 tt.Salasana = k.Uusisalasana;
+                if (!string.IsNullOrEmpty(uusisalasana))
+                {
+
+                    tt.Salasana = k.Uusisalasana;
                 }
 
-               
+
                 tt.Nimimerkki = k.Nimimerkki;
 
 
@@ -267,7 +269,7 @@ namespace RuokaAPI.Controllers
         public async Task<ActionResult> HaeUusiSalasana(string email)
         {
             // Tarkistetaan, löytyykö käyttäjä
-            Kayttaja? tt =  _context.Kayttajat.Where(x=>x.Sahkopostiosoite==email).FirstOrDefault();
+            Kayttaja? tt = _context.Kayttajat.Where(x => x.Sahkopostiosoite == email).FirstOrDefault();
             if (tt == null)
             {
                 return NotFound("Käyttäjää ei löydy!");
@@ -290,7 +292,7 @@ namespace RuokaAPI.Controllers
 
             // Päivitetään salasana 
 
-            tt.Salasana =Uusisalasana;
+            tt.Salasana = Uusisalasana;
             _context.Kayttajat.Update(tt);
             await _context.SaveChangesAsync();
 
@@ -313,9 +315,9 @@ namespace RuokaAPI.Controllers
                     return Unauthorized("Käyttäjää ei löytynyt.");
                 }
 
-                
 
-                if (kayttaja.Salasana!=o.Salasana)
+
+                if (kayttaja.Salasana != o.Salasana)
                 {
                     return Unauthorized("Virheellinen salasana.");
                 }
@@ -349,17 +351,17 @@ namespace RuokaAPI.Controllers
                     reseptiString += $"- {avainsana.Id}, ({avainsana.Sana})\n";
                 }
 
-               
+
                 if (!string.IsNullOrEmpty(resepti.Kuva1)) //reseptiString += $"Kuva 1: {resepti.Kuva1}\n";
                 {
 
-                    kuvaString=resepti.Kuva1;
+                    kuvaString = resepti.Kuva1;
                 }
-                
+
                 // Lähetetään sähköposti
                 ReseptinLaheys reseptinlahetys = new ReseptinLaheys();
 
-                bool lahetysOk = await reseptinlahetys.LahetaResepti(vastaanottajanEmail, "Jaettu resepti", reseptiString,kuvaString);
+                bool lahetysOk = await reseptinlahetys.LahetaResepti(vastaanottajanEmail, "Jaettu resepti", reseptiString, kuvaString);
 
                 if (!lahetysOk)
                 {
@@ -390,13 +392,13 @@ namespace RuokaAPI.Controllers
                 return "Käyttäjää ei löytynyt.";
             }
 
-           
-            if (p.Salasana!=kayttaja.Salasana)
+
+            if (p.Salasana != kayttaja.Salasana)
             {
                 return "Virheellinen salasana.";
             }
 
-            if (p.Salasana==kayttaja.Salasana)
+            if (p.Salasana == kayttaja.Salasana)
             {
                 // Haetaan käyttäjän aiemmat suosikit kannasta
                 var templista = await _context.Suosikit
@@ -435,13 +437,13 @@ namespace RuokaAPI.Controllers
                 return Suosikkireseptit;
             }
 
-            
-            if (p.Salasana!=k.Salasana)
+
+            if (p.Salasana != k.Salasana)
             {
                 return Suosikkireseptit = null;
             }
 
-            if (p.Salasana==k.Salasana)
+            if (p.Salasana == k.Salasana)
             {
                 suosikit = await _context.Suosikit.Where(x => x.kayttajaID == p.Id).ToListAsync();
 
@@ -449,8 +451,8 @@ namespace RuokaAPI.Controllers
                 {
 
                     Resepti? resepti = await _context.Reseptit
-                                            .Include(r => r.AinesosanMaara).ThenInclude(am => am.Ainesosa)    
-                                            .Include(r => r.Avainsanat)   
+                                            .Include(r => r.AinesosanMaara).ThenInclude(am => am.Ainesosa)
+                                            .Include(r => r.Avainsanat)
                                             .FirstOrDefaultAsync(r => r.Id == x.reseptiID);
 
                     Suosikkireseptit.Add(resepti);
@@ -474,7 +476,7 @@ namespace RuokaAPI.Controllers
             }
 
 
-            if (p.Salasana!=request.Salasana)
+            if (p.Salasana != request.Salasana)
             {
                 return "Virheellinen salasana.";
             }
@@ -500,10 +502,11 @@ namespace RuokaAPI.Controllers
 
 
 
-            if (p.Salasana != request.Kayttaja.Salasana) { 
-            
-            return "Virheellinen salasana.";
-            } 
+            if (p.Salasana != request.Kayttaja.Salasana)
+            {
+
+                return "Virheellinen salasana.";
+            }
 
             // Tarkistetaan, onko resepti jo suosikeissa
             bool onJoSuosikissa = await _context.Suosikit
@@ -538,15 +541,16 @@ namespace RuokaAPI.Controllers
             if (p == null) return "Käyttäjää ei löytynyt.";
 
 
-            if (p.Salasana != request.Kayttaja.Salasana) { 
-            
-            return "Virheellinen salasana.";
-            
-            } 
+            if (p.Salasana != request.Kayttaja.Salasana)
+            {
+
+                return "Virheellinen salasana.";
+
+            }
 
             // Etsitään suosikki
             var suosikki = await _context.Suosikit
-                .Where(x => x.kayttajaID == p.Id && x.reseptiID == request.suosikki.reseptiID )
+                .Where(x => x.kayttajaID == p.Id && x.reseptiID == request.suosikki.reseptiID)
                 .FirstOrDefaultAsync();
 
             if (suosikki == null) return "Resepti ei ole suosikeissa.";
@@ -560,5 +564,104 @@ namespace RuokaAPI.Controllers
 
 
 
+        //Poistetaan kaikki käyttäjän tuotokset ja käyttäjä jos tekijä tai palvelun pitäjä sitä vaatii
+        [HttpDelete("Poistatuotokset/{PoistettavanID}")]
+        public async Task<string> PoistaKaiikiTuotokset(int PoistettavanID, [FromBody] Kayttaja poistaja)
+        {
+            Kayttaja? p = await _context.Kayttajat
+                .Where(x => x.Sahkopostiosoite == poistaja.Sahkopostiosoite)
+                .FirstOrDefaultAsync();
+
+            if (p == null) return "Käyttäjää ei löytynyt.";
+
+
+            if (p.Salasana != poistaja.Salasana)
+            {
+
+                return "Virheellinen salasana.";
+
+            }
+
+            if (p != null && p.Kayttajataso == "admin")
+            {
+
+                // Etsitään suosikit
+                List<Suosikit>? suosikit = await _context.Suosikit
+                    .Where(x => x.kayttajaID == PoistettavanID).ToListAsync();
+
+                //ja poistetaan suosikit
+
+                if (suosikit.Count > 0)
+                {
+
+                    _context.Suosikit.RemoveRange(suosikit);
+
+                    await _context.SaveChangesAsync();
+
+
+                   
+
+                }
+                //etsitään reseptit
+
+                List<Resepti>? lista = await _context.Reseptit.Where(x => x.Tekijäid == PoistettavanID).ToListAsync();
+
+                if (lista.Count > 0)
+                {
+                    //  Ja poistetaan ne
+                    _context.Reseptit.RemoveRange(lista);
+
+
+                    await _context.SaveChangesAsync();
+
+                   
+
+                }
+
+                //poistetaan arvostelut
+
+                List<Arvostelu>? arvostelut = await _context.Arvostelut.Where(x => x.ArvostelijanId == PoistettavanID).ToListAsync();
+
+                if(arvostelut.Count > 0)
+                {
+
+                    _context.RemoveRange(arvostelut);
+                    await _context.SaveChangesAsync();
+
+                   
+
+                }
+
+                //poistetaan itse henkilö
+
+                List<Kayttaja>? henkilo =await _context.Kayttajat.Where(x => x.Id == PoistettavanID).ToListAsync();
+
+                if(henkilo.Count > 0)
+                {
+
+                    _context.RemoveRange(henkilo);
+                    await _context.SaveChangesAsync();
+
+             
+
+                }
+
+                return "Kaikki löydetyt käyttäjän tuotokset ja käyttäjä on poistettu palvelusta!!";
+
+            }
+            else
+            {
+
+
+                return "Käyttäjän tuotoksia ei löytynyt tai poistajalla ei ollut oikeuksia!!";
+
+
+
+            }
+        
+        
+        
+        
+        }
     }
 }
