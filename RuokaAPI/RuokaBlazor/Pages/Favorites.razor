@@ -254,7 +254,7 @@
         var userPassword = user.FindFirst("Salasana")?.Value;
 
         kayttaja = new Kayttaja
-            {
+        {
                 Id = int.Parse(userId ?? "0"),
                 Etunimi = userFirstname,
                 Sukunimi = userLastname,
@@ -262,7 +262,7 @@
                 Nimimerkki = username,
                 Salasana = userPassword,
                 Kayttajataso = userRole
-            };
+        };
 
         GetFavoriteRecipes();
         Console.WriteLine($"Tässä reseptit: {recipes}");

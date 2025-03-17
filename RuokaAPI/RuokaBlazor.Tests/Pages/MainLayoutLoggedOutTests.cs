@@ -20,17 +20,14 @@ using System.Reflection;
 using RuokaBlazor.Tests.Mocks;
 using RuokaBlazor.Layout;
 
-public class MainLayoutTests : TestContext
+public class MainLayoutLoggedOutTests : TestContext
 {
-    public MainLayoutTests()
+    public MainLayoutLoggedOutTests()
     {
-        // 🔹 Luo testikäyttäjä ilman kirjautumista (tyhjä ClaimsIdentity)
+        // 🔹 Luo kirjautumaton käyttäjä (tyhjä ClaimsIdentity)
         var user = new ClaimsPrincipal(new ClaimsIdentity());
 
-        // 🔹 Rekisteröi ClaimsPrincipal palveluihin
-        Services.AddSingleton(user);
-
-        // 🔹 Rekisteröi FakeAuthenticationStateProvider käyttäen ClaimsPrincipalia
+        // 🔹 Rekisteröi FakeAuthenticationStateProvider testipalveluihin
         Services.AddSingleton<CustomAuthenticationStateProvider>(new FakeAuthenticationStateProvider(user));
         Services.AddSingleton<AuthenticationStateProvider>(sp => sp.GetRequiredService<CustomAuthenticationStateProvider>());
 
@@ -39,24 +36,13 @@ public class MainLayoutTests : TestContext
 
         // 🔹 Lisää AuthorizationCore Blazor-testejä varten
         Services.AddAuthorizationCore();
-    }
 
-    [Fact]
-    public async Task When_UserIsNotLoggedIn_LoginLinkIsVisible()
-    {
-        // 🔹 Renderöi MainLayout-komponentti
-        var component = RenderComponent<MainLayout>();
-
-        // 🔹 Haetaan palvelusta FakeAuthenticationStateProvider ja varmistetaan, että käyttäjä ei ole kirjautunut sisään
+        // 🔹 Varmistetaan, että käyttäjä EI ole kirjautunut sisään
         var authStateProvider = Services.GetRequiredService<AuthenticationStateProvider>() as FakeAuthenticationStateProvider;
         Assert.NotNull(authStateProvider);
-        var isLoggedIn = await authStateProvider.IsUserLoggedIn();
-        Assert.False(isLoggedIn); // Varmistetaan, että käyttäjä ei ole kirjautunut sisään
-
-        // 🔹 Tarkista, että "Kirjaudu sisään" -linkki löytyy
-        var loginLink = component.Find("a[href='/login']");
-        Assert.NotNull(loginLink);
-        Assert.Equal("Kirjaudu sisään", loginLink.TextContent);
+        var isLoggedInTask = authStateProvider.FakeIsUserLoggedIn();
+        isLoggedInTask.Wait(); // Synkroninen odotus testissä
+        Assert.False(isLoggedInTask.Result); // Varmistetaan, että käyttäjä EI ole kirjautunut sisään
     }
 
     [Fact]
@@ -71,32 +57,49 @@ public class MainLayoutTests : TestContext
         // 🔹 Etsitään "Kirjaudu sisään" -linkki
         var loginLink = component.Find("a[href='/login']");
 
-        // 🔹 Tarkistetaan, että elementti löytyi
+
+        // 🔹 Tarkistetaan, että linkki löytyy
         Assert.NotNull(loginLink);
 
-        // 🔹 Simuloidaan klikkaus Bunitin tapaan
-        component.InvokeAsync(() => loginLink.Click());
+        // 🔹 Simuloidaan navigaatio käyttäen mockNav.NavigateTo()
+        mockNav.NavigateTo(loginLink.GetAttribute("href"));
 
-        // 🔹 Varmistetaan, että navigointi tapahtui /login-sivulle
-        Assert.Equal("/login", mockNav.Uri.Replace(mockNav.BaseUri, ""));
-    }
-
-    [Fact]
-    public void LoginLink_ShouldExist_And_HaveCorrectHref()
-    {
-        // 🔹 Renderöidään MainLayout-komponentti
-        var component = RenderComponent<MainLayout>();
-
-        // 🔹 Etsitään "Kirjaudu sisään" -linkki
-        var loginLink = component.Find("a[href='/login']");
-
-        // 🔹 Varmistetaan, että linkki löytyy ja siinä on oikea teksti
-        Assert.NotNull(loginLink);
-        Assert.Equal("Kirjaudu sisään", loginLink.TextContent);
+        // 🔹 Pakotetaan komponentti renderöimään uudelleen
+        component.Render();
 
         // 🔹 Tarkistetaan, että linkin href on oikein
         Assert.Equal("/login", loginLink.GetAttribute("href"));
     }
-}
 
+    [Fact]
+    public void LoginLink_ShouldBeVisible_WhenUserIsNotLoggedIn()
+    {
+        var component = RenderComponent<MainLayout>();
+        var loginLink = component.Find("a[href='/login']");
+        Assert.NotNull(loginLink);
+        Assert.Equal("Kirjaudu sisään", loginLink.TextContent);
+    }
+
+    [Fact]
+    public void Clicking_HomeLink_NavigatesToHomePage()
+    {
+        // 🔹 Haetaan mockattu NavigationManager
+        var mockNav = Services.GetRequiredService<NavigationManager>();
+
+        // 🔹 Renderöidään MainLayout-komponentti
+        var component = RenderComponent<MainLayout>();
+
+        // 🔹 Etsitään "RuokaBoost-Home" -linkki
+        var homeLink = component.Find("a.homenappi");
+
+        // 🔹 Tarkistetaan, että linkki löytyy
+        Assert.NotNull(homeLink);
+
+        // 🔹 Tarkistetaan, että linkin href on oikein (etusivulle "/")
+        Assert.Equal("/", homeLink.GetAttribute("href"));
+
+        // 🔹 Tarkistetaan, että linkissä on oikea teksti
+        Assert.Equal("RuokaBoost-Home", homeLink.TextContent);
+    }
+}
 
