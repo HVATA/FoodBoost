@@ -36,9 +36,6 @@ public class HomeTests : TestContext
             new Claim("Salasana", "testsalasana")
         }, "mock"));
 
-        // Lisää FakeAuthenticationStateProvider testipalveluihin
-        Services.AddSingleton<AuthenticationStateProvider>(new FakeAuthenticationStateProvider(user));
-
         // Lisää CustomAuthenticationStateProvider, jos Blazor-sovellus sitä käyttää
         Services.AddSingleton<CustomAuthenticationStateProvider>();
 

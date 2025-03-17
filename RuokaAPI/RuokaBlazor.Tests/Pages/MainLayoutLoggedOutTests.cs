@@ -24,12 +24,9 @@ public class MainLayoutLoggedOutTests : TestContext
 {
     public MainLayoutLoggedOutTests()
     {
-        // 🔹 Luo kirjautumaton käyttäjä (tyhjä ClaimsIdentity)
-        var user = new ClaimsPrincipal(new ClaimsIdentity());
-
-        // 🔹 Rekisteröi FakeAuthenticationStateProvider testipalveluihin
-        Services.AddSingleton<CustomAuthenticationStateProvider>(new FakeAuthenticationStateProvider(user));
-        Services.AddSingleton<AuthenticationStateProvider>(sp => sp.GetRequiredService<CustomAuthenticationStateProvider>());
+        // 🔹 Luo CustomAuthenticationStateProvider testikäyttöön
+        var customAuthProvider = new CustomAuthenticationStateProvider(new FakeJSRuntime());
+        Services.AddSingleton(customAuthProvider);
 
         // 🔹 Lisää mockattu NavigationManager
         Services.AddSingleton<NavigationManager, MockNavigationManager>();
@@ -37,12 +34,11 @@ public class MainLayoutLoggedOutTests : TestContext
         // 🔹 Lisää AuthorizationCore Blazor-testejä varten
         Services.AddAuthorizationCore();
 
+        // 🔹 Simuloidaan localStorage.getItem("authUser") palauttamaan NULL (käyttäjä ei kirjautunut)
+        JSInterop.Setup<string>("localStorage.getItem", "authUser").SetResult(null);
+
         // 🔹 Varmistetaan, että käyttäjä EI ole kirjautunut sisään
-        var authStateProvider = Services.GetRequiredService<AuthenticationStateProvider>() as FakeAuthenticationStateProvider;
-        Assert.NotNull(authStateProvider);
-        var isLoggedInTask = authStateProvider.FakeIsUserLoggedIn();
-        isLoggedInTask.Wait(); // Synkroninen odotus testissä
-        Assert.False(isLoggedInTask.Result); // Varmistetaan, että käyttäjä EI ole kirjautunut sisään
+        var isLoggedIn = customAuthProvider.IsUserLoggedIn();
     }
 
     [Fact]

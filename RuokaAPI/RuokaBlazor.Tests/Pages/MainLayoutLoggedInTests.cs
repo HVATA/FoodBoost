@@ -22,44 +22,40 @@ using RuokaBlazor.Layout;
 
 public class MainLayoutLoggedInTests : TestContext
 {
-
     public MainLayoutLoggedInTests()
     {
-        // Luo testikäyttäjä
-        var user = new ClaimsPrincipal(new ClaimsIdentity(new[]
-        {
-    new Claim(ClaimTypes.NameIdentifier, "1001"),
-    new Claim(ClaimTypes.GivenName, "TestGivenName"),
-    new Claim(ClaimTypes.Surname, "TestSurname"),
-    new Claim("Nimimerkki", "TestUser"),
-    new Claim(ClaimTypes.Email, "test@example.com"),
-    new Claim(ClaimTypes.Role, "user"),
-    new Claim("Salasana", "testsalasana")
-}, "mock"));
-
-        var fakeAuthProvider = new FakeAuthenticationStateProvider(user);
-
-        // Lisää FakeAuthenticationStateProvider testipalveluihin
-        Services.AddSingleton<AuthenticationStateProvider>(new FakeAuthenticationStateProvider(user));
-
-        // Lisää CustomAuthenticationStateProvider, jos Blazor-sovellus sitä käyttää
-        Services.AddSingleton<CustomAuthenticationStateProvider>();
-
-        // Lisää mahdolliset muut Blazor-palvelut, joita komponentti voi tarvita
-        Services.AddAuthorizationCore();
-
-        // Mockataan JSInterop vastaamaan localStorage-kutsuun
-        JSInterop.Setup<string>("localStorage.getItem", "authUser")
-                 .SetResult("{ \"id\": 1001, \"role\": \"user\" }"); // Simuloidaan käyttäjätiedot
-
-        var isLoggedInTask = fakeAuthProvider.FakeIsUserLoggedIn();
-        isLoggedInTask.Wait(); // Synkroninen odotus testissä
-        Assert.True(isLoggedInTask.Result); // ✅ Varmistetaan, että käyttäjä on kirjautunut sisään
+        // 🔹 Luo CustomAuthenticationStateProvider testikäyttöön
+        var customAuthProvider = new CustomAuthenticationStateProvider(new FakeJSRuntime());
+        Services.AddSingleton<CustomAuthenticationStateProvider>(customAuthProvider);
+        Services.AddSingleton<AuthenticationStateProvider>(sp => sp.GetRequiredService<CustomAuthenticationStateProvider>());
 
         // 🔹 Lisää mockattu NavigationManager
         Services.AddSingleton<NavigationManager, MockNavigationManager>();
 
+        // 🔹 Lisää AuthorizationCore Blazor-testejä varten
+        Services.AddAuthorizationCore();
+
+        // 🔹 Luo testikäyttäjä
+        var user = new UserData
+        {
+            Id = 1001,
+            Etunimi = "TestGivenName",
+            Sukunimi = "TestSurname",
+            Nimimerkki = "TestUser",
+            Sahkopostiosoite = "test@example.com",
+            Salasana = "testsalasana",
+            Kayttajataso = "user"
+        };
+
+        // 🔹 Kirjataan käyttäjä sisään kutsumalla Login-metodia
+        customAuthProvider.Login(user);
+
+        // 🔹 Varmistetaan, että käyttäjä on kirjautunut
+        var isLoggedInTask = customAuthProvider.IsUserLoggedIn();
+        isLoggedInTask.Wait(); // Synkroninen odotus testissä
+        Assert.True(isLoggedInTask.Result); // ✅ Varmistetaan, että käyttäjä on kirjautunut
     }
+
 
     [Fact]
     public void LoggedInUser_ShouldSee_UserRecipeLink()
