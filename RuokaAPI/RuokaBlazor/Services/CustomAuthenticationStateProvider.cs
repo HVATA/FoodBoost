@@ -73,7 +73,7 @@
         }
 
         // Uusi funktio, joka tarkistaa onko käyttäjä kirjautunut sisään
-        public async Task<bool> IsUserLoggedIn()
+        public virtual async Task<bool> IsUserLoggedIn()
         {
             var userJson = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", "authUser");
             return !string.IsNullOrEmpty(userJson);  // Palauttaa true, jos käyttäjä on kirjautunut, muuten false

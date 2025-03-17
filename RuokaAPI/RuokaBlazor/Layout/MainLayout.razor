@@ -5,8 +5,6 @@
 @inject NavigationManager Navigation
 @inject CustomAuthenticationStateProvider AuthenticationStateProvider
 
-
-
 <div class="page">
     <main>
         <div class="main-header">
@@ -27,7 +25,7 @@
             }
             @if (!isLoggedIn)
             {
-                <a href="/login" >Kirjaudu sisään</a>
+                <a href="/login">Kirjaudu sisään</a>
             }
             else
             {
@@ -48,16 +46,16 @@
         </div>
     </main>
 </div>
+
 @code {
     private bool isUserAdminOrUser;
     private ClaimsPrincipal user;
     private bool isLoggedIn;
     private string userName;
-    private bool showDropdown = false; // Lisää tämä muuttuja
+    private bool showDropdown = false;
 
     protected override async Task OnInitializedAsync()
     {
-
         // Tarkistetaan, onko käyttäjä kirjautunut sisään
         isLoggedIn = await AuthenticationStateProvider.IsUserLoggedIn();
 
@@ -103,5 +101,4 @@
         // Varmista, että UI päivittyy oikein
         StateHasChanged();
     }
-
 }

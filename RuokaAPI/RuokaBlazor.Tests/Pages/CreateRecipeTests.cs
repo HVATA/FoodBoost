@@ -16,6 +16,7 @@ using System.Net.Http.Json;
 using Microsoft.JSInterop;
 using RichardSzalay.MockHttp;
 using Microsoft.AspNetCore.Components;
+using RuokaBlazor.Tests.Mocks;
 
 namespace RuokaBlazor.Tests.Pages
     {
@@ -37,15 +38,6 @@ namespace RuokaBlazor.Tests.Pages
                 new Claim("Salasana", "testsalasana")
             };
 
-            // Ensure no claim values are null
-            foreach (var claim in claims)
-                {
-                if (string.IsNullOrEmpty(claim.Value))
-                    {
-                    throw new ArgumentNullException(nameof(claim.Value), "Claim value cannot be null or empty");
-                    }
-                }
-
             _user = new ClaimsPrincipal(new ClaimsIdentity(claims, "mock"));
 
             var fakeAuthProvider = new FakeAuthenticationStateProvider(_user);
@@ -61,34 +53,72 @@ namespace RuokaBlazor.Tests.Pages
 
             // Mock HttpClient
             var mockHttp = new MockHttpMessageHandler();
-            mockHttp.When(HttpMethod.Post, "/api/reseptit")
+            mockHttp.When(HttpMethod.Post, "/reseptit")
                     .Respond("application/json", "{\"id\": 1}");
 
             var client = mockHttp.ToHttpClient();
             client.BaseAddress = new Uri("http://localhost");
             Services.AddSingleton<HttpClient>(client);
 
-            // Use FakeNavigationManager
-            Services.AddSingleton<NavigationManager, FakeNavigationManager>();
+            // Use MockNavigationManager
+            Services.AddSingleton<NavigationManager, MockNavigationManager>();
             }
 
         [Fact]
         public async Task CreateRecipeComponent_SavesRecipe_WhenFormIsSubmitted ()
             {
             // Arrange
-            var navigationManager = Services.GetRequiredService<NavigationManager>() as FakeNavigationManager;
             var component = RenderComponent<CreateRecipe>();
 
             // Act
-            component.Find("input[name='nimi']").Change("Testi Resepti");
-            component.Find("textarea[name='valmistuskuvaus']").Change("Tämä on testikuvaus");
-            component.Find("button[type='submit']").Click();
+            await component.InvokeAsync(() =>
+            {
+                component.Find("input[name='nimi']").Change("Testi Resepti");
+                component.Find("textarea[name='valmistuskuvaus']").Change("Tämä on testikuvaus");
+                component.Find("button[type='submit']").Click();
+            });
 
             // Wait for async operations to complete
             await Task.Delay(100);
 
             // Assert
-            Assert.Equal("http://localhost/recipe/1", navigationManager?.Uri);
+            var modal = component.Find(".modal");
+            Assert.NotNull(modal);
+            Assert.Contains("Resepti tallennettu onnistuneesti", modal.TextContent);
+            }
+
+        [Fact]
+        public async Task CreateRecipeComponent_NavigatesToRecipePage_WhenOkButtonClicked ()
+            {
+            // Arrange
+            var navigationManager = Services.GetRequiredService<NavigationManager>() as MockNavigationManager;
+            var component = RenderComponent<CreateRecipe>();
+
+            // Act
+            await component.InvokeAsync(() =>
+            {
+                component.Find("input[name='nimi']").Change("Testi Resepti");
+                component.Find("textarea[name='valmistuskuvaus']").Change("Tämä on testikuvaus");
+                component.Find("button[type='submit']").Click();
+            });
+
+            // Wait for async operations to complete
+            await Task.Delay(100);
+
+            // Assert that the modal is visible
+            var modal = component.Find(".modal");
+            Assert.NotNull(modal);
+
+            // Simulate clicking the OK button in the modal
+            await component.InvokeAsync(() =>
+            {
+                var okButton = modal.QuerySelector("button");
+                Assert.NotNull(okButton);
+                okButton.Click();
+            });
+
+            // Assert
+            Assert.EndsWith("/recipe/1", navigationManager?.Uri);
             }
 
         [Fact]
@@ -110,5 +140,4 @@ namespace RuokaBlazor.Tests.Pages
             }
         }
     }
-
 

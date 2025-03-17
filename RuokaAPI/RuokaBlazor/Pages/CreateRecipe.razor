@@ -95,6 +95,19 @@
         <button type="submit" class="btn btn-primary mt-3">Tallenna</button>
     </EditForm>
 </div>
+
+<!-- Ponnahdusikkuna tallennuksen onnistumisesta -->
+@if (showSuccessModal)
+{
+    <div class="modal">
+        <div class="modal-content">
+            <span class="close" @onclick="CloseModal">&times;</span>
+            <h2>Resepti tallennettu onnistuneesti!</h2>
+            <button class="btn btn-primary" @onclick="NavigateToRecipe">OK</button>
+        </div>
+    </div>
+}
+
 <style>
     .image-preview {
         margin-top: 10px;
@@ -121,7 +134,38 @@
     .keyword-item {
         margin-bottom: 10px;
     }
+
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 999;
+    }
+
+    .modal-content {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        width: 300px;
+        text-align: center;
+        position: relative;
+    }
+
+    .close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        cursor: pointer;
+        font-size: 1.5rem;
+    }
 </style>
+
 @code {
     private ReseptiRequest uusiResepti = new();
     private string? kuvanEsikatselu;
@@ -130,6 +174,8 @@
     private string message = string.Empty;
     private string successMessage = string.Empty;
     private bool isPrivate = false;
+    private bool showSuccessModal = false;
+    private int createdRecipeId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -279,7 +325,8 @@
                 {
                     Console.WriteLine("✅ Luodun reseptin ID: " + createdRecipe.Id);
                     successMessage = "Resepti tallennettu onnistuneesti";
-                    Navigation.NavigateTo($"/recipe/{createdRecipe.Id}");
+                    createdRecipeId = createdRecipe.Id;
+                    showSuccessModal = true; // Näytetään ponnahdusikkuna
                 }
                 else
                 {
@@ -299,5 +346,15 @@
         {
             Console.WriteLine($"❌ Poikkeus tallennuksessa: {ex.Message}");
         }
+    }
+
+    private void CloseModal()
+    {
+        showSuccessModal = false;
+    }
+
+    private void NavigateToRecipe()
+    {
+        Navigation.NavigateTo($"/recipe/{createdRecipeId}");
     }
 }

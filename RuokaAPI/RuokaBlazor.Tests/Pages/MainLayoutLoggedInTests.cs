@@ -21,13 +21,14 @@ using RuokaBlazor.Tests.Mocks;
 using RuokaBlazor.Layout;
 
 public class MainLayoutLoggedInTests : TestContext
-{
-
-    public MainLayoutLoggedInTests()
     {
-        // Luo testikäyttäjä
-        var user = new ClaimsPrincipal(new ClaimsIdentity(new[]
+    private readonly ClaimsPrincipal _user;
+
+    public MainLayoutLoggedInTests ()
         {
+        // Create test user
+        var claims = new List<Claim>
+{
     new Claim(ClaimTypes.NameIdentifier, "1001"),
     new Claim(ClaimTypes.GivenName, "TestGivenName"),
     new Claim(ClaimTypes.Surname, "TestSurname"),
@@ -35,33 +36,53 @@ public class MainLayoutLoggedInTests : TestContext
     new Claim(ClaimTypes.Email, "test@example.com"),
     new Claim(ClaimTypes.Role, "user"),
     new Claim("Salasana", "testsalasana")
-}, "mock"));
+};
 
+        var user = new ClaimsPrincipal(new ClaimsIdentity(claims, "mock"));
+
+        // Käytetään ylikirjoitettua FakeAuthenticationStateProvideria, joka nyt palauttaa oikean kirjautumistilan
         var fakeAuthProvider = new FakeAuthenticationStateProvider(user);
 
-        // Lisää FakeAuthenticationStateProvider testipalveluihin
-        Services.AddSingleton<AuthenticationStateProvider>(new FakeAuthenticationStateProvider(user));
+        // Rekisteröidään palvelut
+        
+        Services.AddSingleton<CustomAuthenticationStateProvider>(fakeAuthProvider);
 
-        // Lisää CustomAuthenticationStateProvider, jos Blazor-sovellus sitä käyttää
-        Services.AddSingleton<CustomAuthenticationStateProvider>();
-
-        // Lisää mahdolliset muut Blazor-palvelut, joita komponentti voi tarvita
+        // Add other Blazor services that the component might need
         Services.AddAuthorizationCore();
 
-        // Mockataan JSInterop vastaamaan localStorage-kutsuun
+        // Mock JSInterop to respond to localStorage calls
         JSInterop.Setup<string>("localStorage.getItem", "authUser")
-                 .SetResult("{ \"id\": 1001, \"role\": \"user\" }"); // Simuloidaan käyttäjätiedot
+                 .SetResult("{ \"id\": 1001, \"role\": \"user\" }"); // Simulate user data
 
-        var isLoggedInTask = fakeAuthProvider.FakeIsUserLoggedIn();
-        isLoggedInTask.Wait(); // Synkroninen odotus testissä
-        Assert.True(isLoggedInTask.Result); // ✅ Varmistetaan, että käyttäjä on kirjautunut sisään
+        // Mock HttpClient
+        var mockHttp = new MockHttpMessageHandler();
+        mockHttp.When(HttpMethod.Post, "/api/reseptit")
+                .Respond("application/json", "{\"id\": 1}");
 
-        // 🔹 Lisää mockattu NavigationManager
+        var client = mockHttp.ToHttpClient();
+        client.BaseAddress = new Uri("http://localhost");
+        Services.AddSingleton<HttpClient>(client);
+
+        // Use MockNavigationManager
         Services.AddSingleton<NavigationManager, MockNavigationManager>();
-
-    }
+        }
 
     [Fact]
+    public void LoggedInUser_ShouldSee_CreateRecipeLink ()
+        {
+        var component = RenderComponent<MainLayout>();
+
+        // Debug: Print the rendered HTML to verify the content
+        Console.WriteLine(component.Markup);
+
+        var createRecipeLink = component.Find("a[href='/createRecipe']");
+        Assert.NotNull(createRecipeLink);
+        Assert.Equal("Luo uusi resepti", createRecipeLink.TextContent);
+        }
+    
+
+
+[Fact]
     public void LoggedInUser_ShouldSee_UserRecipeLink()
     {
         var component = RenderComponent<MainLayout>();
@@ -71,15 +92,8 @@ public class MainLayoutLoggedInTests : TestContext
         Assert.Equal("Omat reseptit", userRecipesLink.TextContent);
     }
 
-    [Fact]
-    public void LoggedInUser_ShouldSee_CreateRecipeLink()
-    {
-        var component = RenderComponent<MainLayout>();
+    
 
-        var createRecipeLink = component.Find("a[href='/createRecipe']");
-        Assert.NotNull(createRecipeLink);
-        Assert.Equal("Luo uusi resepti", createRecipeLink.TextContent);
-    }
 
     [Fact]
     public void LoggedInUser_ShouldSee_FavoritesLink()
