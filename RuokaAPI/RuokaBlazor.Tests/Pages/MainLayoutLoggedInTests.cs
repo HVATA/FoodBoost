@@ -108,42 +108,35 @@ public class MainLayoutLoggedInTests : TestContext
     [Fact]
     public void ProfileDropdown_ShouldBeVisible_WhenUserIsLoggedIn()
     {
-        // 🔹 Haetaan testattava komponentti
+        // 🔹 Renderöidään MainLayout-komponentti
         var component = RenderComponent<MainLayout>();
 
-        // 🔹 Odotetaan, että komponentti renderöityy ja sisältää käyttäjän nimen
-        component.WaitForAssertion(() =>
-        {
-            var markup = component.Markup;
-            Assert.Contains("TestGivenName", markup);
-        }, TimeSpan.FromSeconds(10)); // Lisätään aikaa komponentin päivittymiselle
+        // 🔹 Varmistetaan, että käyttäjän nimi näkyy (dropdown käynnistyy tästä)
+        var userInfo = component.Find("div.user-info");
+        Assert.NotNull(userInfo);
+        Assert.Contains("TestGivenName", userInfo.TextContent);
 
-        // 🔹 Haetaan käyttäjän dropdown (user-info)
-        var userInfoElement = component.Find("div.user-info");
-        Assert.NotNull(userInfoElement);
-        Assert.Contains("TestGivenName", userInfoElement.TextContent);
+        // 🔹 Simuloidaan dropdownin avaaminen
+        userInfo.Click();
 
-        // 🔹 Klikataan käyttäjävalikkoa avataksemme sen
-        userInfoElement.Click();
+        // 🔹 Odotetaan, että dropdown-valikko näkyy
+        component.WaitForState(() => component.Markup.Contains("Asetukset"), TimeSpan.FromSeconds(5));
 
-        // 🔹 Odotetaan, että dropdown-valikko näkyy DOM:issa
-        component.WaitForAssertion(() =>
-        {
-            var dropdownMarkup = component.Markup;
-            Assert.Contains("Asetukset", dropdownMarkup);
-            Assert.Contains("Kirjaudu ulos", dropdownMarkup);
-        }, TimeSpan.FromSeconds(10));
+        // 🔹 Varmistetaan, että dropdown-valikko on renderöity
+        var dropdownMenu = component.Find("div.dropdown-menu");
+        Assert.NotNull(dropdownMenu);
 
-        // 🔹 Etsitään "Asetukset"-linkki ja varmistetaan sen olemassaolo
+        // 🔹 Varmistetaan, että "Asetukset" -linkki löytyy
         var settingsLink = component.Find("a[href='/settings']");
         Assert.NotNull(settingsLink);
         Assert.Equal("Asetukset", settingsLink.TextContent);
 
-        // 🔹 Etsitään "Kirjaudu ulos" -linkki ja varmistetaan sen olemassaolo
-        var logoutLink = component.Find("a[href='/']");
+        // 🔹 Varmistetaan, että "Kirjaudu ulos" -linkki löytyy
+        var logoutLink = component.Find(".dropdown-menu a[href='/']");
         Assert.NotNull(logoutLink);
         Assert.Equal("Kirjaudu ulos", logoutLink.TextContent);
     }
+
 
     [Fact]
     public void Clicking_HomeLink_NavigatesToHomePage()
