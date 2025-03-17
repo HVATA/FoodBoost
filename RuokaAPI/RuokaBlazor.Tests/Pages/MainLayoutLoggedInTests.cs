@@ -21,11 +21,10 @@ using RuokaBlazor.Tests.Mocks;
 using RuokaBlazor.Layout;
 
 public class MainLayoutLoggedInTests : TestContext
-    {
-    private readonly ClaimsPrincipal _user;
+{
 
-    public MainLayoutLoggedInTests ()
-        {
+    public MainLayoutLoggedInTests()
+    {
         // Create test user
         var claims = new List<Claim>
 {
@@ -44,7 +43,7 @@ public class MainLayoutLoggedInTests : TestContext
         var fakeAuthProvider = new FakeAuthenticationStateProvider(user);
 
         // Rekisteröidään palvelut
-        
+
         Services.AddSingleton<CustomAuthenticationStateProvider>(fakeAuthProvider);
 
         // Add other Blazor services that the component might need
@@ -54,22 +53,13 @@ public class MainLayoutLoggedInTests : TestContext
         JSInterop.Setup<string>("localStorage.getItem", "authUser")
                  .SetResult("{ \"id\": 1001, \"role\": \"user\" }"); // Simulate user data
 
-        // Mock HttpClient
-        var mockHttp = new MockHttpMessageHandler();
-        mockHttp.When(HttpMethod.Post, "/api/reseptit")
-                .Respond("application/json", "{\"id\": 1}");
-
-        var client = mockHttp.ToHttpClient();
-        client.BaseAddress = new Uri("http://localhost");
-        Services.AddSingleton<HttpClient>(client);
-
         // Use MockNavigationManager
         Services.AddSingleton<NavigationManager, MockNavigationManager>();
-        }
+    }
 
     [Fact]
-    public void LoggedInUser_ShouldSee_CreateRecipeLink ()
-        {
+    public void LoggedInUser_ShouldSee_CreateRecipeLink()
+    {
         var component = RenderComponent<MainLayout>();
 
         // Debug: Print the rendered HTML to verify the content
@@ -78,11 +68,11 @@ public class MainLayoutLoggedInTests : TestContext
         var createRecipeLink = component.Find("a[href='/createRecipe']");
         Assert.NotNull(createRecipeLink);
         Assert.Equal("Luo uusi resepti", createRecipeLink.TextContent);
-        }
-    
+    }
 
 
-[Fact]
+
+    [Fact]
     public void LoggedInUser_ShouldSee_UserRecipeLink()
     {
         var component = RenderComponent<MainLayout>();
@@ -92,7 +82,7 @@ public class MainLayoutLoggedInTests : TestContext
         Assert.Equal("Omat reseptit", userRecipesLink.TextContent);
     }
 
-    
+
 
 
     [Fact]
