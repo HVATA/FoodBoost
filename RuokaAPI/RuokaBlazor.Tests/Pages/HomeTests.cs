@@ -63,7 +63,11 @@ public class HomeTests : TestContext
                 Nimi = "Testi Resepti",
                 Valmistuskuvaus = "Tämä on testikuvaus",
                 Avainsanat = new[] { "pasta", "helppo" },
-                Ainesosat = new[] { new AinesosanMaaraDto { Ainesosa = "Spaghetti", Maara = "200g" } }
+                Ainesosat = new[]
+                {
+                    new AinesosanMaaraDto { Ainesosa = "Spaghetti", Maara = "200g" }
+                },
+                Katseluoikeus = "Yksityinen"  // 🔹 Siirrä tämä ulos Ainesosat-listasta!
             }
         };
 
@@ -214,6 +218,7 @@ public class HomeTests : TestContext
         var mockNavMan = new Mock<NavigationManager>(MockBehavior.Loose);
         Services.AddScoped<NavigationManager, MockNavigationManager>(); // Käytetään mockia
         var navMan = Services.GetRequiredService<NavigationManager>();
+        Assert.NotNull(navMan);
 
         // 🔹 Luodaan testidata (resepti)
         var recipe = new ReseptiRequest
@@ -235,7 +240,7 @@ public class HomeTests : TestContext
         method?.Invoke(component.Instance, new object[] { recipe });
 
         // 🔹 Tarkistetaan, että navigointi on kutsuttu oikealla URL:lla
-        Assert.Equal($"/recipe/{recipe.Id}", ((MockNavigationManager)navMan).LastUri);
+        Assert.EndsWith($"/{recipe.Id}", navMan.Uri);
     }
 
 

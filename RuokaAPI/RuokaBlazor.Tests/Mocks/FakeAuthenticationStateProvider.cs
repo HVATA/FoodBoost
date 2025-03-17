@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 
 public class FakeAuthenticationStateProvider : CustomAuthenticationStateProvider
 {
-    private readonly ClaimsPrincipal _user;
+    private ClaimsPrincipal _user;
 
     public FakeAuthenticationStateProvider(ClaimsPrincipal user)
         : base(new FakeJSRuntime()) // Käytetään fake IJSRuntimea testeissä
     {
-        _user = user;
+        _user = user ?? new ClaimsPrincipal(new ClaimsIdentity()); // Varmistetaan, ettei _user ole null
     }
 
     public override Task<AuthenticationState> GetAuthenticationStateAsync()
@@ -23,10 +23,18 @@ public class FakeAuthenticationStateProvider : CustomAuthenticationStateProvider
     // 🔹 Luodaan uusi metodi testien käyttöön (ei override)
     public Task<bool> FakeIsUserLoggedIn()
     {
-        return Task.FromResult(_user.Identity is { IsAuthenticated: true });
+        return Task.FromResult(_user.Identity != null && _user.Identity.IsAuthenticated);
+    }
+
+    // 🔹 Päivitetään käyttäjä testin aikana ja pakotetaan renderöinti
+    public void SetUser(ClaimsPrincipal user)
+    {
+        _user = user ?? new ClaimsPrincipal(new ClaimsIdentity()); // Varmistetaan, ettei aseteta null-arvoa
+        NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
     }
 }
 
+// Fake JSRuntime, jotta testit eivät kaadu
 public class FakeJSRuntime : IJSRuntime
 {
     public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)

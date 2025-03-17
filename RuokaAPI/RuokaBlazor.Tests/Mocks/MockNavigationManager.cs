@@ -10,7 +10,7 @@ namespace RuokaBlazor.Tests.Mocks
     // 🔹 Mock NavigationManager (pakollinen, koska Bunit ei tue oletuksena suoraa navigointia)
     public class MockNavigationManager : NavigationManager
     {
-        public string LastUri { get; private set; }
+        public string LastUri { get; private set; } = string.Empty;
 
         public MockNavigationManager()
         {
@@ -19,7 +19,9 @@ namespace RuokaBlazor.Tests.Mocks
 
         protected override void NavigateToCore(string uri, bool forceLoad)
         {
-            LastUri = uri; // Tallennetaan navigoitu osoite
+            LastUri = new Uri(new Uri(BaseUri), uri).ToString(); // Muodostetaan koko URL
+            Uri = LastUri; // Päivitetään myös NavigationManager.Uri
         }
     }
+
 }
