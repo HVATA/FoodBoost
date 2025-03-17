@@ -90,5 +90,25 @@ namespace RuokaBlazor.Tests.Pages
             // Assert
             Assert.Equal("http://localhost/recipe/1", navigationManager?.Uri);
             }
+
+        [Fact]
+        public void CreateRecipeComponent_ShowsAllElements ()
+            {
+            // Arrange
+            var component = RenderComponent<CreateRecipe>();
+
+            // Assert
+            Assert.Contains("Luo uusi resepti", component.Markup);
+            Assert.Contains("Reseptin nimi:", component.Markup);
+            Assert.Contains("Valmistuskuvaus:", component.Markup);
+            Assert.Contains("Valitse kuva:", component.Markup);
+            Assert.Contains("Ainesosat", component.Markup);
+            Assert.Contains("+ Lisää ainesosa", component.Markup);
+            Assert.Contains("Avainsanat", component.Markup);
+            Assert.Contains("Näkyy vain rekisteröityneille", component.Markup);
+            Assert.Contains("Tallenna", component.Markup);
+            }
         }
     }
+
+
