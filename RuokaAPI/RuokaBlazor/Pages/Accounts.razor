@@ -59,7 +59,7 @@
                 <button type="submit" class="btn btn-primary" @onclick="async () => await UpdateUser()">Päivitä</button>
 
                 <!-- Poista-painike ei käytä OnValidSubmit:ia vaan kutsuu suoraan DeleteUser-metodia -->
-                <button type="button" class="btn btn-danger" @onclick="async () => await DeleteUser()">Poista</button>
+                <button type="button" class="btn btn-danger" @onclick="OpenModal">Poista</button>
             </EditForm>
 
         </div>
@@ -79,33 +79,96 @@
     </div>
 </div>
 
+<!-- Modal-ikkuna sähköpostin jakamista varten -->
+<div class="modal" style="display:@(modalVisible ? "block" : "none")">
+    <div class="modal-content">
+        <span class="close" @onclick="CloseModal">&times;</span>
+        <h2>Oletko varma että haluat poistaa käyttäjän?</h2>
+        <div>
+            <button class="btn btn-primary" @onclick="DeleteUser">Kyllä</button>
+            <button class="btn btn-secondary" @onclick="CloseModal">Peruuta</button>
+        </div>
+    </div>
+</div>
+<div class="modal-overlay" id="modal-overlay" style="display:@(modalVisible ? "block" : "none")"></div>
+
 <style>
-    
+
     .admin-only{
-        display: block;
+    display: block;
     }
 
     .form-group {
-        display: flex;
-        align-items: center;
-        margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
     }
 
-        .form-group label {
-            margin-right: 10px;
-            min-width: 120px;
-        }
+    .form-group label {
+    margin-right: 10px;
+    min-width: 120px;
+    }
 
     .btn-primary {
-        background-color: #3498db;
+    background-color: #3498db;
     }
 
     .btn-danger {
-        background-color: #e74c3c;
+    background-color: #e74c3c;
     }
 
     .btn:hover {
-        opacity: 0.8;
+    opacity: 0.8;
+    }
+    .container{
+        height: 100vh;
+        align-items: center;
+    }
+    /* Modal style */
+    .modal {
+        width: 600px;
+        max-width: 100%;
+        height: 400px;
+        max-height: 100%;
+        position: fixed;
+        z-index: 100;
+        left: 50%;
+        top: 50%;
+        /* Use this for centering if unknown width/height */
+        transform: translate(-50%, -50%);
+        /* If known, negative margins are probably better (less chance of blurry text). */
+        /* margin: -200px 0 0 -200px; */
+
+        background: white;
+        box-shadow: 0 0 60px 10px rgba(0, 0, 0, 0.9);
+    }
+
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 50;
+        background: rgba(0, 0, 0, 0.6);
+    }
+
+    .modal-content {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        padding: 20px 50px 20px 20px;
+    }
+
+    .close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        cursor: pointer;
+        font-size: 1.5rem;
     }
 </style>
 
@@ -116,6 +179,7 @@
     private Kayttaja kayttaja = new();
     private string message = string.Empty;
     private ClaimsPrincipal user;
+    private bool modalVisible = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -184,16 +248,19 @@
                 if (userData != null)
                 {
                     message = "Kirjautuminen onnistui";
+                    _ = HideMessageAfterDelay();
                     await CustomAuthStateProvider.Login(userData);
                 }
                 else
                 {
                     message = "Käyttäjätietojen hakeminen epäonnistui.";
+                    _ = HideMessageAfterDelay();
                 }
             }
             else
             {
                 message = "Virheellinen sähköpostiosoite tai salasana";
+                _ = HideMessageAfterDelay();
             }
         }
         catch (Exception ex)
@@ -223,12 +290,14 @@
                 if (response.IsSuccessStatusCode)
                 {
                     message = "Käyttäjätiedot päivitetty!";
+                    _ = HideMessageAfterDelay();
                     await getUsers(int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0"), user.FindFirst("Salasana")?.Value, user.FindFirst(ClaimTypes.Email)?.Value ?? "");
                     StateHasChanged(); // Päivitä käyttöliittymä
                 }
                 else
                 {
                     message = "Päivitys epäonnistui. Virheellinen vastaus backendiltä.";
+                    _ = HideMessageAfterDelay();
                     var responseContent = await response.Content.ReadAsStringAsync();
                     Console.WriteLine($"Error: {responseContent}");
                 }
@@ -260,7 +329,7 @@
                 {
                     message = "Käyttäjätiedot päivitetty!";
                     await CustomAuthStateProvider.Logout();
-                    
+
                     // Haetaan päivitetyt tiedot ja päivitetään kayttaja.Kayttajataso
                     var res = await Http.GetAsync($"Kayttaja/Tunnistautumistiedot/{kayttaja.Salasana}/{kayttaja.Sahkopostiosoite}");
 
@@ -270,16 +339,19 @@
                         if (userData != null)
                         {
                             message = "Käyttäjätiedot päivitetty!";
+                            _ = HideMessageAfterDelay();
                             await CustomAuthStateProvider.Login(userData);
                         }
                         else
                         {
                             message = "Käyttäjätietojen hakeminen epäonnistui.";
+                            _ = HideMessageAfterDelay();
                         }
                     }
                     else
                     {
                         message = "Virheellinen sähköpostiosoite tai salasana";
+                        _ = HideMessageAfterDelay();
                     }
                     StateHasChanged(); // Päivitä käyttöliittymä
                 }
@@ -300,9 +372,11 @@
     }
     private async Task DeleteUser() 
     {
+
         if (kayttaja.Id == 0 || string.IsNullOrEmpty(kayttaja.Sahkopostiosoite) || string.IsNullOrEmpty(kayttaja.Salasana))
         {
             message = "Poistaminen epäonnistui: Puuttuvat tiedot.";
+            _ = HideMessageAfterDelay();
             return;
         }
 
@@ -310,16 +384,27 @@
         {
             var response = await Http.DeleteAsync($@"Kayttaja/Poista/{kayttaja.Id}/{kayttaja.Sahkopostiosoite}/{kayttaja.Salasana}");
 
-            if (response.IsSuccessStatusCode)
+            if (response.IsSuccessStatusCode && user.IsInRole("admin"))
             {
                 message = "Käyttäjä poistettu!";
                 await getUsers(int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0"), user.FindFirst("Salasana")?.Value, user.FindFirst(ClaimTypes.Email)?.Value ?? "");
                 kayttaja = new Kayttaja(); // Tyhjennä lomake
+                CloseModal();
+                // Aikakatkaisu: Poistaa viestin näkyvistä 3 sekunnin kuluttua
+                _ = HideMessageAfterDelay();
+            }
+            else if(response.IsSuccessStatusCode && user.IsInRole("user"))
+            {
+                message = "Käyttäjäsi on nyt poistettu! Kirjaudutaan ulos";
+                kayttaja = new Kayttaja(); // Tyhjennä lomake
                 StateHasChanged(); // Päivitä käyttöliittymä
+                Logout();
+                _ = HideMessageAfterDelay();
             }
             else
             {
                 message = "Poistaminen epäonnistui. Virheellinen vastaus backendiltä.";
+                _ = HideMessageAfterDelay();
             }
         }
         catch (Exception ex)
@@ -327,4 +412,45 @@
             message = "Virhe: " + ex.Message;
         }
     }
+
+    private async Task Logout()
+    {
+        // Poista kirjautumistiedot localStoragesta ja päivitä autentikointitila
+        var customAuthStateProvider = (CustomAuthenticationStateProvider)CustomAuthStateProvider;
+        await customAuthStateProvider.Logout();
+        Console.WriteLine("Ulos kirjautuminen onnistui!");
+
+        // Suuntaa käyttäjä takaisin kirjautumissivulle ja lataa sivu uudelleen
+        Navigation.NavigateTo("/", forceLoad: true); // Tämä lataa sivun uudelleen
+
+        // Varmista, että UI päivittyy oikein
+        StateHasChanged();
+    }
+
+    private void OpenModal()
+    {
+        if (kayttaja.Id == 0 || string.IsNullOrEmpty(kayttaja.Sahkopostiosoite) || string.IsNullOrEmpty(kayttaja.Salasana))
+        {
+            message = "Poistaminen epäonnistui: Puuttuvat tiedot.";
+            _ = HideMessageAfterDelay();
+            return;
+        }
+        else
+        {
+            modalVisible = true;
+        }
+    }
+
+    private void CloseModal()
+    {
+        modalVisible = false;
+    }
+
+    private async Task HideMessageAfterDelay()
+    {
+        await Task.Delay(3000); // Odota 3 sekuntia
+        message = string.Empty; // Tyhjennä viesti
+        StateHasChanged(); // Päivitä käyttöliittymä
+    }
+
 }

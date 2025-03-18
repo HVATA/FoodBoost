@@ -127,25 +127,33 @@ else
     <div class="modal" style="display:@(modalVisible ? "block" : "none")">
         <div class="modal-content">
             <span class="close" @onclick="CloseModal">&times;</span>
-            <h2>Jaa resepti sähköpostitse</h2>
-            <div>
-                <label for="emailInput">Sähköpostiosoite:</label>
-                <InputText id="emailInput" @bind-Value="deliveryEmail" class="form-control" placeholder="Syötä sähköpostiosoite" />
-            </div>
-            <div>
-                @if (shareRecipeSuccess)
-                {
-                    <button class="btn btn-secondary" @onclick="CloseModal">Sulje</button>
-                }
-                else
-                {
-                    <button class="btn btn-primary" @onclick="ShareRecipeEmail">Jaa</button>
-                    <button class="btn btn-secondary" @onclick="CloseModal">Peruuta</button>
-                }
-            </div>
-            <p>@message</p>
+            @if (favoriteButtonClicked)
+            {
+                <p>@message</p>
+            }
+            else
+            {
+                <h2>Jaa resepti sähköpostitse</h2>
+                <div>
+                    <label for="emailInput">Sähköpostiosoite:</label>
+                    <InputText id="emailInput" @bind-Value="deliveryEmail" class="form-control" placeholder="Syötä sähköpostiosoite" />
+                </div>
+                <div>
+                    @if (shareRecipeSuccess)
+                    {
+                        <button class="btn btn-secondary" @onclick="CloseModal">Sulje</button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-primary" @onclick="ShareRecipeEmail">Jaa</button>
+                        <button class="btn btn-secondary" @onclick="CloseModal">Peruuta</button>
+                    }
+                </div>
+                <p>@message</p>
+            }
         </div>
     </div>
+    <div class="modal-overlay" id="modal-overlay" style="display:@(modalVisible ? "block" : "none")"></div>
 }
 
 <style>
@@ -261,14 +269,14 @@ else
 
     /* Modal style */
     .modal {
-        position: fixed;
         top: 0;
         left: 0;
+        position: fixed;
         width: 100%;
         height: 100%;
+        justify-items: center;
         background-color: rgba(0, 0, 0, 0.5);
         display: flex; /* Käytetään flexboxia */
-        justify-content: center; /* Keskittää modaalin vaakasuunnassa */
         align-items: center; /* Keskittää modaalin pystysuunnassa */
         z-index: 999; /* Varmistaa, että modaalin taso on tarpeeksi korkea muiden elementtien yläpuolella */
     }
@@ -278,6 +286,12 @@ else
         padding: 20px;
         border-radius: 8px;
         width: 300px; /* Voit säätää tätä tarpeen mukaan */
+        align-self: center;
+        justify-self: center;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
     }
 
     .close {
@@ -307,9 +321,11 @@ else
     public Suosikit suosikit;
     private bool isFavorite = false;
     private List<Resepti> recipes;
+    private bool favoriteButtonClicked = false; // Uusi tila suosikkinapin klikkaukselle
 
     protected override async Task OnInitializedAsync()
     {
+
         // Haetaan kirjautuneen käyttäjän tiedot
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         user = authState.User;
@@ -389,12 +405,12 @@ else
                 message = await response.Content.ReadAsStringAsync(); // Backendin virheilmoitus
             }
 
-            foreach(Resepti recipe in recipes)
+            foreach (Resepti recipe in recipes)
             {
-                if(recipe.Nimi == resepti.Nimi)
+                if (recipe.Nimi == resepti.Nimi)
                 {
                     resepti.Id = recipe.Id;
-                    ToggleFavorite();
+                    isFavorite = true; // 🔹 Asetetaan nappulan tila ilman ToggleFavorite() kutsua
                 }
             };
 
@@ -469,15 +485,19 @@ else
     private async Task ToggleFavorite()
     {
         isFavorite = !isFavorite;
+        favoriteButtonClicked = true; // 🔹 Tallenna, että suosikkinappia painettiin
+        modalVisible = true; // 🔹 Avaa modaalin
+
         if (isFavorite)
         {
             await AddToFavorites();
+            message = "Resepti lisätty suosikkeihin.";
         }
-        else if (!isFavorite)
+        else
         {
             await DeleteFromFavorites();
+            message = "Resepti poistettiin suosikeista.";
         }
-
     }
 
     private async Task DeleteFromFavorites()
@@ -619,5 +639,6 @@ else
     private void CloseModal()
     {
         modalVisible = false;
+        favoriteButtonClicked = false; // 🔹 Nollataan tila, kun modal suljetaan
     }
 }
