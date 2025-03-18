@@ -83,7 +83,7 @@
                 @foreach (var recipe in recipes)
                 {
                     <div class="column">
-                        <div class="card">
+                        <div class="card" @onclick="() => SelectRecipe(recipe)">
                             <h3>@recipe.Nimi</h3>
                             <p>@recipe.Valmistuskuvaus</p>
                         </div>
@@ -266,6 +266,11 @@
 
         GetFavoriteRecipes();
         Console.WriteLine($"Tässä reseptit: {recipes}");
+    }
+
+    private void SelectRecipe(Resepti recipe)
+    {
+        Navigation.NavigateTo($"/recipe/{recipe.Id}");
     }
 
     private async Task GetFavoriteRecipes()
