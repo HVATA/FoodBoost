@@ -339,10 +339,82 @@ public class AccountsAdminTests : TestContext
         component.WaitForState(() => component.Markup.Contains("Käyttäjätiedot päivitetty!"));
 
         // 🔹 Tarkista, että onnistumisviesti näkyy
-        var messageElement = component.Find("div.message");
+        var messageElement = component.Find("p");
         Assert.NotNull(messageElement);
         Assert.Contains("Käyttäjätiedot päivitetty!", messageElement.TextContent);
     }
+
+    [Fact]
+    public async Task AdminUser_DeletesUser_ShouldShowSuccessMessage()
+    {
+        // 🔹 Luo testikäyttäjälista
+        var testUsers = new List<Kayttaja>
+    {
+        new Kayttaja
+        {
+            Id = 2001,
+            Etunimi = "TestiKäyttäjä",
+            Sukunimi = "Testinen",
+            Sahkopostiosoite = "test@example.com",
+            Nimimerkki = "TestUser",
+            Salasana = "testpassword",
+            Kayttajataso = "user"
+        },
+        new Kayttaja
+        {
+            Id = 2002,
+            Etunimi = "ToinenKäyttäjä",
+            Sukunimi = "Toinen",
+            Sahkopostiosoite = "toinen@example.com",
+            Nimimerkki = "ToinenUser",
+            Salasana = "password",
+            Kayttajataso = "admin"
+        }
+    };
+
+        // 🔹 Muuta käyttäjälista JSON-muotoon
+        var usersJson = JsonSerializer.Serialize(testUsers);
+
+        // 🔹 Luo MockHttpMessageHandler ja määritä vastaukset
+        var mockHttp = new MockHttpMessageHandler();
+
+        // 🔹 Mockataan käyttäjien haku API
+        mockHttp.When(HttpMethod.Get, "/Kayttaja/Haekaikki/*")
+                .Respond("application/json", usersJson);
+
+        // 🔹 Mockataan käyttäjän poistaminen API
+        mockHttp.When(HttpMethod.Delete, "/Kayttaja/Poista/2001/test@example.com/testpassword")
+                .Respond("application/json", "{\"status\": \"success\"}");
+
+        var client = mockHttp.ToHttpClient();
+        client.BaseAddress = new Uri("http://localhost");
+        Services.AddSingleton<HttpClient>(client);
+
+        var component = RenderComponent<Accounts>();
+
+        // 🔹 Odota, että käyttäjälista näkyy
+        component.WaitForState(() => component.Markup.Contains("Käyttäjät"));
+
+        // 🔹 Hae käyttäjälistan ensimmäinen käyttäjä
+        var userItem = component.Find("li.user-item");
+        Assert.NotNull(userItem);
+        Assert.Contains("TestiKäyttäjä", userItem.TextContent);
+
+        // 🔹 Klikkaa käyttäjää listalla
+        userItem.Click();
+
+        // 🔹 Klikkaa "Poista" -nappia
+        component.Find("button.btn-danger").Click();
+
+        // 🔹 Odota, että onnistumisviesti näkyy
+        component.WaitForState(() => component.Markup.Contains("Käyttäjä poistettu!"));
+
+        // 🔹 Tarkista, että onnistumisviesti näkyy
+        var messageElement = component.Find("p");
+        Assert.NotNull(messageElement);
+        Assert.Contains("Käyttäjä poistettu!", messageElement.TextContent);
+    }
+
 
 
 }
