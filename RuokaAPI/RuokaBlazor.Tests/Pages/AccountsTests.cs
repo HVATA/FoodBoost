@@ -19,6 +19,8 @@ using Microsoft.AspNetCore.Components;
 using System.Reflection;
 using RuokaBlazor.Tests.Mocks;
 using RuokaBlazor.Layout;
+using System.Text.Json;
+
 
 public class AccountsUserTests : TestContext
 {
@@ -132,8 +134,97 @@ public class AccountsAdminTests : TestContext
     }
 
     [Fact]
+    public void AdminUser_ShouldSeeUserList()
+    {
+        // 🔹 Luo testikäyttäjälista
+        var testUsers = new List<Kayttaja>
+        {
+            new Kayttaja
+            {
+                Id = 2001,
+                Etunimi = "TestiKäyttäjä",
+                Sukunimi = "Testinen",
+                Sahkopostiosoite = "test@example.com",
+                Nimimerkki = "TestUser",
+                Salasana = "testpassword",
+                Kayttajataso = "user"
+            },
+            new Kayttaja
+            {
+                Id = 2002,
+                Etunimi = "ToinenKäyttäjä",
+                Sukunimi = "Toinen",
+                Sahkopostiosoite = "toinen@example.com",
+                Nimimerkki = "ToinenUser",
+                Salasana = "password",
+                Kayttajataso = "admin"
+            }
+        };
+
+        // 🔹 Muuta käyttäjälista JSON-muotoon
+        var usersJson = JsonSerializer.Serialize(testUsers);
+
+        // 🔹 Luo MockHttpMessageHandler ja määritä vastaus
+        var mockHttp = new MockHttpMessageHandler();
+        mockHttp.When(HttpMethod.Get, "/Kayttaja/Haekaikki/*")
+                .Respond("application/json", usersJson);  // Mockaa vastauksen JSONina
+
+        var client = mockHttp.ToHttpClient();
+        client.BaseAddress = new Uri("http://localhost");
+        Services.AddSingleton<HttpClient>(client);
+
+        // 🔹 Renderöi Accounts-komponentti
+        var component = RenderComponent<Accounts>();
+
+        // 🔹 Odota, että käyttäjälista näkyy
+        component.WaitForState(() => component.Markup.Contains("Käyttäjät"));
+
+        // 🔹 Varmista, että listassa näkyy ainakin yksi käyttäjä
+        var userItems = component.FindAll("li.user-item");
+        Assert.NotEmpty(userItems);
+        Assert.Contains(userItems, item => item.TextContent.Contains("TestiKäyttäjä"));
+    }
+
+    [Fact]
     public void AdminUser_ClicksUser_FromUserList_ShouldPopulateForm()
     {
+        // 🔹 Luo testikäyttäjälista
+        var testUsers = new List<Kayttaja>
+        {
+            new Kayttaja
+            {
+                Id = 2001,
+                Etunimi = "TestiKäyttäjä",
+                Sukunimi = "Testinen",
+                Sahkopostiosoite = "test@example.com",
+                Nimimerkki = "TestUser",
+                Salasana = "testpassword",
+                Kayttajataso = "user"
+            },
+            new Kayttaja
+            {
+                Id = 2002,
+                Etunimi = "ToinenKäyttäjä",
+                Sukunimi = "Toinen",
+                Sahkopostiosoite = "toinen@example.com",
+                Nimimerkki = "ToinenUser",
+                Salasana = "password",
+                Kayttajataso = "admin"
+            }
+        };
+
+        // 🔹 Muuta käyttäjälista JSON-muotoon
+        var usersJson = JsonSerializer.Serialize(testUsers);
+
+        // 🔹 Luo MockHttpMessageHandler ja määritä vastaus
+        var mockHttp = new MockHttpMessageHandler();
+        mockHttp.When(HttpMethod.Get, "/Kayttaja/Haekaikki/*")
+                .Respond("application/json", usersJson);  // Mockaa vastauksen JSONina
+
+        var client = mockHttp.ToHttpClient();
+        client.BaseAddress = new Uri("http://localhost");
+        Services.AddSingleton<HttpClient>(client);
+
         var component = RenderComponent<Accounts>();
 
         // 🔹 Odota, että käyttäjälista näkyy
@@ -152,13 +243,107 @@ public class AccountsAdminTests : TestContext
         var lastNameInput = component.Find("input#lastname");
         var emailInput = component.Find("input#email");
         var usernameInput = component.Find("input#username");
+        var passwordInput = component.Find("input#password");
         var roleInput = component.Find("input#role");
 
         Assert.Equal("TestiKäyttäjä", firstNameInput.GetAttribute("value"));
         Assert.Equal("Testinen", lastNameInput.GetAttribute("value"));
         Assert.Equal("test@example.com", emailInput.GetAttribute("value"));
         Assert.Equal("TestUser", usernameInput.GetAttribute("value"));
+        Assert.Equal("testpassword", passwordInput.GetAttribute("value"));
         Assert.Equal("user", roleInput.GetAttribute("value"));
     }
+
+    [Fact]
+    public async Task AdminUser_UpdatesUser_ShouldShowSuccessMessage()
+    {
+        // 🔹 Luo testikäyttäjälista
+        var testUsers = new List<Kayttaja>
+        {
+            new Kayttaja
+            {
+                Id = 2001,
+                Etunimi = "TestiKäyttäjä",
+                Sukunimi = "Testinen",
+                Sahkopostiosoite = "test@example.com",
+                Nimimerkki = "TestUser",
+                Salasana = "testpassword",
+                Kayttajataso = "user"
+            },
+            new Kayttaja
+            {
+                Id = 2002,
+                Etunimi = "ToinenKäyttäjä",
+                Sukunimi = "Toinen",
+                Sahkopostiosoite = "toinen@example.com",
+                Nimimerkki = "ToinenUser",
+                Salasana = "password",
+                Kayttajataso = "admin"
+            }
+        };
+
+        // 🔹 Muuta käyttäjälista JSON-muotoon
+        var usersJson = JsonSerializer.Serialize(testUsers);
+
+        // 🔹 Luo MockHttpMessageHandler ja määritä vastaus
+        var mockHttp = new MockHttpMessageHandler();
+        mockHttp.When(HttpMethod.Get, "/Kayttaja/Haekaikki/*")
+                .Respond("application/json", usersJson);  // Mockaa vastauksen JSONina
+
+        var client = mockHttp.ToHttpClient();
+        client.BaseAddress = new Uri("http://localhost");
+        Services.AddSingleton<HttpClient>(client);
+
+        var component = RenderComponent<Accounts>();
+
+        // 🔹 Odota, että käyttäjälista näkyy
+        component.WaitForState(() => component.Markup.Contains("Käyttäjät"));
+
+        // 🔹 Hae käyttäjälistan ensimmäinen käyttäjä
+        var userItem = component.Find("li.user-item");
+        Assert.NotNull(userItem);
+        Assert.Contains("TestiKäyttäjä", userItem.TextContent);
+
+        // 🔹 Klikkaa käyttäjää listalla
+        userItem.Click();
+
+        // 🔹 Varmista, että käyttäjän tiedot ilmestyvät lomakkeeseen
+        var firstNameInput = component.Find("input#firstname");
+        var lastNameInput = component.Find("input#lastname");
+        var emailInput = component.Find("input#email");
+        var usernameInput = component.Find("input#username");
+        var passwordInput = component.Find("input#password");
+        var roleInput = component.Find("input#role");
+
+        // 🔹 Syötetään käyttäjän tiedot lomakkeelle ennen päivitystä
+        component.Find("input#firstname").Change("TestiEtunimi");
+        component.Find("input#lastname").Change("TestiSukunimi");
+        component.Find("input#email").Change("test@example.com");
+        component.Find("input#username").Change("TestUser");
+        component.Find("input#role").Change("admin");
+
+        // 🔹 Varmistetaan, että syötteet ovat oikein ennen päivitystä
+        Assert.Equal("TestiEtunimi", component.Find("input#firstname").GetAttribute("value"));
+        Assert.Equal("TestiSukunimi", component.Find("input#lastname").GetAttribute("value"));
+        Assert.Equal("test@example.com", component.Find("input#email").GetAttribute("value"));
+        Assert.Equal("TestUser", component.Find("input#username").GetAttribute("value"));
+        Assert.Equal("admin", component.Find("input#role").GetAttribute("value"));
+
+        mockHttp.When(HttpMethod.Put, "/Kayttaja/PaivitaTietoja")
+                .Respond("application/json", "{\"status\": \"success\"}");
+
+        // 🔹 Klikkaa "Päivitä" -nappia
+        component.Find("button.btn-primary").Click();
+
+        // 🔹 Odota, että onnistumisviesti näkyy
+        component.WaitForState(() => component.Markup.Contains("Käyttäjätiedot päivitetty!"));
+
+        // 🔹 Tarkista, että onnistumisviesti näkyy
+        var messageElement = component.Find("div.message");
+        Assert.NotNull(messageElement);
+        Assert.Contains("Käyttäjätiedot päivitetty!", messageElement.TextContent);
+    }
+
+
 }
 
