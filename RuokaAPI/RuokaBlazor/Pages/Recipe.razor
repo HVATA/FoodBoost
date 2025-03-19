@@ -127,165 +127,179 @@ else
     <div class="modal" style="display:@(modalVisible ? "block" : "none")">
         <div class="modal-content">
             <span class="close" @onclick="CloseModal">&times;</span>
-            <h2>Jaa resepti sähköpostitse</h2>
-            <div>
-                <label for="emailInput">Sähköpostiosoite:</label>
-                <InputText id="emailInput" @bind-Value="deliveryEmail" class="form-control" placeholder="Syötä sähköpostiosoite" />
-            </div>
-            <div>
-                @if (shareRecipeSuccess)
-                {
-                    <button class="btn btn-secondary" @onclick="CloseModal">Sulje</button>
-                }
-                else
-                {
-                    <button class="btn btn-primary" @onclick="ShareRecipeEmail">Jaa</button>
-                    <button class="btn btn-secondary" @onclick="CloseModal">Peruuta</button>
-                }
-            </div>
-            <p>@message</p>
+            @if (favoriteButtonClicked)
+            {
+                <p>@message</p>
+            }
+            else
+            {
+                <h2>Jaa resepti sähköpostitse</h2>
+                <div>
+                    <label for="emailInput">Sähköpostiosoite:</label>
+                    <InputText id="emailInput" @bind-Value="deliveryEmail" class="form-control" placeholder="Syötä sähköpostiosoite" />
+                </div>
+                <div>
+                    @if (shareRecipeSuccess)
+                    {
+                        <button class="btn btn-secondary" @onclick="CloseModal">Sulje</button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-primary" @onclick="ShareRecipeEmail">Jaa</button>
+                        <button class="btn btn-secondary" @onclick="CloseModal">Peruuta</button>
+                    }
+                </div>
+                <p>@message</p>
+            }
         </div>
     </div>
+    <div class="modal-overlay" id="modal-overlay" style="display:@(modalVisible ? "block" : "none")"></div>
 }
 
 <style>
     .favorite-star-button {
-        width: 50px;
-        height: 50px;
-        background-color: transparent; /* Läpinäkyvä tausta */
-        border: 2px solid gold; /* Kullankeltaiset rajaviivat */
-        border-radius: 50%;
-        cursor: pointer;
-        font-size: 40px;
-        color: gold; /* Alussa vain rajaviivat näkyvissä */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background-color 0.3s, color 0.3s;
+    width: 50px;
+    height: 50px;
+    background-color: transparent; /* Läpinäkyvä tausta */
+    border: 2px solid gold; /* Kullankeltaiset rajaviivat */
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 40px;
+    color: gold; /* Alussa vain rajaviivat näkyvissä */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s, color 0.3s;
     }
 
-        .favorite-star-button.filled {
-            background-color: gold; /* Kun suosikki, täytetään */
-            color: white;
-        }
+    .favorite-star-button.filled {
+    background-color: gold; /* Kun suosikki, täytetään */
+    color: white;
+    }
 
-        .favorite-star-button:hover {
-            background-color: #f1c40f; /* Hover-efekti */
-        }
+    .favorite-star-button:hover {
+    background-color: #f1c40f; /* Hover-efekti */
+    }
 
     .recipe-header {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2rem;
     }
 
     .recipe-title-container {
-        text-align: center;
-        margin-bottom: 1rem;
+    text-align: center;
+    margin-bottom: 1rem;
     }
 
     .recipe-title {
-        font-size: 2.5rem;
-        margin: 0;
+    font-size: 2.5rem;
+    margin: 0;
     }
 
     .recipe-image-container {
-        display: flex;
-        justify-content: center;
-        width: 100%;
+    display: flex;
+    justify-content: center;
+    width: 100%;
     }
 
     .recipe-image {
-        max-width: 100%;
-        height: auto;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     .tags {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 0.5rem;
-        margin-bottom: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
     }
 
     .tag {
-        background-color: #f0f0f0;
-        padding: 0.5rem 1rem;
-        border-radius: 15px;
-        font-size: 0.9rem;
-        color: #555;
+    background-color: #f0f0f0;
+    padding: 0.5rem 1rem;
+    border-radius: 15px;
+    font-size: 0.9rem;
+    color: #555;
     }
 
     .action-buttons {
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        margin-bottom: 1.5rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 1.5rem;
     }
 
     .info-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 2rem;
-        margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    margin-top: 1rem;
     }
 
     .ingredients, .instructions {
-        flex: 1 1 45%;
-        min-width: 300px;
-        padding: 1rem;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        background-color: #fff;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    flex: 1 1 45%;
+    min-width: 300px;
+    padding: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     .reviews {
-        margin-top: 2rem;
+    margin-top: 2rem;
     }
 
     .review {
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background-color: #f9f9f9;
     }
 
     .review-form {
-        margin-top: 2rem;
+    margin-top: 2rem;
     }
 
     /* Modal style */
     .modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex; /* Käytetään flexboxia */
-        justify-content: center; /* Keskittää modaalin vaakasuunnassa */
-        align-items: center; /* Keskittää modaalin pystysuunnassa */
-        z-index: 999; /* Varmistaa, että modaalin taso on tarpeeksi korkea muiden elementtien yläpuolella */
+    top: 0;
+    left: 0;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    justify-items: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex; /* Käytetään flexboxia */
+    align-items: center; /* Keskittää modaalin pystysuunnassa */
+    z-index: 999; /* Varmistaa, että modaalin taso on tarpeeksi korkea muiden elementtien yläpuolella */
     }
 
     .modal-content {
-        background-color: #fff;
-        padding: 20px;
-        border-radius: 8px;
-        width: 300px; /* Voit säätää tätä tarpeen mukaan */
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 300px; /* Voit säätää tätä tarpeen mukaan */
+    align-self: center;
+    justify-self: center;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     }
 
     .close {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        cursor: pointer;
-        font-size: 1.5rem;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+    font-size: 1.5rem;
     }
 
 </style>
@@ -307,9 +321,11 @@ else
     public Suosikit suosikit;
     private bool isFavorite = false;
     private List<Resepti> recipes;
+    private bool favoriteButtonClicked = false; // Uusi tila suosikkinapin klikkaukselle
 
     protected override async Task OnInitializedAsync()
     {
+
         // Haetaan kirjautuneen käyttäjän tiedot
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         user = authState.User;
@@ -389,12 +405,12 @@ else
                 message = await response.Content.ReadAsStringAsync(); // Backendin virheilmoitus
             }
 
-            foreach(Resepti recipe in recipes)
+            foreach (Resepti recipe in recipes)
             {
-                if(recipe.Nimi == resepti.Nimi)
+                if (recipe.Nimi == resepti.Nimi)
                 {
                     resepti.Id = recipe.Id;
-                    ToggleFavorite();
+                    isFavorite = true; // 🔹 Asetetaan nappulan tila ilman ToggleFavorite() kutsua
                 }
             };
 
@@ -469,15 +485,19 @@ else
     private async Task ToggleFavorite()
     {
         isFavorite = !isFavorite;
+        favoriteButtonClicked = true; // 🔹 Tallenna, että suosikkinappia painettiin
+        modalVisible = true; // 🔹 Avaa modaalin
+
         if (isFavorite)
         {
             await AddToFavorites();
+            message = "Resepti lisätty suosikkeihin.";
         }
-        else if (!isFavorite)
+        else
         {
             await DeleteFromFavorites();
+            message = "Resepti poistettiin suosikeista.";
         }
-
     }
 
     private async Task DeleteFromFavorites()
@@ -619,5 +639,9 @@ else
     private void CloseModal()
     {
         modalVisible = false;
+        favoriteButtonClicked = false; // 🔹 Nollataan tila, kun modal suljetaan
+        shareRecipeSuccess = false;
+        message = string.Empty;
+        deliveryEmail = string.Empty;
     }
 }
