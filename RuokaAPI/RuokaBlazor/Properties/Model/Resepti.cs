@@ -17,5 +17,8 @@
         public List<Avainsana> Avainsanat { get; set; } = new();
         public List<Arvostelu> Arvostelut { get; set; } = new();
         public string? Katseluoikeus { get; set; }
+
+        // 🔹 Lisää tämä ominaisuus
+        public List<ReseptiAinesosa> Aineosat { get; set; } = new();
     }
 }
