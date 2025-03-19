@@ -5,6 +5,8 @@
 @layout SignupLayout
 @using RuokaBlazor.Properties.Model
 @using RuokaBlazor.Services
+@using System.Net.Http;
+@using System.Threading.Tasks
 
 <EditForm Model="uusiKayttaja" OnSubmit="HandleSignup" class="signup-layout">
     <DataAnnotationsValidator />
@@ -59,17 +61,20 @@
         try
         {
             uusiKayttaja.Kayttajataso = "user";
-            var response = await Http.PostAsJsonAsync("Kayttaja/LisaaKayttaja", uusiKayttaja);
+            HttpResponseMessage response = await Http.PostAsJsonAsync("Kayttaja/LisaaKayttaja", uusiKayttaja);
 
             if (response.IsSuccessStatusCode)
             {
-                message = "Rekisteröinti onnistui!";
-                HandleLogin();
-
-            }
-            else
-            {
-                message = "Rekisteröinti epäonnistui. Yritä uudelleen.";
+                string responseString = await response.Content.ReadAsStringAsync();
+                if (responseString.Contains("Sähköposti on jo käytössä!!!"))
+                {
+                    message = $"Rekisteröinti epäonnistui. Virhe: {responseString}";
+                }
+                else
+                {
+                    message = "Rekisteröinti onnistui!";
+                    HandleLogin();
+                }
             }
         }
         catch (Exception ex)
