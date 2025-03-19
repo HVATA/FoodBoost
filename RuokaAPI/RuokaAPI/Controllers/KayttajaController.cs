@@ -87,6 +87,16 @@ namespace RuokaAPI.Controllers
 
 
         }
+        [HttpGet("HaeNimimerkki/{id}")]
+        public async Task<ActionResult<string>> HaeNimimerkki ( int id )
+            {
+            var kayttaja = await _context.Kayttajat.FindAsync(id);
+            if (kayttaja == null)
+                {
+                return NotFound("Käyttäjää ei löytynyt.");
+                }
+            return Ok(kayttaja.Nimimerkki);
+            }
 
         [HttpGet("Tunnistautumistiedot/{salasana}/{sahkopostiosoite}")]
         public async Task<ActionResult<Kayttaja>> HaeKayttaja(string salasana, string sahkopostiosoite)

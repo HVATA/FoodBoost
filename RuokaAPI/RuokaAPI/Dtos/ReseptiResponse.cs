@@ -16,6 +16,7 @@ namespace RuokaAPI.Dtos
         public string Kuva1 { get; set; } = string.Empty;
         public string Katseluoikeus { get; set; } = string.Empty;
         public Arvostelu[] Arvostelut { get; set; } = Array.Empty<Arvostelu>();
-    }
+        
+        }
 }
 

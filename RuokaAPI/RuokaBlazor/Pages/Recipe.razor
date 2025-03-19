@@ -22,106 +22,108 @@ else if (resepti == null)
 else
 {
     <div class="recipe-container">
-        <div class="recipe-header">
-            <!-- Reseptin otsikko -->
-            <div class="recipe-title-container">
-                <h1 class="recipe-title">@resepti?.Nimi</h1>
-            </div>
-
-            <!-- Reseptin kuva -->
-            <div class="recipe-image-container">
-                <img src="@resepti?.Kuva1" alt="@resepti?.Nimi" class="recipe-image" />
-            </div>
+    <div class="recipe-header">
+        <!-- Reseptin otsikko -->
+        <div class="recipe-title-container">
+            <h1 class="recipe-title">@resepti?.Nimi</h1>
+            <p class="recipe-author">Tekijä: @tekijanNimimerkki</p> <!-- Display author's nickname -->
         </div>
 
-        <!-- Napit näkyvät vain, jos käyttäjä on admin tai reseptin tekijä -->
-        <div class="action-buttons">
-            @if (kayttajallaOikeudet)
-            {
-                <button class="btn btn-primary" @onclick="MuokkaaResepti">Muokkaa</button>
-                <button class="btn btn-danger" @onclick="PoistaResepti">Poista</button>
-            }
-            <button class="favorite-star-button @(isFavorite ? "filled" : "")" @onclick="ToggleFavorite">
-                ★
-            </button>
+        <!-- Reseptin kuva -->
+        <div class="recipe-image-container">
+            <img src="@resepti?.Kuva1" alt="@resepti?.Nimi" class="recipe-image" />
         </div>
+    </div>
 
-        <!-- Avainsanat -->
-        <div class="tags">
-            @if (resepti?.Avainsanat?.Any() == true)
-            {
-                @foreach (var tag in resepti.Avainsanat)
-                {
-                    <span class="tag">@tag</span>
-                }
-            }
-        </div>
-
-        <!-- Ainesosat ja valmistuskuvaus -->
-        <div class="info-container">
-            <div class="ingredients">
-                <h2>Ainesosat</h2>
-                <ul>
-                    @foreach (var ainesosa in resepti.Ainesosat)
-                    {
-                        <li>@ainesosa.Ainesosa: @ainesosa.Maara</li>
-                    }
-                </ul>
-            </div>
-            <div class="instructions">
-                <h2>Valmistuskuvaus</h2>
-                <p>@resepti.Valmistuskuvaus</p>
-            </div>
-        </div>
-
-        <!-- Arvostelulomake -->
-        @if (user.Identity != null && user.Identity.IsAuthenticated)
+    <!-- Napit näkyvät vain, jos käyttäjä on admin tai reseptin tekijä -->
+    <div class="action-buttons">
+        @if (kayttajallaOikeudet)
         {
-            <div class="review-form">
-                <h3>Jätä arvostelu</h3>
-                <EditForm Model="uusiArvostelu" OnValidSubmit="LisaaArvostelu">
-                    <DataAnnotationsValidator />
-                    <ValidationSummary />
+            <button class="btn btn-primary" @onclick="MuokkaaResepti">Muokkaa</button>
+            <button class="btn btn-danger" @onclick="PoistaResepti">Poista</button>
+        }
+        <button class="favorite-star-button @(isFavorite ? "filled" : "")" @onclick="ToggleFavorite">
+            ★
+        </button>
+    </div>
 
-                    <div>
-                        <label for="numeroarvostelu">Arvosana (1-5):</label>
-                        <AntDesign.InputNumber id="numeroarvostelu" @bind-Value="uusiArvostelu.Numeroarvostelu" class="form-control" />
-                    </div>
+    <!-- Avainsanat -->
+    <div class="tags">
+        @if (resepti?.Avainsanat?.Any() == true)
+        {
+            @foreach (var tag in resepti.Avainsanat)
+            {
+                <span class="tag">@tag</span>
+            }
+        }
+    </div>
 
-                    <div>
-                        <label for="vapaateksti">Kommentti:</label>
-                        <InputTextArea id="vapaateksti" @bind-Value="uusiArvostelu.Vapaateksti" class="form-control" />
-                    </div>
+    <!-- Ainesosat ja valmistuskuvaus -->
+    <div class="info-container">
+        <div class="ingredients">
+            <h2>Ainesosat</h2>
+            <ul>
+                @foreach (var ainesosa in resepti.Ainesosat)
+                {
+                    <li>@ainesosa.Ainesosa: @ainesosa.Maara</li>
+                }
+            </ul>
+        </div>
+        <div class="instructions">
+            <h2>Valmistuskuvaus</h2>
+            <p>@resepti.Valmistuskuvaus</p>
+        </div>
+    </div>
 
-                    <button type="submit" class="btn btn-primary">Lähetä</button>
-                    <button type="button" class="btn btn-primary" @onclick="OpenShareEmailModal">Jaa sähköpostitse</button>
-                </EditForm>
-            </div>
+    <!-- Arvostelulomake -->
+    @if (user.Identity != null && user.Identity.IsAuthenticated)
+    {
+        <div class="review-form">
+            <h3>Jätä arvostelu</h3>
+            <EditForm Model="uusiArvostelu" OnValidSubmit="LisaaArvostelu">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div>
+                    <label for="numeroarvostelu">Arvosana (1-5):</label>
+                    <AntDesign.InputNumber id="numeroarvostelu" @bind-Value="uusiArvostelu.Numeroarvostelu" class="form-control" />
+                </div>
+
+                <div>
+                    <label for="vapaateksti">Kommentti:</label>
+                    <InputTextArea id="vapaateksti" @bind-Value="uusiArvostelu.Vapaateksti" class="form-control" />
+                </div>
+
+                <button type="submit" class="btn btn-primary">Lähetä</button>
+                <button type="button" class="btn btn-primary" @onclick="OpenShareEmailModal">Jaa sähköpostitse</button>
+            </EditForm>
+        </div>
+    }
+    else
+    {
+        <p>Kirjaudu sisään jättääksesi arvostelun.</p>
+    }
+
+    <!-- Arvostelut -->
+    <div class="reviews">
+        <h2>Arvostelut</h2>
+        @if (resepti.Arvostelut?.Any() == true)
+        {
+            @foreach (var arvostelu in resepti.Arvostelut)
+            {
+                <div class="review">
+                    <p><strong>@arvostelu.ArvostelijanNimimerkki</strong> (@arvostelu.Numeroarvostelu/5)</p>
+                    <p>@arvostelu.Vapaateksti</p>
+                </div>
+            }
         }
         else
         {
-            <p>Kirjaudu sisään jättääksesi arvostelun.</p>
+            <p>Ei arvosteluja.</p>
         }
-
-        <!-- Arvostelut -->
-        <div class="reviews">
-            <h2>Arvostelut</h2>
-            @if (resepti.Arvostelut?.Any() == true)
-            {
-                @foreach (var arvostelu in resepti.Arvostelut)
-                {
-                    <div class="review">
-                        <p><strong>@arvostelu.ArvostelijanNimimerkki</strong> (@arvostelu.Numeroarvostelu/5)</p>
-                        <p>@arvostelu.Vapaateksti</p>
-                    </div>
-                }
-            }
-            else
-            {
-                <p>Ei arvosteluja.</p>
-            }
-        </div>
     </div>
+
+
 
     <!-- Modal-ikkuna sähköpostin jakamista varten -->
     <div class="modal" style="display:@(modalVisible ? "block" : "none")">
@@ -154,6 +156,7 @@ else
         </div>
     </div>
     <div class="modal-overlay" id="modal-overlay" style="display:@(modalVisible ? "block" : "none")"></div>
+    </div>
 }
 
 <style>
@@ -310,6 +313,7 @@ else
     private Resepti recipeForFavs;
     private bool kayttajallaOikeudet = false;
     private string? virheViesti;
+    private string? tekijanNimimerkki;
     private ArvosteluRequest uusiArvostelu = new();
     private ClaimsPrincipal user;
     private string message = string.Empty;
@@ -325,7 +329,6 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-
         // Haetaan kirjautuneen käyttäjän tiedot
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         user = authState.User;
@@ -360,6 +363,8 @@ else
                 return;
             }
 
+            
+
             // Tarkista käyttäjän oikeudet
             if (user.Identity != null && user.Identity.IsAuthenticated)
             {
@@ -370,6 +375,8 @@ else
                     Console.WriteLine(kayttajallaOikeudet.ToString());//Tarkistus
                 }
             }
+
+            tekijanNimimerkki = await Http.GetStringAsync($"Kayttaja/HaeNimimerkki/{resepti.TekijaId}");
         }
         catch (OperationCanceledException)
         {
@@ -600,8 +607,8 @@ else
     {
         if (resepti == null) return;
 
-        uusiArvostelu.ArvostelijanId = int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-        uusiArvostelu.ArvostelijanNimimerkki = user.Identity.Name;
+        uusiArvostelu.ArvostelijanId = kayttaja.Id;
+        uusiArvostelu.ArvostelijanNimimerkki = kayttaja.Nimimerkki;
 
         try
         {
@@ -630,6 +637,8 @@ else
             Console.WriteLine($"Poikkeus arvostelun lisäämisessä: {ex.Message}");
         }
     }
+
+
 
     private void OpenShareEmailModal()
     {

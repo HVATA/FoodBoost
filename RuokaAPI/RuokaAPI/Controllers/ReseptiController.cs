@@ -53,6 +53,7 @@ namespace RuokaAPI.Controllers
             }
 
             return Ok(resepti);
+
         }
 
         [HttpGet("omat/{userId}")]
