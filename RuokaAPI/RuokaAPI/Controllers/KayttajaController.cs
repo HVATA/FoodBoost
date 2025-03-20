@@ -37,6 +37,7 @@ namespace RuokaAPI.Controllers
 
 
 
+
             List<Kayttaja> lista2 = new List<Kayttaja>();
 
             string email = x.Sahkopostiosoite;
@@ -96,7 +97,6 @@ namespace RuokaAPI.Controllers
                 }
             return Ok(kayttaja.Nimimerkki);
             }
-
 
         [HttpGet("Tunnistautumistiedot/{salasana}/{sahkopostiosoite}")]
         public async Task<ActionResult<Kayttaja>> HaeKayttaja(string salasana, string sahkopostiosoite)

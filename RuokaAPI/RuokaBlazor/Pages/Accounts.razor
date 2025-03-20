@@ -54,12 +54,8 @@
                     <InputText style="display: none;" id="hidden-role" @bind-Value="kayttaja.Kayttajataso" />
                 }
 
-
-                <!-- Nyt OnValidSubmit on asetettu vain Päivitä-painikkeelle -->
                 <button type="submit" class="btn btn-primary" @onclick="async () => await UpdateUser()">Päivitä</button>
-
-                <!-- Poista-painike ei käytä OnValidSubmit:ia vaan kutsuu suoraan DeleteUser-metodia -->
-                <button type="button" class="btn btn-danger" @onclick="OpenModal">Poista</button>
+                <button type="button" class="btn btn-danger" @onclick="OpenDeleteModal">Poista</button>
             </EditForm>
 
         </div>
@@ -79,34 +75,32 @@
     </div>
 </div>
 <!-- Modal-ikkuna sähköpostin jakamista varten -->
-<div class="modal" style="display:@(modalVisible ? "block" : "none")">
+<div class="modal" style="display:@(deleteModalVisible ? "block" : "none")">
     <div class="modal-content">
         <span class="close" @onclick="CloseModal">&times;</span>
-        @if (DeleteButtonClicked)
-        {
-            <div class="modal">
-                <div class="modal-content">
-                    <span class="close" @onclick="CloseModal">&times;</span>
-                    <h2>Oletko varma että haluat poistaa käyttäjän?</h2>
-                    <div>
-                        <button class="btn btn-primary" @onclick="DeleteUser">Kyllä</button>
-                        <button class="btn btn-secondary" @onclick="CloseModal">Peruuta</button>
-                    </div>
-                </div>
-            </div>
-        }
-        else
-        {
-            <p>@message</p>
-        }
+        <h2>Oletko varma että haluat poistaa käyttäjän?</h2>
+        <div>
+            <button class="btn btn-primary" @onclick="DeleteUser">Kyllä</button>
+            <button class="btn btn-secondary" @onclick="CloseModal">Peruuta</button>
+        </div>
     </div>
 </div>
 
-<div class="modal-overlay" id="modal-overlay" style="display:@(modalVisible ? "block" : "none")"></div>
+<div class="modal-overlay" id="modal-overlay" style="display:@(deleteModalVisible ? "block" : "none")"></div>
+
+<!-- Modal-ikkuna sähköpostin jakamista varten -->
+<div class="modal" style="display:@(updateModalVisible ? "block" : "none")">
+    <div class="modal-content">
+        <span class="close" @onclick="CloseModal">&times;</span>
+        <p>@message</p>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay" style="display:@(updateModalVisible ? "block" : "none")"></div>
 
 <style>
 
-    .admin-only{
+    .admin-only {
     display: block;
     }
 
@@ -132,7 +126,8 @@
     .btn:hover {
     opacity: 0.8;
     }
-    .container{
+
+    .container {
     height: 100vh;
     align-items: center;
     }
@@ -184,14 +179,13 @@
     }
 </style>
 
-<p>@message</p>
-
 @code {
     private List<Kayttaja> users = new();
     private Kayttaja kayttaja = new();
     private string message = string.Empty;
     private ClaimsPrincipal user;
-    private bool modalVisible = false;
+    private bool deleteModalVisible = false;
+    private bool updateModalVisible = false;
     private bool DeleteButtonClicked = false; // Uusi tila suosikkinapin klikkaukselle
 
     protected override async Task OnInitializedAsync()
@@ -235,6 +229,7 @@
             message = "Käyttäjien lataaminen epäonnistui: " + ex.Message;
         }
     }
+
 
     private void SelectUser(Kayttaja selectedUser)
     {
@@ -302,15 +297,23 @@
 
                 if (response.IsSuccessStatusCode)
                 {
-                    OpenModal();
+                    OpenUpdateModal();
                     message = "Käyttäjätiedot päivitetty!";
                     await getUsers(int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0"), user.FindFirst("Salasana")?.Value, user.FindFirst(ClaimTypes.Email)?.Value ?? "");
                     StateHasChanged(); // Päivitä käyttöliittymä
                 }
                 else
                 {
-                    OpenModal();
-                    message = "Päivitys epäonnistui. Virheellinen vastaus backendiltä.";
+                    OpenUpdateModal();
+                    if (string.IsNullOrEmpty(kayttaja.Sahkopostiosoite) || string.IsNullOrEmpty(kayttaja.Salasana))
+                    {
+                        message = "Poistaminen epäonnistui: Puuttuvat tiedot.";
+                    }
+                    else
+                    {
+                        message = "Päivitys epäonnistui. Virheellinen vastaus backendiltä.";
+                    }
+                    
                     var responseContent = await response.Content.ReadAsStringAsync();
                     Console.WriteLine($"Error: {responseContent}");
                 }
@@ -340,7 +343,7 @@
 
                 if (response.IsSuccessStatusCode)
                 {
-                    OpenModal();
+                    OpenUpdateModal();
                     message = "Käyttäjätietosi päivitetty!";
                     await CustomAuthStateProvider.Logout();
 
@@ -356,7 +359,7 @@
                         }
                         else
                         {
-                            OpenModal();
+                            OpenUpdateModal();
                             message = "Käyttäjätietojen hakeminen epäonnistui.";
                         }
                     }
@@ -364,7 +367,7 @@
                 }
                 else
                 {
-                    OpenModal();
+                    OpenUpdateModal();
                     message = "Päivitys epäonnistui. Virheellinen vastaus backendiltä.";
                     var responseContent = await response.Content.ReadAsStringAsync();
                     Console.WriteLine($"Error: {responseContent}");
@@ -378,9 +381,8 @@
         }
 
     }
-    private async Task DeleteUser() 
+    private async Task DeleteUser()
     {
-        DeleteButtonClicked = true;
 
         if (kayttaja.Id == 0 || string.IsNullOrEmpty(kayttaja.Sahkopostiosoite) || string.IsNullOrEmpty(kayttaja.Salasana))
         {
@@ -399,7 +401,7 @@
                 kayttaja = new Kayttaja(); // Tyhjennä lomake
                 CloseModal();
             }
-            else if(response.IsSuccessStatusCode && user.IsInRole("user"))
+            else if (response.IsSuccessStatusCode && user.IsInRole("user"))
             {
                 message = "Käyttäjäsi on nyt poistettu! Kirjaudutaan ulos";
                 kayttaja = new Kayttaja(); // Tyhjennä lomake
@@ -431,8 +433,14 @@
         StateHasChanged();
     }
 
-    private void OpenModal()
+    private void OpenUpdateModal()
     {
+        updateModalVisible = true;
+    }
+
+    private void OpenDeleteModal()
+    {
+
         if (kayttaja.Id == 0 || string.IsNullOrEmpty(kayttaja.Sahkopostiosoite) || string.IsNullOrEmpty(kayttaja.Salasana))
         {
             message = "Poistaminen epäonnistui: Puuttuvat tiedot.";
@@ -440,15 +448,16 @@
         }
         else
         {
-            modalVisible = true;
+            deleteModalVisible = true;
+            Console.WriteLine(deleteModalVisible);
         }
     }
 
     private void CloseModal()
     {
-        modalVisible = false;
+        updateModalVisible = false;
+        deleteModalVisible = false;
         message = string.Empty;
-        DeleteButtonClicked = false;
     }
 
     private async Task HideMessageAfterDelay()

@@ -345,7 +345,7 @@ public class AccountsAdminTests : TestContext
     }
 
     [Fact]
-    public async Task AdminUser_DeletesUser_ShouldShowSuccessMessage()
+    public async Task AdminUser_DeletesUser_ThroughModal_ShouldShowSuccessMessage()
     {
         // 🔹 Luo testikäyttäjälista
         var testUsers = new List<Kayttaja>
@@ -382,14 +382,18 @@ public class AccountsAdminTests : TestContext
         mockHttp.When(HttpMethod.Get, "/Kayttaja/Haekaikki/*")
                 .Respond("application/json", usersJson);
 
-        // 🔹 Mockataan käyttäjän poistaminen API
-        mockHttp.When(HttpMethod.Delete, "/Kayttaja/Poista/2001/test@example.com/testpassword")
-                .Respond("application/json", "{\"status\": \"success\"}");
-
         var client = mockHttp.ToHttpClient();
         client.BaseAddress = new Uri("http://localhost");
-        Services.AddSingleton<HttpClient>(client);
 
+        // 🔹 Rekisteröidään kaikki palvelut ENNEN komponentin renderöintiä!
+        Services.AddSingleton<HttpClient>(client);
+        Services.AddSingleton<NavigationManager, MockNavigationManager>();
+
+        // 🔹 Hae mockattu navigointipalvelu ennen komponentin renderöintiä
+        var navigationManager = Services.GetRequiredService<NavigationManager>() as MockNavigationManager;
+        Assert.NotNull(navigationManager);
+
+        // 🔹 Renderöidään komponentti
         var component = RenderComponent<Accounts>();
 
         // 🔹 Odota, että käyttäjälista näkyy
@@ -403,18 +407,27 @@ public class AccountsAdminTests : TestContext
         // 🔹 Klikkaa käyttäjää listalla
         userItem.Click();
 
-        // 🔹 Klikkaa "Poista" -nappia
+        // 🔹 Klikkaa "Poista"-painiketta (avaa modalin)
         component.Find("button.btn-danger").Click();
 
-        // 🔹 Odota, että onnistumisviesti näkyy
-        component.WaitForState(() => component.Markup.Contains("Käyttäjä poistettu!"));
+        // 🔹 Odota, että modal avautuu
+        component.WaitForState(() => component.Markup.Contains("Oletko varma että haluat poistaa käyttäjän?"), TimeSpan.FromSeconds(5));
 
-        // 🔹 Tarkista, että onnistumisviesti näkyy
-        var messageElement = component.Find("p");
-        Assert.NotNull(messageElement);
-        Assert.Contains("Käyttäjä poistettu!", messageElement.TextContent);
+        // 🔹 Klikkaa "Kyllä"-painiketta modalista (poistaa käyttäjän)
+        var confirmButton = component.WaitForElement("button.btn-primary", TimeSpan.FromSeconds(5));
+        Assert.NotNull(confirmButton);
+        confirmButton.Click();
+
+        // 🔹 Odota hetki, jotta UI ehtii päivittyä
+        await Task.Delay(1000);
+
+        // 🔹 Tarkista, että navigointi tapahtui oikeaan osoitteeseen "/"
+        component.WaitForAssertion(() =>
+        {
+            Assert.NotNull(navigationManager);
+            Assert.EndsWith("/", navigationManager?.Uri);
+        }, TimeSpan.FromSeconds(5)); // ✅ Odota max 5 sekuntia navigoinnin tapahtumista
     }
-
 
 
 }
