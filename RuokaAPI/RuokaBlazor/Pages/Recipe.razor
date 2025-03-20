@@ -309,10 +309,10 @@ else
 
 @code {
     [Parameter] public int Id { get; set; }
-    private ReseptiResponse? resepti;
+    public ReseptiResponse? resepti;
     private Resepti recipeForFavs;
     private bool kayttajallaOikeudet = false;
-    private string? virheViesti;
+    public string? virheViesti;
     private string? tekijanNimimerkki;
     private ArvosteluRequest uusiArvostelu = new();
     private ClaimsPrincipal user;
