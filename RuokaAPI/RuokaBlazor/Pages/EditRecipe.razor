@@ -142,11 +142,10 @@ else
 
     protected override async Task OnInitializedAsync() // Changed to protected override
     {
-        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         try
         {
             // Hae resepti API:sta
-            resepti = await Http.GetFromJsonAsync<ReseptiResponse>($"resepti/{Id}", cts.Token);
+            resepti = await Http.GetFromJsonAsync<ReseptiResponse>($"resepti/{Id}");
             if (resepti == null)
             {
                 virheViesti = "Valittua reseptiä ei löydy.";
@@ -164,10 +163,6 @@ else
 
             // Haetaan avainsanat
             await GetKeywords();
-        }
-        catch (OperationCanceledException)
-        {
-            virheViesti = "Reseptin lataaminen kesti liian kauan.";
         }
         catch (Exception ex)
         {
