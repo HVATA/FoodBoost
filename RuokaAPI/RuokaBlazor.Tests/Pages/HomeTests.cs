@@ -239,7 +239,4 @@ public class HomeTests : TestContext
         // 🔹 Tarkistetaan, että navigointi on kutsuttu oikealla URL:lla
         Assert.EndsWith($"/{recipe.Id}", navMan.Uri);
     }
-
-
-
 }
