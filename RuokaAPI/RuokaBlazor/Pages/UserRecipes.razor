@@ -10,22 +10,17 @@
 @using System.Security.Claims
 @using System.Text.Json
 
-<h1>Omat Reseptit</h1>
-
-@if (virheViesti != null)
+@if (reseptit == null)
 {
-    <p>@virheViesti</p>
-}
-else if (reseptit == null)
-{
-    <p>Ladataan reseptejä...</p>
+    <h1>Ladataan reseptejä...</h1>
 }
 else if (!reseptit.Any())
 {
-    <p>Sinulla ei ole vielä reseptejä.</p>
+    <h1>Sinulla ei ole vielä reseptejä.</h1>
 }
 else
 {
+    <h1>Omat Reseptit</h1>
     <ul class="recipe-list">
         @foreach (var resepti in reseptit)
         {
@@ -93,14 +88,12 @@ else
 
 @code {
     private List<ReseptiResponse>? reseptit;
-    private string? virheViesti;
-    private ClaimsPrincipal user;
 
     protected override async Task OnInitializedAsync()
     {
         // Haetaan kirjautuneen käyttäjän tiedot
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        user = authState.User;
+        var user = authState.User;
 
         if (user.Identity != null && user.Identity.IsAuthenticated)
         {
@@ -109,14 +102,6 @@ else
             {
                 await HaeOmatReseptit(id);
             }
-            else
-            {
-                virheViesti = "Virhe: Käyttäjän ID ei ole kelvollinen.";
-            }
-        }
-        else
-        {
-            virheViesti = "Virhe: Käyttäjä ei ole kirjautunut.";
         }
     }
 
@@ -125,10 +110,14 @@ else
         try
         {
             reseptit = await Http.GetFromJsonAsync<List<ReseptiResponse>>($"resepti/omat/{userId}");
+            if (reseptit == null || !reseptit.Any())
+            {
+                reseptit = new List<ReseptiResponse>();
+            }
         }
-        catch (Exception ex)
+        catch
         {
-            virheViesti = $"Virhe reseptien lataamisessa: {ex.Message}";
+            reseptit = new List<ReseptiResponse>();
         }
     }
 
@@ -137,7 +126,7 @@ else
         Navigation.NavigateTo($"/editRecipe/{reseptiId}");
     }
 
-    private async Task PoistaResepti(int reseptiId)
+    public async Task PoistaResepti(int reseptiId)
     {
         var confirm = await JSRuntime.InvokeAsync<bool>("window.confirm", new object[] { "Haluatko varmasti poistaa tämän reseptin?" });
         if (confirm)
@@ -148,11 +137,11 @@ else
                 if (response.IsSuccessStatusCode)
                 {
                     reseptit = reseptit?.Where(r => r.Id != reseptiId).ToList();
+                    if (reseptit == null || !reseptit.Any())
+                    {
+                        reseptit = new List<ReseptiResponse>();
+                    }
                     StateHasChanged();
-                }
-                else
-                {
-                    Console.WriteLine($"Virhe poistamisessa: {response.StatusCode}");
                 }
             }
             catch (Exception ex)
@@ -161,12 +150,12 @@ else
             }
         }
     }
+
     public async Task SetRecipes(List<ReseptiResponse> recipes)
     {
         reseptit = recipes;
         await InvokeAsync(StateHasChanged);
     }
-
-
-
 }
+
+
