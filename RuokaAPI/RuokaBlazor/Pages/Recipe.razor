@@ -376,7 +376,12 @@ else
                 }
             }
 
+            
             tekijanNimimerkki = await Http.GetStringAsync($"Kayttaja/HaeNimimerkki/{resepti.TekijaId}");
+            if (string.IsNullOrWhiteSpace(tekijanNimimerkki))
+            {
+                tekijanNimimerkki = "tuntematon";
+            }
         }
         catch (OperationCanceledException)
         {
