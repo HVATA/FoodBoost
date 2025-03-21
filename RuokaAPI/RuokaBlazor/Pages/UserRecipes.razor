@@ -41,8 +41,8 @@ else
                     </div>
                 </a>
                 <div class="recipe-actions">
-                    <button class="btn btn-primary" @onclick="() => MuokkaaResepti(resepti.Id)">Muokkaa</button>
-                    <button class="btn btn-danger" @onclick="() => PoistaResepti(resepti.Id)">Poista</button>
+                    <button data-testid="edit-button" class="btn btn-primary" @onclick="() => MuokkaaResepti(resepti.Id)">Muokkaa</button>
+                    <button data-testid="delete-button" class="btn btn-danger" @onclick="() => PoistaResepti(resepti.Id)">Poista</button>
                 </div>
             </li>
         }

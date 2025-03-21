@@ -93,9 +93,9 @@ namespace RuokaBlazor.Tests.Pages
             client.BaseAddress = new Uri("http://localhost");
             Services.AddSingleton<HttpClient>(client);
 
-            // Act: Renderöidään komponentti ja suoritetaan asynkroninen alustus
+            // Act: Renderöidään komponentti
             var component = RenderComponent<EditRecipe>(parameters => parameters.Add(p => p.Id, 1));
-            await component.InvokeAsync(() => component.Instance.OnInitializedAsync());
+            component.WaitForState(() => component.Instance.resepti != null);
 
             // Assert: Tarkistetaan, että resepti latautui
             Assert.NotNull(component.Instance.resepti);
@@ -127,6 +127,7 @@ namespace RuokaBlazor.Tests.Pages
                 Assert.Contains("Keyword3", component.Markup);
             }, timeout: TimeSpan.FromSeconds(3));
             }
+
         [Fact]
         public async Task EditRecipeComponent_AddsAndRemovesIngredient_UI_Test ()
             {
@@ -140,8 +141,8 @@ namespace RuokaBlazor.Tests.Pages
                 // Alustetaan listassa kaksi ainesosaa
                 Ainesosat = new AinesosanMaaraDto[]
                 {
-    new AinesosanMaaraDto(),
-    new AinesosanMaaraDto()
+                    new AinesosanMaaraDto(),
+                    new AinesosanMaaraDto()
                 },
                 Avainsanat = new string[0],
                 Kuva1 = "test.jpg",
@@ -159,10 +160,7 @@ namespace RuokaBlazor.Tests.Pages
 
             // Act: Renderöidään komponentti
             var component = RenderComponent<EditRecipe>(parameters => parameters.Add(p => p.Id, 1));
-
-            // Kutsutaan eksplisiittisesti asynkronista alustusta ja renderöidään uudelleen
-            await component.InvokeAsync(() => component.Instance.OnInitializedAsync());
-            component.Render();
+            component.WaitForState(() => component.Instance.resepti != null);
 
             // Assert: Alussa ainesosa-inputeja tulee olla 2
             Assert.Equal(2, component.Instance.resepti.Ainesosat.Length);
@@ -177,8 +175,6 @@ namespace RuokaBlazor.Tests.Pages
             component.Render();
             Assert.Equal(2, component.Instance.resepti.Ainesosat.Length);
             }
-
-
 
         [Fact]
         public async Task EditRecipeComponent_AddsAndRemovesIngredient_DirectMethod_Test ()
@@ -205,10 +201,9 @@ namespace RuokaBlazor.Tests.Pages
             client.BaseAddress = new Uri("http://localhost");
             Services.AddSingleton<HttpClient>(client);
 
-            // Act: Renderöidään komponentti ja kutsutaan asynkroninen alustus suoraan
+            // Act: Renderöidään komponentti
             var component = RenderComponent<EditRecipe>(parameters => parameters.Add(p => p.Id, 1));
-            await component.InvokeAsync(() => component.Instance.OnInitializedAsync());
-            component.Render();
+            component.WaitForState(() => component.Instance.resepti != null);
 
             // Assert: Tarkistetaan, että alussa ainesosia on 0
             Assert.Equal(0, component.Instance.resepti.Ainesosat.Length);
@@ -223,7 +218,6 @@ namespace RuokaBlazor.Tests.Pages
             component.Render();
             Assert.Equal(0, component.Instance.resepti.Ainesosat.Length);
             }
-
 
         [Fact]
         public async Task EditRecipeComponent_AddsAndRemovesKeyword ()
@@ -252,10 +246,7 @@ namespace RuokaBlazor.Tests.Pages
 
             // Act: Renderöidään komponentti
             var component = RenderComponent<EditRecipe>(parameters => parameters.Add(p => p.Id, 1));
-
-            // Kutsutaan eksplisiittisesti asynkronista alustusta ja renderöidään uudelleen
-            await component.InvokeAsync(() => component.Instance.OnInitializedAsync());
-            component.Render();
+            component.WaitForState(() => component.Instance.resepti != null);
 
             // Assert: Alussa avainsanoja tulee olla 0
             Assert.Equal(0, component.Instance.resepti.Avainsanat.Length);
@@ -301,10 +292,7 @@ namespace RuokaBlazor.Tests.Pages
 
             // Act: Renderöidään komponentti
             var component = RenderComponent<EditRecipe>(parameters => parameters.Add(p => p.Id, 1));
-
-            // Kutsutaan eksplisiittisesti asynkronista alustusta ja renderöidään uudelleen
-            await component.InvokeAsync(() => component.Instance.OnInitializedAsync());
-            component.Render();
+            component.WaitForState(() => component.Instance.resepti != null);
 
             // Act: Kutsutaan suoraan metodia tallentaa resepti
             await component.InvokeAsync(() => component.Instance.TallennaResepti());
@@ -343,10 +331,7 @@ namespace RuokaBlazor.Tests.Pages
 
             // Act: Renderöidään komponentti
             var component = RenderComponent<EditRecipe>(parameters => parameters.Add(p => p.Id, 1));
-
-            // Kutsutaan eksplisiittisesti asynkronista alustusta ja renderöidään uudelleen
-            await component.InvokeAsync(() => component.Instance.OnInitializedAsync());
-            component.Render();
+            component.WaitForState(() => component.Instance.resepti != null);
 
             // Luodaan fake tiedosto, joka toteuttaa IBrowserFile-rajapinnan
             var fakeFile = new FakeBrowserFile();
@@ -379,5 +364,4 @@ namespace RuokaBlazor.Tests.Pages
             }
         }
     }
-
 
