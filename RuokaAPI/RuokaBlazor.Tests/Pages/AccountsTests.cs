@@ -24,6 +24,7 @@ using System.Text.Json;
 
 public class AccountsUserTests : TestContext
 {
+    private ClaimsPrincipal _user;
     public AccountsUserTests()
     {
         // Create test user
@@ -38,10 +39,10 @@ public class AccountsUserTests : TestContext
             new Claim("Salasana", "testsalasana")
         };
 
-        var user = new ClaimsPrincipal(new ClaimsIdentity(claims, "mock"));
+        _user = new ClaimsPrincipal(new ClaimsIdentity(claims, "mock"));
 
         // Käytetään ylikirjoitettua FakeAuthenticationStateProvideria, joka nyt palauttaa oikean kirjautumistilan
-        var fakeAuthProvider = new FakeAuthenticationStateProvider(user);
+        var fakeAuthProvider = new FakeAuthenticationStateProvider(_user);
 
         // Rekisteröidään palvelut
 
@@ -56,6 +57,8 @@ public class AccountsUserTests : TestContext
 
         // Use MockNavigationManager
         Services.AddSingleton<NavigationManager, MockNavigationManager>();
+
+        
     }
 
     [Fact]
@@ -81,6 +84,125 @@ public class AccountsUserTests : TestContext
         Assert.Equal("TestUser", usernameInput.GetAttribute("value"));
         Assert.Equal("testsalasana", passwordInput.GetAttribute("value"));
     }
+
+    [Fact]
+    public async Task User_UpdateSelf_ShouldShowSuccessMessage()
+    {
+        // 🔹 Luo testikäyttäjä
+        var testKayttaja = new Kayttaja
+        {
+            Id = 1001,
+            Etunimi = "TestGivenName",
+            Sukunimi = "TestSurname",
+            Nimimerkki = "TestUser",
+            Sahkopostiosoite = "test@example.com",
+            Kayttajataso = "user",
+            Salasana = "testsalasana"
+        };
+
+        var usersJson = JsonSerializer.Serialize(new[] { testKayttaja });
+
+        // 🔹 Luo MockHttpMessageHandler ja määritä vastaukset
+        var mockHttp = new MockHttpMessageHandler();
+       
+        mockHttp.When(HttpMethod.Put, "/Kayttaja/PaivitaTietoja")
+                .Respond("application/json", "{\"status\": \"success\"}");
+
+        var client = mockHttp.ToHttpClient();
+        client.BaseAddress = new Uri("http://localhost");
+
+        // 🔹 Rekisteröi HttpClient ENNEN komponentin renderöintiä
+        Services.AddSingleton<HttpClient>(client);
+
+        // 🔹 Renderöidään Accounts-komponentti
+        var component = RenderComponent<Accounts>();
+
+        // Odotetaan, että komponentti renderöi käyttäjän tiedot
+        component.WaitForState(() => component.Markup.Contains("Etunimi"));
+
+        // Syötetään käyttäjän tiedot lomakkeelle ennen päivitystä
+        component.Find("input#firstname").Change("TestiEtunimi");
+        component.Find("input#lastname").Change("TestiSukunimi");
+        component.Find("input#email").Change("test@example.com");
+        component.Find("input#username").Change("TestUser");
+        component.Find("input#password").Change("TestPassword");
+
+        // Varmistetaan, että syötteet ovat oikein ennen päivitystä
+        Assert.Equal("TestiEtunimi", component.Find("input#firstname").GetAttribute("value"));
+        Assert.Equal("TestiSukunimi", component.Find("input#lastname").GetAttribute("value"));
+        Assert.Equal("test@example.com", component.Find("input#email").GetAttribute("value"));
+        Assert.Equal("TestUser", component.Find("input#username").GetAttribute("value"));
+        Assert.Equal("TestPassword", component.Find("input#password").GetAttribute("value"));
+
+        // Klikkaa "Päivitä"-nappia
+        component.Find("button.btn-primary").Click();
+
+        // Odota onnistumisviesti
+        component.WaitForState(() => component.Markup.Contains("Käyttäjätietosi ovat päivitetty!"));
+
+        // Tarkista, että onnistumisviesti näkyy
+        var messageElement = component.Find("p");
+        Assert.NotNull(messageElement);
+        Assert.Contains("Käyttäjätietosi ovat päivitetty!", messageElement.TextContent);
+    }
+
+    [Fact]
+    public async Task User_DeleteSelf_ThroughModal_ShouldChangePages()
+    {
+        // 🔹 Luo testikäyttäjä
+        var testKayttaja = new Kayttaja
+        {
+            Id = 1001,
+            Etunimi = "TestGivenName",
+            Sukunimi = "TestSurname",
+            Nimimerkki = "TestUser",
+            Sahkopostiosoite = "test@example.com",
+            Kayttajataso = "user",
+            Salasana = "testsalasana"
+        };
+
+        var usersJson = JsonSerializer.Serialize(new[] { testKayttaja });
+
+        // 🔹 Luo MockHttpMessageHandler ja määritä vastaukset
+        var mockHttp = new MockHttpMessageHandler();
+
+        mockHttp.When(HttpMethod.Delete, $"/Kayttaja/Poista/{testKayttaja.Id}")
+                .Respond(HttpStatusCode.OK);
+
+        var client = mockHttp.ToHttpClient();
+        client.BaseAddress = new Uri("http://localhost");
+
+        // 🔹 Rekisteröi HttpClient ENNEN palveluiden käyttöä
+        Services.AddSingleton<HttpClient>(client);
+
+        // 🔹 Hae mockattu navigointipalvelu
+        var navigationManager = Services.GetRequiredService<NavigationManager>() as MockNavigationManager;
+        Assert.NotNull(navigationManager);
+
+        // 🔹 Renderöi komponentti
+        var component = RenderComponent<Accounts>();
+
+        // 🔹 Odota että käyttäjän tiedot näkyvät
+        component.WaitForState(() => component.Markup.Contains("Etunimi"));
+
+        // 🔹 Klikkaa "Poista"-painiketta
+        component.Find("button.btn-danger").Click();
+
+        // 🔹 Odota että modal avautuu
+        component.WaitForState(() => component.Markup.Contains("Oletko varma että haluat poistaa käyttäjän?"), TimeSpan.FromSeconds(5));
+
+        // 🔹 Klikkaa "Kyllä" modalista
+        var confirmButton = component.WaitForElement("button.btn-primary", TimeSpan.FromSeconds(5));
+        confirmButton.Click();
+
+        // 🔹 Odota navigointia
+        component.WaitForAssertion(() =>
+        {
+            Assert.NotNull(navigationManager);
+            Assert.EndsWith("/", navigationManager.Uri);
+        }, TimeSpan.FromSeconds(5));
+    }
+
 
 }
 public class AccountsAdminTests : TestContext
@@ -345,7 +467,7 @@ public class AccountsAdminTests : TestContext
     }
 
     [Fact]
-    public async Task AdminUser_DeletesUser_ThroughModal_ShouldShowSuccessMessage()
+    public async Task AdminUser_DeletesUser_ThroughModal_ShouldChangePages()
     {
         // 🔹 Luo testikäyttäjälista
         var testUsers = new List<Kayttaja>
