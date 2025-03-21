@@ -1,4 +1,5 @@
-﻿using RuokaAPI.Dtos;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using RuokaAPI.Dtos;
 
 // This class is responsible for validating the properties of a ReseptiRequest DTO.
 // It ensures that the description, ingredients, and keywords meet specific criteria such as length and non-null values.
@@ -16,13 +17,14 @@ public class ReseptiValidator
         ValidateAinesosat(reseptiDto.Ainesosat.Select(a => a.Ainesosa).ToArray(), validationMessages);
         ValidateAvainsanat(reseptiDto.Avainsanat, validationMessages);
         ValidateNimi(reseptiDto.Nimi, validationMessages);
+        ValidateKuva(reseptiDto.Kuva1, validationMessages);
 
         return validationMessages;
     }
 
     private void ValidateNimi(string nimi, List<string> validationMessages)
     {
-       if (string.IsNullOrWhiteSpace(nimi))
+        if (string.IsNullOrWhiteSpace(nimi))
         {
             validationMessages.Add("Nimi cannot be null or empty.");
         }
@@ -76,6 +78,14 @@ public class ReseptiValidator
                     validationMessages.Add($"Avainsana cannot exceed {MaxAinesosaLength} characters.");
                 }
             }
+        }
+    }
+
+    private void ValidateKuva(string Kuva1, List<string> validationMessages)
+    {
+        if (Kuva1 == null)
+        {
+            return;
         }
     }
 }

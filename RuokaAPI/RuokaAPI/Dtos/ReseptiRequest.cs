@@ -11,7 +11,7 @@ namespace RuokaAPI.Dtos
         public string Valmistuskuvaus { get; set; } = string.Empty;
         public AinesosanMaaraDto[] Ainesosat { get; set; } = Array.Empty<AinesosanMaaraDto>();
         public string[] Avainsanat { get; set; } = Array.Empty<string>();
-        public string Kuva1 { get; set; } = string.Empty;
+        public string? Kuva1 { get; set; }
         public string Katseluoikeus { get; set; } = string.Empty;
     }}
 
