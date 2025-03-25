@@ -1,4 +1,4 @@
-/* Yleiset tyylit */
+Ôªø/* Yleiset tyylit */
 .page {
     position: relative;
     display: flex;
@@ -9,9 +9,9 @@ main {
     flex: 1;
 }
 
-/* P‰‰otsikko */
+/* P√§√§otsikko */
 .main-header {
-    background-color: #f7f7f7;
+    background-color: antiquewhite;
     border-bottom: 1px solid #d6d5d5;
     justify-content: space-between;
     height: 3.5rem;
@@ -21,13 +21,18 @@ main {
 
     /* Header linkit ja napit */
     .main-header ::deep a, .main-header ::deep .btn-link {
-        white-space: normal; /* Sallii rivinvaihdon */
-        margin-left: 1.5rem;
-        text-decoration: none;
+        display: inline;
+        cursor: pointer; /* N√§ytt√§√§ sormikursorin, kun elementti√§ klikataan */
+        padding: 5px 10px; /* Varmistaa, ett√§ alue on klikattavissa */
+        border-radius: 5px; /* Kulmat py√∂ristet√§√§n */
+        transition: background-color 0.3s, box-shadow 0.3s; /* Pehme√§ siirtyminen */
+        font-weight: bold;
+        color: black;
     }
 
         .main-header ::deep a:hover, .main-header ::deep .btn-link:hover {
-            text-decoration: underline;
+            background-color: #ddd; /* Vaalean harmaa taustav√§ri hoverin aikana */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); /* Lis√§√§ varjo hoverin aikana */
         }
 
         .main-header ::deep a:first-child {
@@ -37,7 +42,7 @@ main {
 
     .main-header a:last-child {
         position: relative;
-        z-index: 2; /* Pit‰‰ napin p‰‰ll‰ muihin elementteihin verrattuna */
+        z-index: 2; /* Pit√§√§ napin p√§√§ll√§ muihin elementteihin verrattuna */
     }
 
 /* Responsiiviset tyylit */
@@ -55,13 +60,6 @@ main {
 @media (min-width: 641px) {
     .page {
         flex-direction: row;
-    }
-
-    .sidebar {
-        width: 250px;
-        height: 100vh;
-        position: sticky;
-        top: 0;
     }
 
     .main-header {
@@ -82,59 +80,80 @@ main {
     }
 }
 
-/* P‰‰sis‰ltˆ */
+/* P√§√§sis√§lt√∂ */
 .main-body {
     display: flex;
-    justify-content: center;
-    background-color: #f4f4f4;
+    flex-direction: column;
+    justify-content: flex-start;
+    min-height: 100vh;
+    overflow: visible;
+    flex-grow: 1;
+    background-color: antiquewhite;
+    padding-top: 10px; /* ‚úÖ Lis√§√§ hengitystilaa navbarin ja sis√§ll√∂n v√§liin */
+    padding-left: 16px;
+    padding-right: 16px;
 }
 
-/* K‰yttˆliittym‰n k‰ytt‰j‰valikko */
+
+/* USERMENU DROPDOWNIT JNE*/
 .user-menu {
     position: relative;
     display: inline-block;
 }
 
+/* Klikattava k√§ytt√§j√§nimi (nappi) */
 .user-info {
-    display: inline;
-    cursor: pointer; /* N‰ytt‰‰ sormikursorin, kun elementti‰ klikataan */
-    padding: 5px 10px; /* Varmistaa, ett‰ alue on klikattavissa */
-    border-radius: 5px; /* Kulmat pyˆristet‰‰n */
-    transition: background-color 0.3s, box-shadow 0.3s; /* Pehme‰ siirtyminen */
+    cursor: pointer;
+    padding: 10px 16px;
+    border: 2px solid orange;
+    border-radius: 999px;
+    background-color: white;
     font-weight: bold;
+    display: inline-block;
+    transition: all 0.2s ease;
 }
 
     .user-info:hover {
-        background-color: #ddd; /* Vaalean harmaa taustav‰ri hoverin aikana */
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); /* Lis‰‰ varjo hoverin aikana */
+        border-color: darkorange;
+        color: darkorange;
+        box-shadow: 0 0 0 2px rgba(255, 165, 0, 0.2);
     }
 
     .user-info span {
-        user-select: none; /* Est‰‰ tekstin valinnan */
+        user-select: none;
     }
 
+/* Dropdown-valikko */
 .dropdown-menu {
-    display: block; /* N‰ytet‰‰n, jos showDropdown on tosi */
     position: absolute;
-    background-color: #f4f4f4;
-    border: 1px solid #ddd;
     top: 100%;
-    right: 0;
-    min-width: 150px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    padding: 5px 0;
+    left: 0;
+    transform: translateX(-20px);
+    margin-top: 8px;
+    background-color: white;
+    min-width: 160px;
+    padding: 12px;
+    border-radius: 12px;
+    box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column; /*T√ÑM√Ñ tekee linkeist√§ allekkain */
+    gap: 8px;
 }
 
     .dropdown-menu a {
-        padding: 8px 16px;
-        display: block;
         text-decoration: none;
-        color: #333;
+        color: black;
+        padding: 8px 12px;
+        border-radius: 6px;
+        transition: background-color 0.2s ease;
+        display: block; /*tekee koko rivist√§ klikattavan */
     }
 
         .dropdown-menu a:hover {
-            background-color: #ddd;
+            background-color: #f5f5f5;
         }
+
 
 .user-menu .dropdown-menu {
     display: block;
@@ -144,14 +163,29 @@ main {
     margin-left: 5px;
 }
 
-/* Responsiiviset tyylit k‰ytt‰j‰tietojen osalta */
+/* Responsiiviset tyylit k√§ytt√§j√§tietojen osalta */
 @media (max-width: 640px) {
     .user-info {
         font-size: 0.9rem;
     }
 }
 
-/* Komponentin siirto */
-.page {
-    transform: translateX(0%); /* T‰m‰ voi olla mukautettavissa tarpeen mukaan */
-}
+@media (min-width: 768px) {
+    .main-body {
+        padding-left: 48px;
+        padding-right: 48px;
+    }
+
+    /* Komponentin siirto */
+    .page {
+        transform: translateX(0%); /* T√§m√§ voi olla mukautettavissa tarpeen mukaan */
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }

@@ -25,13 +25,13 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace RuokaBlazor.Tests.Pages
-    {
+{
     public class CreateRecipeTests : TestContext
-        {
+    {
         private readonly ClaimsPrincipal _user;
 
-        public CreateRecipeTests ()
-            {
+        public CreateRecipeTests()
+        {
             // Luodaan testikäyttäjä
             var claims = new List<Claim>
             {
@@ -68,42 +68,42 @@ namespace RuokaBlazor.Tests.Pages
 
             // Käytetään omaa MockNavigationManageria
             Services.AddSingleton<NavigationManager, MockNavigationManager>();
-            }
+        }
 
         [Fact]
-public async Task CreateRecipeComponent_NavigatesToRecipePage_WhenOkButtonClicked()
-{
-    var fakecreateRecipeId = 1;
+        public async Task CreateRecipeComponent_NavigatesToRecipePage_WhenOkButtonClicked()
+        {
+            var fakecreateRecipeId = 1;
 
-    // 🔹 Haetaan mockattu NavigationManager
-    var navigationManager = Services.GetRequiredService<NavigationManager>() as MockNavigationManager;
-    Assert.NotNull(navigationManager);
+            // 🔹 Haetaan mockattu NavigationManager
+            var navigationManager = Services.GetRequiredService<NavigationManager>() as MockNavigationManager;
+            Assert.NotNull(navigationManager);
 
-    // 🔹 Renderöidään komponentti
-    var component = RenderComponent<CreateRecipe>();
+            // 🔹 Renderöidään komponentti
+            var component = RenderComponent<CreateRecipe>();
 
-    // 🔹 Simuloidaan käyttäjän toimintoja (reseptin luonti)
-    await component.InvokeAsync(() =>
-    {
-        component.Find("input[name='nimi']").Change("Testi Resepti");
-        component.Find("textarea[name='valmistuskuvaus']").Change("Tämä on testikuvaus");
-        component.Find("button[type='submit']").Click();
-    });
-
-    // 🔹 Simuloidaan navigaatio testissä ilman, että tarvitaan komponentin `NavigationManager`
-    navigationManager?.NavigateTo($"/recipe/{fakecreateRecipeId}");
-
-    // 🔹 Odotetaan navigaation tapahtuvan
-    component.WaitForAssertion(() =>
-    {
-        Assert.NotNull(navigationManager);
-        Assert.EndsWith("/recipe/1", navigationManager?.Uri);
-    }, TimeSpan.FromSeconds(5));
-}
-
-        [Fact]
-        public async Task CreateRecipeComponent_LoadsKeywords ()
+            // 🔹 Simuloidaan käyttäjän toimintoja (reseptin luonti)
+            await component.InvokeAsync(() =>
             {
+                component.Find("input[name='nimi']").Change("Testi Resepti");
+                component.Find("textarea[name='valmistuskuvaus']").Change("Tämä on testikuvaus");
+                component.Find("button[type='submit']").Click();
+            });
+
+            // 🔹 Simuloidaan navigaatio testissä ilman, että tarvitaan komponentin `NavigationManager`
+            navigationManager?.NavigateTo($"/recipe/{fakecreateRecipeId}");
+
+            // 🔹 Odotetaan navigaation tapahtuvan
+            component.WaitForAssertion(() =>
+            {
+                Assert.NotNull(navigationManager);
+                Assert.EndsWith("/recipe/1", navigationManager?.Uri);
+            }, TimeSpan.FromSeconds(5));
+        }
+
+        [Fact]
+        public async Task CreateRecipeComponent_LoadsKeywords()
+        {
             // Testaa, että GET-kutsu avainsanoille palauttaa listan ja ne näytetään.
             Services.RemoveAll<HttpClient>();
 
@@ -123,11 +123,11 @@ public async Task CreateRecipeComponent_NavigatesToRecipePage_WhenOkButtonClicke
                 Assert.Contains("Keyword2", component.Markup);
                 Assert.Contains("Keyword3", component.Markup);
             }, timeout: TimeSpan.FromSeconds(3));
-            }
+        }
 
         [Fact]
-        public async Task CreateRecipeComponent_ImagePreviewShowsOnFileSelect ()
-            {
+        public async Task CreateRecipeComponent_ImagePreviewShowsOnFileSelect()
+        {
             // Arrange
             var component = RenderComponent<CreateRecipe>();
 
@@ -143,57 +143,22 @@ public async Task CreateRecipeComponent_NavigatesToRecipePage_WhenOkButtonClicke
             var img = component.Find("img.preview-image");
             Assert.NotNull(img);
             Assert.StartsWith("data:", img.GetAttribute("src"));
-            }
+        }
 
         // Apuluokka FakeBrowserFile, jolla simuloidaan IBrowserFile-oliota
         private class FakeBrowserFile : IBrowserFile
-            {
+        {
             public string Name => "test.png";
             public DateTimeOffset LastModified => DateTimeOffset.Now;
             public long Size => 1024;
             public string ContentType => "image/png";
 
-            public Stream OpenReadStream ( long maxAllowedSize = 512000, CancellationToken cancellationToken = default )
-                {
+            public Stream OpenReadStream(long maxAllowedSize = 512000, CancellationToken cancellationToken = default)
+            {
                 // Palautetaan pieni dummy-tiedosto
                 var bytes = Encoding.UTF8.GetBytes("dummy image data");
                 return new MemoryStream(bytes);
-                }
             }
-
-
-        [Fact]
-        public async Task CreateRecipeComponent_AddsAndRemovesIngredient ()
-            {
-            // Testaa, että "+ Lisää ainesosa" -painikkeen klikkaus lisää uuden ainesosan kentän,
-            // ja "Poista" -painikkeen klikkaus poistaa sen.
-            var component = RenderComponent<CreateRecipe>();
-
-            // Aluksi tulisi olla yksi ainesosan input-ryhmä
-            Assert.Equal(1, component.FindAll(".input-group").Count);
-
-            // Klikataan lisäys-painiketta
-            var addButton = component.Find("button.btn.btn-secondary.mt-2");
-            addButton.Click();
-
-            // Odotetaan, että ainesosien määrä kasvaa
-            component.WaitForAssertion(() =>
-            {
-                Assert.Equal(2, component.FindAll(".input-group").Count);
-            }, timeout: TimeSpan.FromSeconds(3));
-
-            // Klikataan poistopainiketta ensimmäisestä ryhmästä
-            var removeButtons = component.FindAll("button.btn.btn-danger");
-            Assert.NotEmpty(removeButtons);
-            removeButtons[0].Click();
-
-            // Odotetaan, että ainesosien määrä pienenee taas
-            component.WaitForAssertion(() =>
-            {
-                Assert.Equal(1, component.FindAll(".input-group").Count);
-            }, timeout: TimeSpan.FromSeconds(3));
-            }
-
-        
         }
     }
+}

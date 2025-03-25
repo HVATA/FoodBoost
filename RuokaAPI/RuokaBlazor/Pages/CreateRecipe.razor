@@ -7,9 +7,10 @@
 @using RuokaBlazor.Services
 @using RuokaBlazor.Properties.Model
 @using System.Security.Claims
+@using AntDesign
+
 
 <h1>Luo uusi resepti</h1>
-
 @if (!string.IsNullOrEmpty(successMessage))
 {
     <div class="alert alert-success">@successMessage</div>
@@ -19,7 +20,7 @@
     <div class="alert alert-danger">@errorMessage</div>
 }
 
-<div class="form-container">
+<div class="container">
     <EditForm Model="uusiResepti" OnValidSubmit="TallennaResepti">
         <DataAnnotationsValidator />
         <ValidationSummary />
@@ -52,20 +53,19 @@
                 </div>
             }
         </div>
-
         <!-- Ainesosat -->
         <h2>Ainesosat</h2>
         @for (int i = 0; i < uusiResepti.Ainesosat.Length; i++)
         {
             var index = i;
-            <div class="input-group">
-                <InputText @bind-Value="uusiResepti.Ainesosat[index].Ainesosa" class="form-control" placeholder="Ainesosa" />
-                <InputText @bind-Value="uusiResepti.Ainesosat[index].Maara" class="form-control" placeholder="Määrä" />
-                <button type="button" class="btn btn-danger" @onclick="() => PoistaAinesosa(index)">Poista</button>
+            <div class="ingredient-row">
+                <input type="text" placeholder="Ainesosa" class="ingredient-input" />
+                <input type="text" placeholder="Määrä" class="amount-input" />
+                <button type="button" class="remove-button" @onclick="() => PoistaAinesosa(index)">-</button>
             </div>
         }
-        <button type="button" class="btn btn-secondary mt-2" @onclick="LisaaAinesosa">+ Lisää ainesosa</button>
-
+        <button type="button" class="btn btn-primary" @onclick="LisaaAinesosa">+ Lisää ainesosa</button>
+        
         <!-- Avainsanat -->
         <h2>Avainsanat</h2>
         <div class="keyword-container">
@@ -104,32 +104,16 @@
         <button type="submit" class="btn btn-primary mt-3">Tallenna</button>
     </EditForm>
 </div>
-
 <style>
-    .image-preview {
-        margin-top: 10px;
+    h1 {
+        text-align: center;
+        margin-bottom: 32px;
     }
 
-    .preview-image {
-        max-width: 200px;
-        height: auto;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .keyword-container {
-        display: flex;
-        flex-wrap: wrap;
-    }
-
-    .keyword-column {
-        display: flex;
-        flex-direction: column;
-        margin-right: 20px;
-    }
-
-    .keyword-item {
-        margin-bottom: 10px;
+    label[for="valmistuskuvaus"] {
+        vertical-align: top;
+        display: inline-block;
+        margin-bottom: 4px;
     }
 </style>
 

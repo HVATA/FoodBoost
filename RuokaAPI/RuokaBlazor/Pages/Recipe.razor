@@ -126,7 +126,7 @@ else
 
 
     <!-- Modal-ikkuna sähköpostin jakamista varten -->
-    <div class="modal" style="display:@(modalVisible ? "block" : "none")">
+    <div class="modal" style="display:@(modalVisible ? "flex" : "none")">
         <div class="modal-content">
             <span class="close" @onclick="CloseModal">&times;</span>
             @if (favoriteButtonClicked)
@@ -143,12 +143,12 @@ else
                 <div>
                     @if (shareRecipeSuccess)
                     {
-                        <button class="btn btn-secondary" @onclick="CloseModal">Sulje</button>
+                        <button class="btn btn-primary" @onclick="CloseModal">Sulje</button>
                     }
                     else
                     {
                         <button class="btn btn-primary" @onclick="ShareRecipeEmail">Jaa</button>
-                        <button class="btn btn-secondary" @onclick="CloseModal">Peruuta</button>
+                        <button class="btn btn-primary" @onclick="CloseModal">Peruuta</button>
                     }
                 </div>
                 <p>@message</p>
@@ -268,41 +268,6 @@ else
 
     .review-form {
     margin-top: 2rem;
-    }
-
-    /* Modal style */
-    .modal {
-    top: 0;
-    left: 0;
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    justify-items: center;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex; /* Käytetään flexboxia */
-    align-items: center; /* Keskittää modaalin pystysuunnassa */
-    z-index: 999; /* Varmistaa, että modaalin taso on tarpeeksi korkea muiden elementtien yläpuolella */
-    }
-
-    .modal-content {
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    width: 300px; /* Voit säätää tätä tarpeen mukaan */
-    align-self: center;
-    justify-self: center;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    }
-
-    .close {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    cursor: pointer;
-    font-size: 1.5rem;
     }
 
 </style>

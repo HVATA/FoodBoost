@@ -73,7 +73,7 @@ public class MainLayoutLoggedTests : TestContext
         var component = RenderComponent<MainLayout>();
         var loginLink = component.Find("a[href='/login']");
         Assert.NotNull(loginLink);
-        Assert.Equal("Kirjaudu sisään", loginLink.TextContent);
+        Assert.Equal("🔑 Kirjaudu sisään", loginLink.TextContent);
     }
 
     [Fact]
@@ -95,7 +95,8 @@ public class MainLayoutLoggedTests : TestContext
         Assert.Equal("/", homeLink.GetAttribute("href"));
 
         // 🔹 Tarkistetaan, että linkissä on oikea teksti
-        Assert.Equal("RuokaBoost-Home", homeLink.TextContent);
+        Assert.Equal("🏠 RuokaBoost-Home", homeLink.TextContent.Trim());
+
     }
 }
 public class MainLayoutLoggedInTests : TestContext
@@ -145,7 +146,7 @@ public class MainLayoutLoggedInTests : TestContext
 
         var createRecipeLink = component.Find("a[href='/createRecipe']");
         Assert.NotNull(createRecipeLink);
-        Assert.Equal("Luo uusi resepti", createRecipeLink.TextContent);
+        Assert.Equal("📝 Luo uusi resepti", createRecipeLink.TextContent);
     }
 
 
@@ -157,7 +158,7 @@ public class MainLayoutLoggedInTests : TestContext
 
         var userRecipesLink = component.Find("a[href='/userRecipes']");
         Assert.NotNull(userRecipesLink);
-        Assert.Equal("Omat reseptit", userRecipesLink.TextContent);
+        Assert.Equal("📚 Omat reseptit", userRecipesLink.TextContent);
     }
 
 
@@ -170,7 +171,7 @@ public class MainLayoutLoggedInTests : TestContext
 
         var favoritesLink = component.Find("a[href='/favorites']");
         Assert.NotNull(favoritesLink);
-        Assert.Equal("Suosikit", favoritesLink.TextContent);
+        Assert.Equal("❤️ Suosikit", favoritesLink.TextContent);
     }
 
     [Fact]
@@ -197,12 +198,12 @@ public class MainLayoutLoggedInTests : TestContext
         // 🔹 Varmistetaan, että "Asetukset" -linkki löytyy
         var settingsLink = component.Find("a[href='/settings']");
         Assert.NotNull(settingsLink);
-        Assert.Equal("Asetukset", settingsLink.TextContent);
+        Assert.Equal("⚙️ Asetukset", settingsLink.TextContent);
 
         // 🔹 Varmistetaan, että "Kirjaudu ulos" -linkki löytyy
         var logoutLink = component.Find(".dropdown-menu a[href='/']");
         Assert.NotNull(logoutLink);
-        Assert.Equal("Kirjaudu ulos", logoutLink.TextContent);
+        Assert.Equal("🚪 Kirjaudu ulos", logoutLink.TextContent);
     }
 
 
@@ -225,7 +226,7 @@ public class MainLayoutLoggedInTests : TestContext
         Assert.Equal("/", homeLink.GetAttribute("href"));
 
         // 🔹 Tarkistetaan, että linkissä on oikea teksti
-        Assert.Equal("RuokaBoost-Home", homeLink.TextContent);
+        Assert.Equal("🏠 RuokaBoost-Home", homeLink.TextContent.Trim());
     }
 
 }

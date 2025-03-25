@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Components;
 using RuokaBlazor.Tests.Mocks;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Text.Json;
+using AntDesign;
 
 public class UserRecipesTests : TestContext
     {

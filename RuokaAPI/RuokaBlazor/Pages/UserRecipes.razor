@@ -21,70 +21,26 @@ else if (!reseptit.Any())
 else
 {
     <h1>Omat Reseptit</h1>
-    <ul class="recipe-list">
-        @foreach (var resepti in reseptit)
-        {
-            <li class="recipe-item">
-                <a href="@($"/recipe/{resepti.Id}")" class="recipe-link">
-                    <div class="recipe-info">
-                        <h3>@resepti.Nimi</h3>
-                        <p>@resepti.Valmistuskuvaus</p>
-                        @if (!string.IsNullOrWhiteSpace(resepti.Kuva1))
-                        {
-                            <img src="@resepti.Kuva1" alt="@resepti.Nimi" class="recipe-image" />
-                        }
-                    </div>
-                </a>
-                <div class="recipe-actions">
-                    <button data-testid="edit-button" class="btn btn-primary" @onclick="() => MuokkaaResepti(resepti.Id)">Muokkaa</button>
-                    <button data-testid="delete-button" class="btn btn-danger" @onclick="() => PoistaResepti(resepti.Id)">Poista</button>
+
+    <div class="main-content">
+        <div class="row">
+            @foreach (var resepti in reseptit)
+            {
+                <div class="column">
+                    <a href="@($"/recipe/{resepti.Id}")" class="custom-card-wrapper">
+                        <Card Class="custom-card">
+                            <CardMeta Title="@resepti.Nimi" />
+                            <div class="card-buttons">
+                                <button data-testid="edit-button" class="btn btn-primary" @onclick="() => MuokkaaResepti(resepti.Id)">Muokkaa</button>
+                                <button data-testid="delete-button" class="btn btn-danger" @onclick="() => PoistaResepti(resepti.Id)">Poista</button>
+                            </div>
+                        </Card>
+                    </a>
                 </div>
-            </li>
-        }
-    </ul>
+            }
+        </div>
+    </div>
 }
-
-<style>
-    .recipe-list {
-        list-style-type: none;
-        padding: 0;
-    }
-
-    .recipe-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1rem;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        margin-bottom: 1rem;
-        background-color: #fff;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .recipe-link {
-        text-decoration: none;
-        color: inherit;
-        display: flex;
-        flex: 1;
-    }
-
-    .recipe-info {
-        flex: 1;
-    }
-
-    .recipe-image {
-        max-width: 100px;
-        height: auto;
-        border-radius: 8px;
-        margin-left: 1rem;
-    }
-
-    .recipe-actions {
-        display: flex;
-        gap: 1rem;
-    }
-</style>
 
 @code {
     private List<ReseptiResponse>? reseptit;

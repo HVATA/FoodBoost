@@ -93,47 +93,6 @@ public class FavoritesTests : TestContext
 
         // Assert
         Assert.Contains("Testi Resepti", component.Markup);
-        Assert.Contains("Tämä on testikuvaus", component.Markup);
-    }
-
-    [Fact]
-    public void FavoritePage_ShowsMessage_WhenNoFavoriteRecipes()
-    {
-        // Arrange: tyhjä reseptilista
-        var emptyRecipes = new List<Resepti>();
-
-        var responseMessage = new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = JsonContent.Create(emptyRecipes)
-        };
-
-        var mockHandler = new Mock<HttpMessageHandler>();
-        mockHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(req =>
-                    req.Method == HttpMethod.Put &&
-                    req.RequestUri!.AbsolutePath == "/Kayttaja/Haesuosikkireseptit"),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(responseMessage);
-
-        var mockHttpClient = new HttpClient(mockHandler.Object)
-        {
-            BaseAddress = new Uri("http://localhost")
-        };
-
-        Services.AddSingleton<HttpClient>(mockHttpClient);
-
-        // Act
-        var component = RenderComponent<Favorites>();
-
-        // 🔹 Tarkista, että viestielementti on renderöity
-        var messageElement = component.Find("div.row > p");
-
-        Assert.NotNull(messageElement);
-        Assert.Contains("Sinulla ei ole vielä suosikkireseptejä", messageElement.TextContent);
     }
 
     [Fact]

@@ -8,39 +8,44 @@
 <div class="page">
     <main>
         <div class="main-header">
-            <a href="/" class="homenappi">RuokaBoost-Home</a>
+            <a href="/" class="homenappi">
+                🏠 RuokaBoost-Home
+            </a>
+
             @if (isLoggedIn)
             {
-                <a href="/userRecipes">Omat reseptit</a>
-                <a href="/createRecipe">Luo uusi resepti</a>
-                <a href="/favorites">Suosikit</a>
+                <a href="/userRecipes">📚 Omat reseptit</a>
+                <a href="/createRecipe">📝 Luo uusi resepti</a>
+                <a href="/favorites">❤️ Suosikit</a>
             }
-            else
-            {
-                <h1>Kirjaudu sisään aktivoidaksesi lisää ominaisuuksia </h1>
-            }
+
             @if (isUserAdminOrUser)
             {
-                <a href="/accounts">Käyttäjähallinta</a>
+                <a href="/accounts">👥 Käyttäjähallinta</a>
             }
+
             @if (!isLoggedIn)
             {
-                <a href="/login">Kirjaudu sisään</a>
+                <a href="/login">🔑 Kirjaudu sisään</a>
             }
             else
             {
-                <div class="user-info" @onclick="ToggleDropdown">
-                    <span>@userName</span>
-                </div>
-                @if (showDropdown)
-                {
-                    <div class="dropdown-menu">
-                        <a href="/settings">Asetukset</a>
-                        <a href="/" @onclick="Logout">Kirjaudu ulos</a>
+                <div class="user-menu">
+                    <div class="user-info" @onclick="ToggleDropdown">
+                        <span>👤 @userName</span>
                     </div>
-                }
+
+                    @if (showDropdown)
+                    {
+                        <div class="dropdown-menu">
+                            <a href="/settings">⚙️ Asetukset</a>
+                            <a href="/" @onclick="Logout">🚪 Kirjaudu ulos</a>
+                        </div>
+                    }
+                </div>
             }
         </div>
+
         <div class="main-body">
             @Body
         </div>

@@ -6,8 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RuokaBlazor</title>
     <base href="/" />
-    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
-    <link href="css/app.css" rel="stylesheet">
+
+    <!-- 🔽 Oma CSS, joka voi yliajaa edellä olevat -->
+    <link href="/css/app.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="favicon.png" />
     <link href="RuokaBlazor.styles.css" rel="stylesheet" />
 </head>
@@ -26,6 +27,10 @@
         <a href="" class="reload">Reload</a>
         <a class="dismiss">🗙</a>
     </div>
+
+    <!-- 🔽 AntDesignin JS ankkuri -->
+    <script antblazor-js></script>
+
     <script src="_framework/blazor.webassembly.js"></script>
 </body>
 

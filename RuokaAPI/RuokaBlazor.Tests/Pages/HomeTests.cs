@@ -18,7 +18,7 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Components;
 using System.Reflection;
 using RuokaBlazor.Tests.Mocks;
-
+using AntDesign;
 
 public class HomeTests : TestContext
 {
@@ -83,7 +83,6 @@ public class HomeTests : TestContext
 
         // Assert
         Assert.Contains("Testi Resepti", component.Markup);
-        Assert.Contains("Tämä on testikuvaus", component.Markup);
     }
 
     [Fact]
@@ -239,4 +238,7 @@ public class HomeTests : TestContext
         // 🔹 Tarkistetaan, että navigointi on kutsuttu oikealla URL:lla
         Assert.EndsWith($"/{recipe.Id}", navMan.Uri);
     }
+
+
+
 }

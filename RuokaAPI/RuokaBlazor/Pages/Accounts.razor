@@ -54,8 +54,10 @@
                     <InputText style="display: none;" id="hidden-role" @bind-Value="kayttaja.Kayttajataso" />
                 }
 
-                <button type="submit" class="btn btn-primary" @onclick="async () => await UpdateUser()">Päivitä</button>
-                <button type="button" class="btn btn-danger" @onclick="OpenDeleteModal">Poista</button>
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary" @onclick="async () => await UpdateUser()">Päivitä</button>
+                    <button type="button" class="btn btn-danger" @onclick="OpenDeleteModal">Poista</button>
+                </div>
             </EditForm>
 
         </div>
@@ -74,110 +76,30 @@
         }
     </div>
 </div>
-<!-- Modal-ikkuna sähköpostin jakamista varten -->
-<div class="modal" style="display:@(deleteModalVisible ? "block" : "none")">
+
+<div class="modal" style="display:@(deleteModalVisible ? "flex" : "none")">
     <div class="modal-content">
-        <span class="close" @onclick="CloseModal">&times;</span>
         <h2>Oletko varma että haluat poistaa käyttäjän?</h2>
         <div>
             <button class="btn btn-primary" @onclick="DeleteUser">Kyllä</button>
-            <button class="btn btn-secondary" @onclick="CloseModal">Peruuta</button>
+            <button class="btn btn-primary" @onclick="CloseModal">Peruuta</button>
         </div>
     </div>
 </div>
 
 <div class="modal-overlay" id="modal-overlay" style="display:@(deleteModalVisible ? "block" : "none")"></div>
 
-<!-- Modal-ikkuna sähköpostin jakamista varten -->
-<div class="modal" style="display:@(updateModalVisible ? "block" : "none")">
+
+<div class="modal" style="display:@(updateModalVisible ? "flex" : "none")">
     <div class="modal-content">
-        <span class="close" @onclick="CloseModal">&times;</span>
         <p>@message</p>
+        <button class="btn btn-primary" @onclick="CloseModal">Peruuta</button>
     </div>
 </div>
 
 <div class="modal-overlay" id="modal-overlay" style="display:@(updateModalVisible ? "block" : "none")"></div>
 
-<style>
 
-    .admin-only {
-    display: block;
-    }
-
-    .form-group {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-    }
-
-    .form-group label {
-    margin-right: 10px;
-    min-width: 120px;
-    }
-
-    .btn-primary {
-    background-color: #3498db;
-    }
-
-    .btn-danger {
-    background-color: #e74c3c;
-    }
-
-    .btn:hover {
-    opacity: 0.8;
-    }
-
-    .container {
-    height: 100vh;
-    align-items: center;
-    }
-    /* Modal style */
-    .modal {
-    width: 600px;
-    max-width: 100%;
-    height: 400px;
-    max-height: 100%;
-    position: fixed;
-    z-index: 100;
-    left: 50%;
-    top: 50%;
-    /* Use this for centering if unknown width/height */
-    transform: translate(-50%, -50%);
-    /* If known, negative margins are probably better (less chance of blurry text). */
-    /* margin: -200px 0 0 -200px; */
-
-    background: white;
-    box-shadow: 0 0 60px 10px rgba(0, 0, 0, 0.9);
-    }
-
-    .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 50;
-    background: rgba(0, 0, 0, 0.6);
-    }
-
-    .modal-content {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    padding: 20px 50px 20px 20px;
-    }
-
-    .close {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    cursor: pointer;
-    font-size: 1.5rem;
-    }
-</style>
 
 @code {
     private List<Kayttaja> users = new();
