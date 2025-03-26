@@ -239,11 +239,18 @@ namespace RuokaAPI.Repositories
                 }
                 else
                 {
-                    resepti.AinesosanMaara.Add(new ReseptiAinesosa
+                    
+                    var existingAinesosa = ainesosat.FirstOrDefault(a => a.Nimi.Equals(ainesosa.Ainesosa, StringComparison.OrdinalIgnoreCase));
+                    if (existingAinesosa != null)
                     {
-                        Ainesosa = ainesosat.FirstOrDefault(a => a.Nimi == ainesosa.Ainesosa),
-                        Maara = ainesosa.Maara
-                    });
+                        resepti.AinesosanMaara.Add(new ReseptiAinesosa
+                        {
+                            Ainesosa = existingAinesosa,
+                            AinesosaId = existingAinesosa.Id,  // Asetetaan eksplisiittisesti vierasavain
+                            Maara = ainesosa.Maara
+                        });
+                    }
+
                 }
             }
         }
