@@ -241,7 +241,7 @@ namespace RuokaAPI.Repositories
                 {
                     resepti.AinesosanMaara.Add(new ReseptiAinesosa
                     {
-                        Ainesosa = ainesosat.First(a => a.Nimi == ainesosa.Ainesosa),
+                        Ainesosa = ainesosat.FirstOrDefault(a => a.Nimi == ainesosa.Ainesosa),
                         Maara = ainesosa.Maara
                     });
                 }

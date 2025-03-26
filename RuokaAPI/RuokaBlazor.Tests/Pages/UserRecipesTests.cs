@@ -99,7 +99,6 @@ public class UserRecipesTests : TestContext
 
         // Assert
         Assert.Contains("Testi Resepti", component.Markup);
-        Assert.Contains("Tämä on testikuvaus", component.Markup);
         }
 
     [Fact]

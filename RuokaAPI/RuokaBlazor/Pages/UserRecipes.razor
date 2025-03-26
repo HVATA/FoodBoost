@@ -28,13 +28,13 @@ else
             {
                 <div class="column">
                     <a href="@($"/recipe/{resepti.Id}")" class="custom-card-wrapper">
-                        <Card Class="custom-card">
-                            <CardMeta Title="@resepti.Nimi" />
+                        <div class="custom-card">
+                                <h4>@resepti.Nimi</h4>
                             <div class="card-buttons">
                                 <button data-testid="edit-button" class="btn btn-primary" @onclick="() => MuokkaaResepti(resepti.Id)">Muokkaa</button>
                                 <button data-testid="delete-button" class="btn btn-danger" @onclick="() => PoistaResepti(resepti.Id)">Poista</button>
                             </div>
-                        </Card>
+                        </div>
                     </a>
                 </div>
             }
