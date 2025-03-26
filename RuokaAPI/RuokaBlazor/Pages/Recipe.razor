@@ -445,7 +445,7 @@ else
                 var response = await Http.DeleteAsync($"resepti/{resepti.Id}");
                 if (response.IsSuccessStatusCode)
                 {
-                    Navigation.NavigateTo("/Home");
+                    Navigation.NavigateTo("/");
                 }
                 else
                 {
