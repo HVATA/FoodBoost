@@ -9,7 +9,6 @@
 @using System.Security.Claims
 @using AntDesign
 
-
 <h1>Luo uusi resepti</h1>
 @if (!string.IsNullOrEmpty(successMessage))
 {
@@ -25,22 +24,20 @@
         <DataAnnotationsValidator />
         <ValidationSummary />
 
-       <!-- Reseptin nimi (pakollinen) -->
-<div>
-    <label for="nimi">Reseptin nimi: <span class="text-danger">*</span></label>
-    <InputText id="nimi" name="nimi" @bind-Value="uusiResepti.Nimi" class="form-control" />
-</div>
+        <!-- Reseptin nimi (pakollinen) -->
+        <div>
+            <label for="nimi">Reseptin nimi: <span class="text-danger">*</span></label>
+            <InputText id="nimi" name="nimi" @bind-Value="uusiResepti.Nimi" class="form-control" />
+        </div>
 
-<!-- Valmistuskuvaus (pakollinen) -->
-<div>
-    <label for="valmistuskuvaus">Valmistuskuvaus: <span class="text-danger">*</span></label>
-    <InputTextArea id="valmistuskuvaus" name="valmistuskuvaus" @bind-Value="uusiResepti.Valmistuskuvaus" class="form-control" />
-</div>
+        <!-- Valmistuskuvaus (pakollinen) -->
+        <div>
+            <label for="valmistuskuvaus">Valmistuskuvaus: <span class="text-danger">*</span></label>
+            <InputTextArea id="valmistuskuvaus" name="valmistuskuvaus" @bind-Value="uusiResepti.Valmistuskuvaus" class="form-control" />
+        </div>
 
-
-<!-- Pakollisten kenttien selite -->
-<p class="text-muted mt-2"><span class="text-danger">*</span> Merkityt kentät ovat pakollisia.</p>
-
+        <!-- Pakollisten kenttien selite -->
+        <p class="text-muted mt-2"><span class="text-danger">*</span> Merkityt kentät ovat pakollisia.</p>
 
         <!-- Drop box kuvien valintaan -->
         <div>
@@ -53,19 +50,20 @@
                 </div>
             }
         </div>
+
         <!-- Ainesosat -->
         <h2>Ainesosat</h2>
         @for (int i = 0; i < uusiResepti.Ainesosat.Length; i++)
         {
             var index = i;
             <div class="ingredient-row">
-                <input type="text" placeholder="Ainesosa" class="ingredient-input" />
-                <input type="text" placeholder="Määrä" class="amount-input" />
+                <InputText placeholder="Ainesosa" class="ingredient-input" @bind-Value="uusiResepti.Ainesosat[index].Ainesosa" />
+                <InputText placeholder="Määrä" class="amount-input" @bind-Value="uusiResepti.Ainesosat[index].Maara" />
                 <button type="button" class="remove-button" @onclick="() => PoistaAinesosa(index)">-</button>
             </div>
         }
         <button type="button" class="btn btn-primary" @onclick="LisaaAinesosa">+ Lisää ainesosa</button>
-        
+
         <!-- Avainsanat -->
         <h2>Avainsanat</h2>
         <div class="keyword-container">
