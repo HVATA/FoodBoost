@@ -120,7 +120,7 @@
     private string message = string.Empty;
 
     protected override async Task OnInitializedAsync()
-    {
+    {   //Action upon start
         isLoggedIn = await AuthenticationStateProvider.IsUserLoggedIn();
 
         var recipesTask= GetRecipes();
