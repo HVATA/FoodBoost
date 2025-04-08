@@ -1,20 +1,99 @@
-# Introduction 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
+﻿# 📋 FoodBoost - Recipe Management Web App
 
-# Getting Started
-TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
-1.	Installation process
-2.	Software dependencies
-3.	Latest releases
-4.	API references
+A web application for managing recipes for multiple users. Originally made as a group project for a university course, now being used for personal learning and testing.
 
-# Build and Test
-TODO: Describe and show how to build your code and run the tests. 
+---
 
-# Contribute
-TODO: Explain how other users and developers can contribute to make your code better. 
+## 🌟 Features
+- User authentication and authorization (Admin & Regular users)
+- Recipe management (CRUD operations)
+- Favorite recipe management
+- Backend API built with ASP.NET Core Web API (FoodAPI)
+- Frontend built with Blazor WebAssembly (FoodBlazor)
 
-If you want to learn more about creating good readme files then refer the following [guidelines](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops). You can also seek inspiration from the below readme files:
-- [ASP.NET Core](https://github.com/aspnet/Home)
-- [Visual Studio Code](https://github.com/Microsoft/vscode)
-- [Chakra Core](https://github.com/Microsoft/ChakraCore)
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- .NET 6.0 SDK or higher
+- Visual Studio or Visual Studio Code
+- SQL Server (LocalDB or other)
+- Entity Framework Core (EF Core)
+
+---
+
+### 🔧 Installation
+
+1. **Clone the repository**
+																																																														
+	git clone https://github.com/HVATA/FoodBoost.git
+    cd FoodBoost
+
+2. **Set up the Database** 
+	
+	Make sure SQL Server is running.
+	Update appsettings.json in the backend project to match your SQL Server connection string.
+	Run migrations and update the database. Project will have default data.
+    		
+	   dotnet ef database update
+
+3. **Run the API Backend (Swagger UI)**
+		
+	   cd FoodAPI
+       dotnet run
+
+	The Swagger UI will be available at: https://localhost:7048/swagger
+
+4. **Run the Blazor Frontend**
+
+	   cd FoodBlazor
+       dotnet run
+
+	The frontend will be available at: https://localhost:7042
+
+---
+
+### 🧩 Build and Test
+
+1. **Building**
+																																																														
+	Open the solution in Visual Studio and build the solution (Ctrl+Shift+B) or use:
+    
+	   dotnet build FoodBoost.sln
+
+2. **Testing** 
+	
+	The solution includes automated tests located in the following projects:
+	
+	  - FoodAPI.Tests (Backend API tests)
+
+	  - FoodBlazor.Tests (Frontend Blazor tests)
+
+	To run all tests from the command line:
+    		
+	   dotnet test
+
+	You can also run the tests directly from Visual Studio using the Test Explorer.
+
+---
+
+### 🤝 Contributation
+
+No outside contributions are currently accepted.
+
+---
+
+### 📚 Resources and Inspiration
+
+   - [ASP.NET Core](https://github.com/aspnet/Home)
+   - [Visual Studio Code](https://github.com/Microsoft/vscode)
+   - [Entity Framework Core](https://learn.microsoft.com/en-us/ef/core/)
+
+---
+
+### 📜 License
+
+   This project is for personal learning and testing purposes. Not licensed for external use or modification.
+
+---

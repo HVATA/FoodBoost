@@ -1,0 +1,117 @@
+﻿@page "/userRecipes"
+@layout MainLayout
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject CustomAuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JSRuntime
+
+@using FoodBlazor.Properties.Model
+@using FoodBlazor.Services
+@using System.Security.Claims
+@using System.Text.Json
+
+@if (reseptit == null)
+{
+    <h1>Ladataan reseptejä...</h1>
+}
+else if (!reseptit.Any())
+{
+    <h1>Sinulla ei ole vielä reseptejä.</h1>
+}
+else
+{
+    <h1>Omat Reseptit</h1>
+
+    <div class="main-content">
+        <div class="row">
+            @foreach (var resepti in reseptit)
+            {
+                <div class="column">
+                    <a href="@($"/recipe/{resepti.Id}")" class="custom-card-wrapper">
+                        <div class="custom-card">
+                                <h4>@resepti.Nimi</h4>
+                            <div class="card-buttons">
+                                <button data-testid="edit-button" class="btn btn-primary" @onclick="() => MuokkaaResepti(resepti.Id)">Muokkaa</button>
+                                <button data-testid="delete-button" class="btn btn-danger" @onclick="() => PoistaResepti(resepti.Id)">Poista</button>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private List<ReseptiResponse>? reseptit;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Haetaan kirjautuneen käyttäjän tiedot
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(userId, out var id))
+            {
+                await HaeOmatReseptit(id);
+            }
+        }
+    }
+
+    private async Task HaeOmatReseptit(int userId)
+    {
+        try
+        {
+            reseptit = await Http.GetFromJsonAsync<List<ReseptiResponse>>($"resepti/omat/{userId}");
+            if (reseptit == null || !reseptit.Any())
+            {
+                reseptit = new List<ReseptiResponse>();
+            }
+        }
+        catch
+        {
+            reseptit = new List<ReseptiResponse>();
+        }
+    }
+
+    private void MuokkaaResepti(int reseptiId)
+    {
+        Navigation.NavigateTo($"/editRecipe/{reseptiId}");
+    }
+
+    public async Task PoistaResepti(int reseptiId)
+    {
+        var confirm = await JSRuntime.InvokeAsync<bool>("window.confirm", new object[] { "Haluatko varmasti poistaa tämän reseptin?" });
+        if (confirm)
+        {
+            try
+            {
+                var response = await Http.DeleteAsync($"resepti/{reseptiId}");
+                if (response.IsSuccessStatusCode)
+                {
+                    reseptit = reseptit?.Where(r => r.Id != reseptiId).ToList();
+                    if (reseptit == null || !reseptit.Any())
+                    {
+                        reseptit = new List<ReseptiResponse>();
+                    }
+                    StateHasChanged();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Poikkeus poistamisessa: {ex.Message}");
+            }
+        }
+    }
+
+    public async Task SetRecipes(List<ReseptiResponse> recipes)
+    {
+        reseptit = recipes;
+        await InvokeAsync(StateHasChanged);
+    }
+}
+
+
