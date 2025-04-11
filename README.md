@@ -86,6 +86,7 @@ Development has continued after the course, and the project remains active.
 Below are the contributors who have contributed post-course:
 
 HVATA Github: https://github.com/HVATA
+
 valipakka Github: https://github.com/valipakka
 
 ---
