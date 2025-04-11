@@ -19,10 +19,10 @@
         </div>
         <div class="search-bar-container">
             <input type="text"
-                   class="custom-search-input"
-                   placeholder="Hae reseptejä nimellä tai ainesosalla..."
-                   value="@SearchQuery"
-                   @oninput="SearchQueryChanged" />
+            class="custom-search-input"
+            placeholder="Hae reseptejä nimellä tai ainesosalla..."
+            value="@SearchQuery"
+            @oninput="SearchQueryChanged" />
 
         </div>
     </div>
@@ -85,6 +85,10 @@
                     <div class="column">
                         <div class="custom-card-wrapper" @onclick="@(() => SelectRecipe(recipe))">
                             <div class="custom-card">
+                                @if (!string.IsNullOrEmpty(recipe.Kuva1))
+                                {
+                                    <img src="data:image/png;base64,@recipe.Kuva1" alt="Reseptin kuva" style="width: 100%; height: auto;" />
+                                }
                                 <h4>@recipe.Nimi</h4>
                             </div>
                         </div>
@@ -123,7 +127,8 @@
     {   //Action upon start
         isLoggedIn = await AuthenticationStateProvider.IsUserLoggedIn();
 
-        var recipesTask= GetRecipes();
+        ///var recipesTask= GetRecipes();
+        var recipesTask = GetRecipesTest();
         var ingredientsTask = GetIngredients();
         var keywordsTask = GetKeywords();
 
@@ -320,6 +325,54 @@
             message = $"Virhe haettaessa reseptejä: {ex.Message}";
         }
     }
+
+    ////////////TESTI//////////////////////////////////
+    private async Task GetRecipesTest()
+    {
+        try
+        {
+            // Hae kevennetty reseptilista ilman kuvia
+            var dtoList = await Http.GetFromJsonAsync<List<ReseptiListausTestiDto>>("/Resepti/TestiLista");
+
+            if (dtoList == null || !dtoList.Any())
+            {
+                message = "Ei löytynyt reseptejä (testi).";
+                return;
+            }
+
+            // Muodosta reseptit ja hae niille kuvat erikseen
+            recipes = new List<ReseptiRequest>();
+
+            foreach (var dto in dtoList)
+            {
+                string? kuva = null;
+
+                try
+                {
+                    kuva = await Http.GetStringAsync($"/Resepti/KuvaTesti/{dto.Id}");
+                }
+                catch
+                {
+                    // Ei kuvaa, se jää nulliksi
+                }
+
+                recipes.Add(new ReseptiRequest
+                    {
+                        Id = dto.Id,
+                        Nimi = dto.Nimi,
+                        TekijaId = dto.TekijaId,
+                        Katseluoikeus = dto.Katseluoikeus,
+                        Kuva1 = kuva
+                    });
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Virhe testireseptien haussa: {ex.Message}";
+        }
+    }
+
+    ////////////TESTI//////////////////////////////////
 
     private async Task GetIngredients()
     {

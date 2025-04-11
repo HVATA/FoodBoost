@@ -22,6 +22,36 @@ namespace FoodAPI.Controllers
             _repository = repository;
         }
 
+        /////////////TESTI////////////////////////////////////////////////
+        [HttpGet("TestiLista")]
+        public async Task<ActionResult<IEnumerable<ReseptiListausTestiDto>>> HaeKaikkiReseptitTesti()
+        {
+            var reseptit = await _repository.HaeReseptitAsync(null, null, false);
+
+            var dtoList = reseptit.Select(r => new ReseptiListausTestiDto
+            {
+                Id = r.Id,
+                Nimi = r.Nimi,
+                TekijaId = r.TekijaId,
+                Katseluoikeus = r.Katseluoikeus ?? ""
+            }).ToList();
+
+            return Ok(dtoList);
+        }
+
+        [HttpGet("KuvaTesti/{id}")]
+        public async Task<ActionResult<string>> HaeKuvaTesti(int id)
+        {
+            var resepti = await _repository.HaeReseptiAsync(id); // käytä omaa metodia tai tee sellainen
+
+            if (resepti == null || string.IsNullOrEmpty(resepti.Kuva1))
+            {
+                return NotFound("Kuvaa ei löytynyt.");
+            }
+
+            return Ok(resepti.Kuva1); // base64 string
+        }
+        ///////////////TESTI///////////////////////////////////////////////////
         [HttpGet()]
         public async Task<ActionResult<IEnumerable<Resepti>>> HaeKaikkiReseptit(
             [FromQuery] string[]? ainesosat, //Voi hakea tyhjänä tai ainesosalla tai avainsanalla
