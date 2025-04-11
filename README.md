@@ -78,9 +78,16 @@ A web application for managing recipes for multiple users. Originally made as a 
 
 ---
 
-### 🤝 Contributation
+### 🤝 Contributions
 
-No outside contributions are currently accepted.
+This project was originally created and developed by a group of four students as part of a full-stack web development course. 
+Development has continued after the course, and the project remains active.
+
+Below are the contributors who have contributed post-course:
+
+HVATA Github: https://github.com/HVATA
+
+valipakka Github: https://github.com/valipakka
 
 ---
 
